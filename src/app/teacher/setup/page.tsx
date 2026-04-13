@@ -73,17 +73,27 @@ export default function TeacherSetupPage() {
 
   useEffect(() => {
     const snapshot = loadAppState();
-    if (!snapshot.session) {
+    const session = snapshot.session;
+
+    if (!session) {
       router.replace("/auth");
       return;
     }
 
-    if (snapshot.session.role !== "teacher") {
+    if (session.role === "parent") {
       router.replace("/browse");
       return;
     }
 
-    const existingTeacher = findTeacherByUserId(snapshot.session.id);
+    if (!session.role) {
+      // Backup guard: ensure teacher setup can continue for role-pending sessions.
+      saveSession({
+        ...session,
+        role: "teacher",
+      });
+    }
+
+    const existingTeacher = findTeacherByUserId(session.id);
     const editMode = searchParams.get("edit") === "1";
 
     if (existingTeacher && !editMode) {
