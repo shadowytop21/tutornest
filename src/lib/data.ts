@@ -70,6 +70,7 @@ export type TeacherFilters = {
   board?: string;
   availability?: string;
   priceMax?: number;
+  includePending?: boolean;
 };
 
 export type SubjectCategory = {
@@ -313,11 +314,25 @@ export function computeFilteredTeachers(
     board?: string;
     availability?: string;
     priceMax?: number;
+    includePending?: boolean;
   } = {},
   reviews = seedReviews,
 ) {
+  const includePending = Boolean(filters.includePending);
   const publicCatalog = catalog.filter(
-    (teacher) => teacher.status === "verified" || (teacher.public_status ?? "pending") === "verified",
+    (teacher) => {
+      const status = teacher.public_status ?? teacher.status;
+
+      if (status === "verified" || teacher.status === "verified") {
+        return true;
+      }
+
+      if (includePending && (status === "pending" || teacher.status === "pending")) {
+        return true;
+      }
+
+      return false;
+    },
   );
   const filtered = filterTeachers(publicCatalog, filters);
 
@@ -335,5 +350,14 @@ export function computeFilteredTeachers(
         reviews_count: reviewCount,
       };
     })
-    .sort((left, right) => right.rating - left.rating || left.price_per_month - right.price_per_month);
+    .sort((left, right) => {
+      const leftVerified = left.status === "verified" || (left.public_status ?? "pending") === "verified";
+      const rightVerified = right.status === "verified" || (right.public_status ?? "pending") === "verified";
+
+      if (leftVerified !== rightVerified) {
+        return leftVerified ? -1 : 1;
+      }
+
+      return right.rating - left.rating || left.price_per_month - right.price_per_month;
+    });
 }

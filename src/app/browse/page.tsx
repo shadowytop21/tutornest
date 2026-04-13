@@ -53,7 +53,7 @@ export default function BrowsePage() {
       const { data: teacherRows, error: teacherError } = await supabase
         .from("teacher_profiles")
         .select("id,user_id,photo_url,bio,subjects,grades,boards,locality,price_per_month,teaches_at,availability,experience_years,whatsapp_number,status,is_founding_member,created_at")
-        .eq("status", "verified");
+        .in("status", ["verified", "pending"]);
 
       if (teacherError || !teacherRows) {
         return;
@@ -152,7 +152,7 @@ export default function BrowsePage() {
   };
   const teachers = useMemo(
     () =>
-      computeFilteredTeachers((snapshot.teachers ?? []).filter((teacher) => teacher.status === "verified" || teacher.public_status === "verified"), {
+      computeFilteredTeachers(snapshot.teachers ?? [], {
         query,
         subject: subject || undefined,
         grade: grade || undefined,
@@ -160,6 +160,7 @@ export default function BrowsePage() {
         board: board || undefined,
         availability: availability || undefined,
         priceMax,
+        includePending: true,
       },
       snapshot.reviews ?? []),
     [availability, board, grade, locality, priceMax, query, snapshot.reviews, snapshot.teachers, subject],
