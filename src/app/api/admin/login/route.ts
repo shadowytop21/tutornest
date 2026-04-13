@@ -23,9 +23,11 @@ export async function POST(request: Request) {
 
   const email = body.email?.trim().toLowerCase() ?? "";
   const password = body.password ?? "";
+  const normalizedAdminEmail = adminEmail.trim().toLowerCase();
+  const normalizedAdminPassword = adminPassword.replace(/\r?\n/g, "").trim();
 
-  const validEmail = email === adminEmail.trim().toLowerCase();
-  const validPassword = password === adminPassword;
+  const validEmail = email === normalizedAdminEmail;
+  const validPassword = password === normalizedAdminPassword;
 
   if (!validEmail || !validPassword) {
     return NextResponse.json({ message: "Invalid admin credentials." }, { status: 401 });
