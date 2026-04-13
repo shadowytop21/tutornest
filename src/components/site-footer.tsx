@@ -8,8 +8,7 @@ export function SiteFooter() {
         <div>
           <div className="text-xl font-bold text-navy font-display">Docent</div>
           <p className="mt-3 max-w-xl text-sm leading-7 text-mutedText">
-            Hyperlocal home tuition discovery for parents and teachers in Mathura,
-            built to feel warm, clear, and trustworthy.
+            Verified local experts for every need - starting with education
           </p>
         </div>
 

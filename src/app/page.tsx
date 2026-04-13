@@ -54,12 +54,12 @@ export default function HomePage() {
       <section className="hero-shell lotus-pattern border-b border-[var(--border)]">
         <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.12fr_0.88fr] lg:px-8 lg:py-24">
           <div className="flex flex-col justify-center">
-            <span className="pill badge-founding w-fit">Mathura's home tuition marketplace</span>
+            <span className="pill badge-founding w-fit">Local Services, Verified Experts</span>
             <h1 className="mt-6 max-w-4xl font-display text-[2.25rem] font-extrabold leading-tight text-[var(--foreground)] lg:text-[4rem]">
-              Find trusted local experts in your neighbourhood
+              Find trusted local experts right in your neighbourhood
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)] sm:text-xl">
-              Docent helps parents discover verified home tutors in Mathura, while teachers build a local profile that gets found by the right families.
+              Docent connects you with verified tutors, plumbers, electricians and more — all local, all trusted
             </p>
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -68,7 +68,7 @@ export default function HomePage() {
                   <input
                     name="subject"
                     className="w-full border-none bg-transparent py-3 text-[15px] outline-none placeholder:text-[var(--muted)]"
-                    placeholder="Search subject, grade, or locality"
+                    placeholder="Search tutors, plumbers, electricians..."
                   />
                   <button type="submit" className="btn-primary px-6 py-3">
                     Search tutors
@@ -158,7 +158,7 @@ export default function HomePage() {
         <div className="grid gap-8 lg:grid-cols-2">
           <div className="card-surface rounded-[2rem] p-8">
             <p className="text-sm uppercase tracking-[0.22em] text-[var(--muted)]">How it works for parents</p>
-            <h2 className="mt-3 font-display text-3xl font-bold text-[var(--foreground)]">Simple, local, and trust-first.</h2>
+            <h2 className="mt-3 font-display text-3xl font-bold text-[var(--foreground)]">Simple, local, and trust-first</h2>
             <div className="mt-6 space-y-4">
               {parentSteps.map((step, index) => (
                 <div key={step} className="flex gap-4 rounded-3xl bg-[rgba(255,251,245,0.92)] p-4">
@@ -173,7 +173,7 @@ export default function HomePage() {
 
           <div className="card-surface rounded-[2rem] p-8">
             <p className="text-sm uppercase tracking-[0.22em] text-[var(--muted)]">How it works for teachers</p>
-            <h2 className="mt-3 font-display text-3xl font-bold text-[var(--foreground)]">A polished profile that can actually convert.</h2>
+            <h2 className="mt-3 font-display text-3xl font-bold text-[var(--foreground)]">A profile that gets you found locally</h2>
             <div className="mt-6 space-y-4">
               {teacherSteps.map((step, index) => (
                 <div key={step} className="flex gap-4 rounded-3xl bg-[rgba(255,251,245,0.92)] p-4">
