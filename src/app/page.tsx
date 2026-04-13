@@ -11,10 +11,9 @@ const expertCategories = [
 ];
 
 const trustSignals = [
-  "Verified profiles with clear identity and service details",
-  "Local-first matching so responses are faster and practical",
-  "Transparent ratings and parent/customer feedback",
-  "WhatsApp-first communication for real conversations",
+  "Verified profiles",
+  "Local-first matching",
+  "Transparent ratings",
 ];
 
 const howItWorks = [
