@@ -72,6 +72,8 @@ create unique index if not exists reviews_parent_daily_unique_idx on public.revi
 create index if not exists teacher_profiles_status_idx on public.teacher_profiles (status);
 create index if not exists teacher_profiles_locality_idx on public.teacher_profiles (locality);
 create index if not exists reviews_teacher_idx on public.reviews (teacher_id);
+create index if not exists idx_teacher_profiles_subjects on public.teacher_profiles using gin(subjects);
+create index if not exists idx_reviews_teacher_id on public.reviews (teacher_id);
 create index if not exists admin_audit_logs_created_at_idx on public.admin_audit_logs (created_at desc);
 create index if not exists admin_audit_logs_action_idx on public.admin_audit_logs (action);
 
