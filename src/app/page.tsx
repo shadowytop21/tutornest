@@ -35,7 +35,8 @@ const howItWorks = [
 export default function HomePage() {
   return (
     <div className="fade-in">
-      <section className="hero-shell border-b border-[var(--border)]">
+      <section className="hero-shell relative overflow-hidden border-b border-[var(--border)]">
+        <div className="hero-rings" aria-hidden="true" />
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:py-24">
           <div className="flex flex-col justify-center stage-reveal">
             <span className="pill badge-founding w-fit">Local Services, Verified Experts</span>
@@ -70,6 +71,12 @@ export default function HomePage() {
                 Join as Expert
               </JoinAsTeacherAction>
             </div>
+
+            <div className="mt-8 flex flex-wrap gap-2">
+              {trustSignals.slice(0, 3).map((signal) => (
+                <span key={signal} className="pill pill-inactive">{signal.split(" ").slice(0, 3).join(" ")}</span>
+              ))}
+            </div>
           </div>
 
           <div className="premium-hero-visual stage-reveal stage-delay-1">
@@ -89,6 +96,14 @@ export default function HomePage() {
               </div>
               <p className="mt-4 text-sm leading-6 text-[var(--muted)]">A premium local marketplace designed for credibility over noise.</p>
             </div>
+          </div>
+        </div>
+        <div className="hero-rail">
+          <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-3 px-4 py-4 text-sm sm:px-6 lg:px-8">
+            <span className="font-semibold text-[var(--foreground)]">Popular near you:</span>
+            {expertCategories.map((item) => (
+              <span key={item.name} className="pill pill-inactive">{item.name}</span>
+            ))}
           </div>
         </div>
       </section>
