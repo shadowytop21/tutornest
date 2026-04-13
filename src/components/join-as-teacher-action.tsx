@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/toast-provider";
-import { findTeacherByUserId, loadAppState } from "@/lib/mock-db";
+import { findTeacherByUserId, loadAppState, saveSession } from "@/lib/mock-db";
 
 type JoinAsTeacherActionProps = {
   className?: string;
@@ -28,6 +28,14 @@ export function JoinAsTeacherAction({ className, children }: JoinAsTeacherAction
         title: "You're registered as a parent. Create a new account to join as a teacher.",
       });
       return;
+    }
+
+    if (!session.role) {
+      // Mark teacher intent so /teacher/setup does not redirect this session back to browse.
+      saveSession({
+        ...session,
+        role: "teacher",
+      });
     }
 
     const existingTeacher = findTeacherByUserId(session.id);
