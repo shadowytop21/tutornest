@@ -7,7 +7,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-borderWarm bg-[rgba(250,250,252,0.78)] backdrop-blur-2xl">
       <div className="mx-auto mt-3 flex max-w-7xl items-center justify-between rounded-2xl border border-white/70 bg-white/80 px-6 py-4 shadow-[0_10px_35px_rgba(15,15,26,0.08)] lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <Image src="/docent-logo.png" alt="Docent logo" width={220} height={48} quality={80} priority className="h-9 w-auto" />
+          <Image src="/docent-mark-v2.png" alt="Docent logo" width={96} height={96} quality={80} priority className="h-9 w-auto" />
           <div>
             <div className="text-lg font-bold tracking-tight text-navy font-display">Docent</div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--accent)]">

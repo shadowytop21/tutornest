@@ -9,7 +9,7 @@ export function SiteFooter() {
         <div className="grid gap-8 rounded-[2rem] border border-white/80 bg-white/85 p-8 shadow-[0_14px_45px_rgba(15,15,26,0.08)] lg:grid-cols-[1.2fr_0.8fr]">
           <div>
             <div className="flex items-center gap-3">
-              <Image src="/docent-logo.png" alt="Docent logo" width={220} height={48} quality={80} loading="lazy" className="h-8 w-auto" />
+              <Image src="/docent-mark-v2.png" alt="Docent logo" width={96} height={96} quality={80} loading="lazy" className="h-8 w-auto" />
               <div className="text-xl font-bold text-navy font-display">Docent</div>
             </div>
             <p className="mt-3 max-w-xl text-sm leading-7 text-mutedText">
