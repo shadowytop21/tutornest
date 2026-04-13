@@ -6,6 +6,7 @@ import { useToast } from "@/components/toast-provider";
 import { AppSecurityError, isTeacherVisiblePublicly, loadAppState, submitReview as submitReviewSecure } from "@/lib/mock-db";
 import { formatCurrency, formatDate, whatsappLink } from "@/lib/utils";
 import { TeacherCard } from "@/components/teacher-card";
+import type { ReviewRecord, TeacherRecord } from "@/lib/data";
 
 export default function TeacherProfilePage() {
   const params = useParams<{ id: string }>();
@@ -17,17 +18,48 @@ export default function TeacherProfilePage() {
   const [parentName, setParentName] = useState("");
   const [editingReview, setEditingReview] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [remoteTeachers, setRemoteTeachers] = useState<TeacherRecord[] | null>(null);
+  const [remoteReviews, setRemoteReviews] = useState<ReviewRecord[] | null>(null);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const snapshot = useMemo(() => loadAppState(), [mounted, rating, editingReview, refreshKey]);
+  useEffect(() => {
+    async function loadRemoteCatalog() {
+      setCatalogLoaded(false);
+      const response = await fetch("/api/browse", { cache: "no-store" });
+      if (!response.ok) {
+        setCatalogLoaded(true);
+        return;
+      }
+
+      const payload = (await response.json()) as { teachers?: TeacherRecord[]; reviews?: ReviewRecord[] };
+      setRemoteTeachers(payload.teachers ?? []);
+      setRemoteReviews(payload.reviews ?? []);
+      setCatalogLoaded(true);
+    }
+
+    loadRemoteCatalog();
+  }, []);
+
+  const fallbackSnapshot = useMemo(() => loadAppState(), [mounted, rating, editingReview, refreshKey]);
+  const snapshot = {
+    teachers: remoteTeachers ?? fallbackSnapshot.teachers,
+    reviews: remoteReviews ?? fallbackSnapshot.reviews,
+    session: fallbackSnapshot.session,
+    profiles: fallbackSnapshot.profiles,
+  };
   const teacher = snapshot.teachers.find((item) => item.id === params.id);
   const teacherReviews = snapshot.reviews.filter((item) => item.teacher_id === params.id);
   const session = snapshot.session;
 
   if (!mounted) {
+    return <div className="mx-auto max-w-2xl px-4 py-24 text-center text-[var(--muted)]">Loading profile...</div>;
+  }
+
+  if (!catalogLoaded) {
     return <div className="mx-auto max-w-2xl px-4 py-24 text-center text-[var(--muted)]">Loading profile...</div>;
   }
 

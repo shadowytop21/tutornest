@@ -4,30 +4,28 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-sessi
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 
 export async function GET() {
-  const token = cookies().get(ADMIN_SESSION_COOKIE)?.value;
-  if (!verifyAdminSessionToken(token)) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const token = cookies().get(ADMIN_SESSION_COOKIE)?.value;
+    if (!verifyAdminSessionToken(token)) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
-  const supabase = getSupabaseServiceClient();
-  if (!supabase) {
-    return NextResponse.json({ message: "Server Supabase service role is not configured." }, { status: 500 });
-  }
+    const supabase = getSupabaseServiceClient();
+    if (!supabase) {
+      return NextResponse.json({ teachers: [], profiles: [], reviews: [], offline: true });
+    }
 
-  const [teacherResponse, profileResponse, reviewResponse] = await Promise.all([
-    supabase
-      .from("teacher_profiles")
-      .select("id,user_id,photo_url,bio,subjects,grades,boards,locality,price_per_month,teaches_at,availability,experience_years,whatsapp_number,status,is_founding_member,created_at"),
-    supabase.from("profiles").select("id,role,name,phone,created_at"),
-    supabase.from("reviews").select("id,teacher_id,parent_id,rating,comment,created_at"),
-  ]);
+    const [teacherResponse, profileResponse, reviewResponse] = await Promise.all([
+      supabase
+        .from("teacher_profiles")
+        .select("id,user_id,photo_url,bio,subjects,grades,boards,locality,price_per_month,teaches_at,availability,experience_years,whatsapp_number,status,is_founding_member,created_at"),
+      supabase.from("profiles").select("id,role,name,phone,created_at"),
+      supabase.from("reviews").select("id,teacher_id,parent_id,rating,comment,created_at"),
+    ]);
 
-  if (teacherResponse.error || profileResponse.error || reviewResponse.error) {
-    return NextResponse.json(
-      { message: teacherResponse.error?.message ?? profileResponse.error?.message ?? reviewResponse.error?.message ?? "Unable to load moderation data." },
-      { status: 500 },
-    );
-  }
+    if (teacherResponse.error || profileResponse.error || reviewResponse.error) {
+      return NextResponse.json({ teachers: [], profiles: [], reviews: [], offline: true });
+    }
 
   const teacherRows = (teacherResponse.data ?? []) as any[];
   const profileRows = (profileResponse.data ?? []) as any[];
@@ -103,9 +101,13 @@ export async function GET() {
     created_at: row.created_at,
   }));
 
-  return NextResponse.json({
-    teachers,
-    profiles,
-    reviews,
-  });
+    return NextResponse.json({
+      teachers,
+      profiles,
+      reviews,
+      offline: false,
+    });
+  } catch {
+    return NextResponse.json({ teachers: [], profiles: [], reviews: [], offline: true });
+  }
 }

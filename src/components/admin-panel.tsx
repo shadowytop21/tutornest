@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/toast-provider";
 import type { AppSnapshot } from "@/lib/mock-db";
+import { deleteReviewById, loadAppState, setTeacherStatus, toggleFoundingMember } from "@/lib/mock-db";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export function AdminPanel() {
@@ -20,12 +21,18 @@ export function AdminPanel() {
   const loadModerationSnapshot = useCallback(async () => {
     const response = await fetch("/api/admin/moderation", { cache: "no-store" });
     if (!response.ok) {
-      setSnapshot({ profiles: [], teachers: [], reviews: [], session: null });
+      setSnapshot(loadAppState());
       setIsRemoteData(false);
       return;
     }
 
-    const data = (await response.json()) as AppSnapshot;
+    const data = (await response.json()) as AppSnapshot & { offline?: boolean };
+    if (data.offline) {
+      setSnapshot(loadAppState());
+      setIsRemoteData(false);
+      return;
+    }
+
     setSnapshot(data);
     setIsRemoteData(true);
   }, []);
@@ -42,6 +49,13 @@ export function AdminPanel() {
   }
 
   async function approveTeacher(teacherId: string) {
+    if (!isRemoteData) {
+      setTeacherStatus(teacherId, "verified");
+      setSnapshot(loadAppState());
+      pushToast({ tone: "success", title: "Teacher approved" });
+      return;
+    }
+
     const response = await fetch(`/api/admin/teachers/${teacherId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -59,6 +73,13 @@ export function AdminPanel() {
   }
 
   async function rejectTeacher(teacherId: string) {
+    if (!isRemoteData) {
+      setTeacherStatus(teacherId, "rejected");
+      setSnapshot(loadAppState());
+      pushToast({ tone: "warning", title: "Teacher rejected" });
+      return;
+    }
+
     const response = await fetch(`/api/admin/teachers/${teacherId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -76,6 +97,13 @@ export function AdminPanel() {
   }
 
   async function toggleFounder(teacherId: string) {
+    if (!isRemoteData) {
+      toggleFoundingMember(teacherId);
+      setSnapshot(loadAppState());
+      pushToast({ tone: "success", title: "Founding badge updated" });
+      return;
+    }
+
     const current = snapshot.teachers.find((teacher) => teacher.id === teacherId);
     const response = await fetch(`/api/admin/teachers/${teacherId}`, {
       method: "PATCH",
@@ -94,6 +122,13 @@ export function AdminPanel() {
   }
 
   async function removeReview(reviewId: string) {
+    if (!isRemoteData) {
+      deleteReviewById(reviewId);
+      setSnapshot(loadAppState());
+      pushToast({ tone: "success", title: "Review deleted" });
+      return;
+    }
+
     const response = await fetch(`/api/admin/reviews/${reviewId}`, {
       method: "DELETE",
     });

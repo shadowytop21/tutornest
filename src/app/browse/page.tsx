@@ -33,6 +33,7 @@ export default function BrowsePage() {
   const [availability, setAvailability] = useState(searchParams.get("availability") ?? "");
   const [priceMax, setPriceMax] = useState(Number(searchParams.get("priceMax") ?? 5000));
   const [mounted, setMounted] = useState(false);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
   const [remoteTeachers, setRemoteTeachers] = useState<TeacherRecord[] | null>(null);
   const [remoteReviews, setRemoteReviews] = useState<ReviewRecord[] | null>(null);
 
@@ -42,17 +43,35 @@ export default function BrowsePage() {
 
   useEffect(() => {
     async function loadRemoteCatalog() {
+      setCatalogLoaded(false);
       const response = await fetch("/api/browse", { cache: "no-store" });
       if (!response.ok) {
+        setCatalogLoaded(true);
         return;
       }
 
       const payload = (await response.json()) as { teachers?: TeacherRecord[]; reviews?: ReviewRecord[] };
       setRemoteTeachers(payload.teachers ?? []);
       setRemoteReviews(payload.reviews ?? []);
+      setCatalogLoaded(true);
     }
 
     loadRemoteCatalog();
+  }, []);
+
+  useEffect(() => {
+    function reloadCatalog() {
+      void fetch("/api/browse", { cache: "no-store" })
+        .then((response) => response.json())
+        .then((payload: { teachers?: TeacherRecord[]; reviews?: ReviewRecord[] }) => {
+          setRemoteTeachers(payload.teachers ?? []);
+          setRemoteReviews(payload.reviews ?? []);
+        })
+        .catch(() => undefined);
+    }
+
+    window.addEventListener("focus", reloadCatalog);
+    return () => window.removeEventListener("focus", reloadCatalog);
   }, []);
 
   useEffect(() => {
@@ -110,6 +129,12 @@ export default function BrowsePage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-20">
+      {!catalogLoaded ? (
+        <section className="card-surface rounded-[2rem] p-10 text-center text-[var(--muted)]">
+          Loading shared tutors...
+        </section>
+      ) : null}
+
       <section className="card-surface rounded-[2rem] p-6 lg:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>

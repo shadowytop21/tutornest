@@ -39,38 +39,43 @@ async function getOrCreateUserId(email: string, name: string, phone: string) {
 }
 
 export async function POST(request: Request) {
-  const payload = (await request.json().catch(() => null)) as ProfileRequest | null;
-  if (!payload?.email || !payload?.name || !payload?.phone || !payload?.role) {
-    return NextResponse.json({ message: "Missing profile fields." }, { status: 400 });
+  try {
+    const payload = (await request.json().catch(() => null)) as ProfileRequest | null;
+    if (!payload?.email || !payload?.name || !payload?.phone || !payload?.role) {
+      return NextResponse.json({ message: "Missing profile fields." }, { status: 400 });
+    }
+
+    const supabase = getSupabaseServiceClient();
+    if (!supabase) {
+      return NextResponse.json({ message: "Server database is not configured." }, { status: 503 });
+    }
+
+    const adminSupabase = supabase as any;
+
+    const userResult = await getOrCreateUserId(payload.email, payload.name, payload.phone);
+    if (userResult.error || !userResult.userId) {
+      return NextResponse.json({ message: userResult.error ?? "Unable to create user." }, { status: 500 });
+    }
+
+    const now = new Date().toISOString();
+    const { error: profileError } = await adminSupabase.from("profiles").upsert(
+      {
+        id: userResult.userId,
+        role: payload.role,
+        name: payload.name,
+        phone: payload.phone,
+        created_at: now,
+      },
+      { onConflict: "id" },
+    );
+
+    if (profileError) {
+      return NextResponse.json({ message: profileError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, userId: userResult.userId });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to save profile.";
+    return NextResponse.json({ message }, { status: 500 });
   }
-
-  const supabase = getSupabaseServiceClient();
-  if (!supabase) {
-    return NextResponse.json({ message: "Server Supabase service role is not configured." }, { status: 500 });
-  }
-
-  const adminSupabase = supabase as any;
-
-  const userResult = await getOrCreateUserId(payload.email, payload.name, payload.phone);
-  if (userResult.error || !userResult.userId) {
-    return NextResponse.json({ message: userResult.error ?? "Unable to create user." }, { status: 500 });
-  }
-
-  const now = new Date().toISOString();
-  const { error: profileError } = await adminSupabase.from("profiles").upsert(
-    {
-      id: userResult.userId,
-      role: payload.role,
-      name: payload.name,
-      phone: payload.phone,
-      created_at: now,
-    },
-    { onConflict: "id" },
-  );
-
-  if (profileError) {
-    return NextResponse.json({ message: profileError.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ ok: true, userId: userResult.userId });
 }
