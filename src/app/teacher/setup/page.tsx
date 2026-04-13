@@ -394,7 +394,7 @@ export default function TeacherSetupPage() {
           </p>
           <div className="mt-8 flex justify-center gap-3">
             <button type="button" onClick={() => router.push("/teacher/dashboard")} className="btn-primary px-6 py-3 text-sm">Go to dashboard</button>
-            <button type="button" onClick={() => router.push("/browse")} className="btn-secondary px-6 py-3 text-sm">Browse tutors</button>
+            <button type="button" onClick={() => router.push("/browse")} className="btn-secondary px-6 py-3 text-sm">Browse Experts</button>
           </div>
         </div>
       </div>

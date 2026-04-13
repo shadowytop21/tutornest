@@ -10,20 +10,20 @@ export function SiteHeader() {
             T
           </div>
           <div>
-            <div className="text-lg font-bold tracking-tight text-navy font-display">TutorNest</div>
+            <div className="text-lg font-bold tracking-tight text-navy font-display">Docent</div>
             <div className="text-xs font-medium uppercase tracking-[0.25em] text-saffron">
-              Mathura tutoring
+              Local Services, Verified Experts
             </div>
           </div>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
           <Link href="/browse" className="text-sm font-semibold text-navy transition hover:text-saffron">
-            Browse Tutors
+            Browse Experts
           </Link>
           {/* Use centralized role-aware join flow so all entry points behave consistently. */}
           <JoinAsTeacherAction className="text-sm font-semibold text-navy transition hover:text-saffron">
-            Join as Teacher
+            Join as Expert
           </JoinAsTeacherAction>
           <Link href="/auth" className="text-sm font-semibold text-navy transition hover:text-saffron">
             Login

@@ -122,7 +122,7 @@ export default function AuthPage() {
     <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[1fr_0.9fr] lg:px-8 lg:py-20">
       <section className="card-surface rounded-[2rem] p-8">
         <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted)]">Parent and teacher sign up</p>
-        <h1 className="mt-3 font-display text-4xl font-bold text-[var(--foreground)]">Sign up for TutorNest</h1>
+        <h1 className="mt-3 font-display text-4xl font-bold text-[var(--foreground)]">Sign up for Docent</h1>
         <p className="mt-4 max-w-xl text-lg leading-8 text-[var(--muted)]">
           New users should sign up with their phone number and email. Existing users can continue with the same details.
         </p>
@@ -179,7 +179,7 @@ export default function AuthPage() {
         <div className="card-surface rounded-[2rem] p-6">
           <p className="font-display text-2xl font-bold text-[var(--foreground)]">A cleaner first impression</p>
           <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-            TutorNest feels like a funded startup: warm, polished, and built to turn a local search into a real conversation.
+            Docent feels like a funded startup: warm, polished, and built to turn a local search into a real conversation.
           </p>
         </div>
       </aside>

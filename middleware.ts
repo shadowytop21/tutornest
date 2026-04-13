@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-const ADMIN_SESSION_COOKIE = "tutornest_admin_session";
+const ADMIN_SESSION_COOKIE = "docent_admin_session";
 
 function isAdminPage(pathname: string) {
   return pathname.startsWith("/admin") && pathname !== "/admin/login";

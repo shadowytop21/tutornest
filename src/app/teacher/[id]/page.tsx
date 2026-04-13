@@ -183,7 +183,7 @@ export default function TeacherProfilePage() {
 
     const openWhatsApp = (number: string) => {
       window.open(
-        whatsappLink(number, "Hi, I found your profile on TutorNest and I'm interested in home tuition for my child."),
+        whatsappLink(number, "Hi, I found your profile on Docent and I'm interested in home tuition for my child."),
         "_blank",
         "noopener,noreferrer",
       );

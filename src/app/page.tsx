@@ -26,7 +26,7 @@ const teacherSteps = [
   "First 50 teachers earn a founding member badge automatically.",
 ];
 
-const whyTutorNest = [
+const whyDocent = [
   "Hyperlocal discovery tuned for Mathura neighborhoods.",
   "Warm, trustworthy profiles with real badges and reviews.",
   "Fast WhatsApp-first communication, not clunky lead forms.",
@@ -56,10 +56,10 @@ export default function HomePage() {
           <div className="flex flex-col justify-center">
             <span className="pill badge-founding w-fit">Mathura's home tuition marketplace</span>
             <h1 className="mt-6 max-w-4xl font-display text-[2.25rem] font-extrabold leading-tight text-[var(--foreground)] lg:text-[4rem]">
-              Find the right home tutor for your child, right in your neighborhood.
+              Find trusted local experts in your neighbourhood
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--muted)] sm:text-xl">
-              TutorNest helps parents discover verified home tutors in Mathura, while teachers build a local profile that gets found by the right families.
+              Docent helps parents discover verified home tutors in Mathura, while teachers build a local profile that gets found by the right families.
             </p>
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -79,11 +79,11 @@ export default function HomePage() {
 
             <div className="mt-4 flex flex-wrap gap-3">
               <Link href="/browse" className="btn-primary px-6 py-3 text-sm">
-                Browse tutors
+                Browse Experts
               </Link>
               {/* Use centralized role-aware join flow so all entry points behave consistently. */}
               <JoinAsTeacherAction className="btn-secondary px-6 py-3 text-sm">
-                Join as teacher
+                Join as Expert
               </JoinAsTeacherAction>
             </div>
 
@@ -246,7 +246,7 @@ export default function HomePage() {
       <section className="bg-[rgba(247,243,238,0.58)] py-16 lg:py-24">
         <div className="mx-auto grid w-full max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
           <div>
-            <p className="text-sm uppercase tracking-[0.22em] text-[var(--muted)]">Why TutorNest?</p>
+            <p className="text-sm uppercase tracking-[0.22em] text-[var(--muted)]">Why Docent?</p>
             <h2 className="mt-3 font-display text-3xl font-bold text-[var(--foreground)]">Built to feel trustworthy from the first glance.</h2>
             <p className="mt-4 max-w-xl text-lg leading-8 text-[var(--muted)]">
               The platform is designed for parents who want speed and clarity, and for teachers who want a profile that looks premium instead of generic.
@@ -254,7 +254,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            {whyTutorNest.map((point) => (
+            {whyDocent.map((point) => (
               <div key={point} className="card-surface rounded-[1.75rem] p-5">
                 <p className="font-display text-xl font-semibold text-[var(--foreground)]">Trust signal</p>
                 <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{point}</p>

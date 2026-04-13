@@ -15,8 +15,8 @@ export interface AppSnapshot {
   session: SessionRecord | null;
 }
 
-const STORAGE_KEY = "tutornest.app-state.v1";
-const ADMIN_STORAGE_KEY = "tutornest.admin-auth.v1";
+const STORAGE_KEY = "docent.app-state.v1";
+const ADMIN_STORAGE_KEY = "docent.admin-auth.v1";
 const REVIEW_RATE_LIMIT_MS = 24 * 60 * 60 * 1000;
 
 export type AppSecurityErrorCode =

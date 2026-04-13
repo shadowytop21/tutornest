@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-export const ADMIN_SESSION_COOKIE = "tutornest_admin_session";
+export const ADMIN_SESSION_COOKIE = "docent_admin_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 12;
 
 type AdminPayload = {

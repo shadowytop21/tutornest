@@ -1,6 +1,6 @@
-# TutorNest
+# Docent
 
-TutorNest is a hyperlocal home tuition marketplace for Mathura, India.
+Docent is a hyperlocal home tuition marketplace for Mathura, India.
 
 ## Stack
 

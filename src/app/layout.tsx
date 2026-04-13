@@ -5,9 +5,9 @@ import { ToastProvider } from "@/components/toast-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TutorNest | Hyperlocal Home Tuition in Mathura",
+  title: "Docent | Local Experts Near You",
   description:
-    "TutorNest connects parents with verified home tutors in Mathura, India.",
+    "Docent helps you find verified local tutors, plumbers, electricians and more in your neighbourhood",
 };
 
 export default function RootLayout({

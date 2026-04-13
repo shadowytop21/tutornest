@@ -156,7 +156,7 @@ export function AdminPanel() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted)]">Admin panel</p>
-            <h1 className="mt-3 font-display text-4xl font-bold text-[var(--foreground)]">TutorNest moderation</h1>
+            <h1 className="mt-3 font-display text-4xl font-bold text-[var(--foreground)]">Docent moderation</h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-[var(--muted)]">Approve teachers, reject incomplete submissions, and manage the founding member badge.</p>
             <p className="mt-3 text-sm text-[var(--muted)]">Data source: {isRemoteData ? "Supabase (shared across devices)" : "Local browser storage"}</p>
           </div>

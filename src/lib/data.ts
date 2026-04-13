@@ -197,11 +197,11 @@ export const seedTeachers: TeacherProfile[] = [];
 export const seedReviews: Review[] = [];
 
 export const localStorageKeys = {
-  profile: "tutornest_profile",
-  teacherDraft: "tutornest_teacher_draft",
-  parentDraft: "tutornest_parent_draft",
-  teacherCatalog: "tutornest_local_teachers",
-  teacherReviewsPrefix: "tutornest_teacher_reviews_",
+  profile: "docent_profile",
+  teacherDraft: "docent_teacher_draft",
+  parentDraft: "docent_parent_draft",
+  teacherCatalog: "docent_local_teachers",
+  teacherReviewsPrefix: "docent_teacher_reviews_",
 };
 
 export function buildWhatsAppLink(number: string, message: string) {

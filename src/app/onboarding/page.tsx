@@ -107,7 +107,7 @@ export default function OnboardingPage() {
         <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted)]">Who are you?</p>
         <h1 className="mt-3 font-display text-4xl font-bold text-[var(--foreground)]">Choose your role</h1>
         <p className="mt-4 max-w-2xl text-lg leading-8 text-[var(--muted)]">
-          We already have your session. Now choose the path that matches what you want to do on TutorNest.
+          We already have your session. Now choose the path that matches what you want to do on Docent.
         </p>
         <div className="mt-6 rounded-3xl bg-[rgba(255,251,245,0.9)] p-5 text-sm text-[var(--muted)]">
           Signed in as <span className="font-semibold text-[var(--foreground)]">{snapshot.session?.name}</span> · {snapshot.session?.phone}

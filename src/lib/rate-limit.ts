@@ -4,11 +4,11 @@ type Bucket = {
 };
 
 const globalScope = globalThis as typeof globalThis & {
-  __tutornestRateLimit?: Map<string, Bucket>;
+  __docentRateLimit?: Map<string, Bucket>;
 };
 
-const buckets = globalScope.__tutornestRateLimit ?? new Map<string, Bucket>();
-globalScope.__tutornestRateLimit = buckets;
+const buckets = globalScope.__docentRateLimit ?? new Map<string, Bucket>();
+globalScope.__docentRateLimit = buckets;
 
 export function getRequestIp(request: Request) {
   const forwardedFor = request.headers.get("x-forwarded-for");

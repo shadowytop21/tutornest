@@ -43,7 +43,7 @@ export default function TeacherDashboardPage() {
           <p className="mt-4 text-lg leading-8 text-[var(--muted)]">Create your teaching profile to start appearing in search results.</p>
           <div className="mt-8 flex justify-center gap-3">
             <Link href="/teacher/setup" className="btn-primary px-6 py-3 text-sm">Create profile</Link>
-            <Link href="/browse" className="btn-secondary px-6 py-3 text-sm">Browse tutors</Link>
+            <Link href="/browse" className="btn-secondary px-6 py-3 text-sm">Browse Experts</Link>
           </div>
         </div>
       </div>

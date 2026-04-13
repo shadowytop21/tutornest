@@ -139,7 +139,7 @@ export default function BrowsePage() {
       <section className="card-surface rounded-[2rem] p-6 lg:p-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted)]">Browse tutors</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted)]">Browse Experts</p>
             <h1 className="mt-3 font-display text-4xl font-bold text-[var(--foreground)]">Find tutors in Mathura</h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-[var(--muted)]">
               Search by subject, grade, locality, board, price, or availability. Verified teachers appear first.
@@ -147,7 +147,7 @@ export default function BrowsePage() {
           </div>
           {/* Use centralized role-aware join flow so all entry points behave consistently. */}
           <JoinAsTeacherAction className="btn-primary px-6 py-3 text-sm">
-            Join as teacher
+            Join as Expert
           </JoinAsTeacherAction>
         </div>
 
