@@ -4,13 +4,13 @@ import { JoinAsTeacherAction } from "@/components/join-as-teacher-action";
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-borderWarm bg-[rgba(255,251,245,0.86)] backdrop-blur-lg">
+    <header className="sticky top-0 z-40 border-b border-borderWarm bg-[rgba(250,250,252,0.92)] backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <Image src="/docent-logo.png" alt="Docent logo" width={140} height={36} className="h-9 w-auto" priority />
+          <Image src="/docent-logo.svg" alt="Docent logo" width={220} height={48} className="h-9 w-auto" priority />
           <div>
             <div className="text-lg font-bold tracking-tight text-navy font-display">Docent</div>
-            <div className="text-xs font-medium uppercase tracking-[0.25em] text-saffron">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-saffron">
               Neighbourhood Trust Network
             </div>
           </div>

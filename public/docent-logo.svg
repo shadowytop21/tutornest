@@ -1,0 +1,7 @@
+<svg width="220" height="48" viewBox="0 0 220 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="docentLogoTitle">
+  <title id="docentLogoTitle">Docent logo</title>
+  <rect x="2" y="2" width="40" height="40" rx="12" fill="#1A1A2E"/>
+  <path d="M14 14H22C28.6274 14 34 19.3726 34 26C34 32.6274 28.6274 38 22 38H14V14ZM18.5 18.5V33.5H22C26.1421 33.5 29.5 30.1421 29.5 26C29.5 21.8579 26.1421 18.5 22 18.5H18.5Z" fill="#EEF2FF"/>
+  <text x="54" y="23" fill="#111827" font-family="Playfair Display, Georgia, serif" font-size="24" font-weight="700">Docent</text>
+  <text x="54" y="39" fill="#4F46E5" font-family="DM Sans, Arial, sans-serif" font-size="10" letter-spacing="3">LOCAL SERVICES, VERIFIED EXPERTS</text>
+</svg>

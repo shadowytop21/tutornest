@@ -229,3 +229,60 @@ h6,
 .slide-step {
   animation: fade-slide-in 0.35s ease both;
 }
+
+.stage-reveal {
+  animation: fade-slide-in 0.55s ease both;
+}
+
+.stage-delay-1 {
+  animation-delay: 0.08s;
+}
+
+.stage-delay-2 {
+  animation-delay: 0.16s;
+}
+
+.stage-delay-3 {
+  animation-delay: 0.24s;
+}
+
+.premium-hero-visual {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  align-content: center;
+  min-height: 420px;
+}
+
+.hero-shape {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(0.2px);
+  pointer-events: none;
+}
+
+.hero-shape-a {
+  width: 180px;
+  height: 180px;
+  top: 20px;
+  right: 20px;
+  background: radial-gradient(circle at 35% 35%, rgba(79, 70, 229, 0.25), rgba(79, 70, 229, 0.08));
+}
+
+.hero-shape-b {
+  width: 130px;
+  height: 130px;
+  bottom: 40px;
+  left: 30px;
+  background: radial-gradient(circle at 35% 35%, rgba(26, 26, 46, 0.22), rgba(26, 26, 46, 0.06));
+}
+
+.hero-layer-card {
+  position: relative;
+  z-index: 1;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+  box-shadow: 0 16px 34px rgba(26, 26, 46, 0.08);
+}

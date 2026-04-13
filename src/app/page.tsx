@@ -37,7 +37,7 @@ export default function HomePage() {
     <div className="fade-in">
       <section className="hero-shell border-b border-[var(--border)]">
         <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:py-24">
-          <div className="flex flex-col justify-center">
+          <div className="flex flex-col justify-center stage-reveal">
             <span className="pill badge-founding w-fit">Local Services, Verified Experts</span>
             <h1 className="mt-6 max-w-4xl font-display text-[2.25rem] font-extrabold leading-tight text-[var(--foreground)] lg:text-[4rem]">
               Find the expert next door, not a random lead online.
@@ -72,13 +72,23 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {expertCategories.slice(0, 4).map((item) => (
-              <div key={item.name} className="card-surface rounded-[1.5rem] p-5">
-                <p className="font-display text-2xl font-bold text-[var(--foreground)]">{item.name}</p>
-                <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{item.detail}</p>
+          <div className="premium-hero-visual stage-reveal stage-delay-1">
+            <div className="hero-shape hero-shape-a" />
+            <div className="hero-shape hero-shape-b" />
+            <div className="hero-layer-card stage-reveal stage-delay-2">
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Live in your area</p>
+              <p className="mt-2 font-display text-2xl font-bold text-[var(--foreground)]">120+ verified experts</p>
+              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">From tutoring to home repairs, discover profiles people nearby already trust.</p>
+            </div>
+            <div className="hero-layer-card stage-reveal stage-delay-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Fastest growing categories</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {expertCategories.slice(0, 4).map((item) => (
+                  <span key={item.name} className="pill pill-inactive">{item.name}</span>
+                ))}
               </div>
-            ))}
+              <p className="mt-4 text-sm leading-6 text-[var(--muted)]">A premium local marketplace designed for credibility over noise.</p>
+            </div>
           </div>
         </div>
       </section>
