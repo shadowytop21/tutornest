@@ -28,17 +28,35 @@ export async function ensureSupabaseUser() {
     };
   }
 
-  const current = await client.auth.getUser();
-  if (current.error) {
-    return { client, user: null, error: current.error };
+  const sessionResult = await client.auth.getSession();
+  if (sessionResult.error) {
+    return { client, user: null, error: sessionResult.error };
   }
 
+  if (sessionResult.data.session?.user) {
+    return { client, user: sessionResult.data.session.user, error: null };
+  }
+
+  const current = await client.auth.getUser();
   if (current.data.user) {
     return { client, user: current.data.user, error: null };
   }
 
+  // "Auth session missing" can occur before first sign-in; continue to anonymous sign-in.
+  if (current.error && !/auth session missing/i.test(current.error.message)) {
+    return { client, user: null, error: current.error };
+  }
+
   const anonymous = await client.auth.signInAnonymously();
   if (anonymous.error) {
+    if (/anonymous/i.test(anonymous.error.message) && /disabled/i.test(anonymous.error.message)) {
+      return {
+        client,
+        user: null,
+        error: new Error("Anonymous sign-in is disabled in Supabase Auth settings."),
+      };
+    }
+
     return { client, user: null, error: anonymous.error };
   }
 
