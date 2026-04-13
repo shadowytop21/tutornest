@@ -10,9 +10,9 @@ export function SiteHeader() {
           <Image src="/docent-mark-v2.png?v=4" alt="Docent logo" width={96} height={96} quality={80} priority className="h-9 w-auto" />
           <div>
             <div className="text-lg font-bold tracking-tight text-navy font-display">Docent</div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--accent)]">
+            {/* <div className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--accent)]">
               Neighbourhood Trust Network
-            </div>
+            </div> */}
           </div>
         </Link>
 
