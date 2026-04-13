@@ -11,7 +11,7 @@ export function SiteHeader() {
           <div>
             <div className="text-lg font-bold tracking-tight text-navy font-display">Docent</div>
             <div className="text-xs font-medium uppercase tracking-[0.25em] text-saffron">
-              Local Services, Verified Experts
+              Neighbourhood Trust Network
             </div>
           </div>
         </Link>
@@ -25,7 +25,7 @@ export function SiteHeader() {
             Join as Expert
           </JoinAsTeacherAction>
           <Link href="/auth" className="text-sm font-semibold text-navy transition hover:text-saffron">
-            Login
+            Sign In
           </Link>
         </nav>
 

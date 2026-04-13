@@ -8,7 +8,7 @@ export function SiteFooter() {
         <div>
           <div className="text-xl font-bold text-navy font-display">Docent</div>
           <p className="mt-3 max-w-xl text-sm leading-7 text-mutedText">
-            Verified local experts for every need - starting with education
+            Trusted local experts for daily life, home, and learning.
           </p>
         </div>
 
