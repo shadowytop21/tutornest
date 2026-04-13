@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { type TeacherProfile } from "@/lib/data";
 
@@ -17,9 +18,14 @@ export function TeacherCard({ teacher }: { teacher: TeacherProfile }) {
     <article className="group rounded-[1.6rem] border border-[var(--border)] bg-white p-5 shadow-[0_4px_24px_rgba(255,107,53,0.08)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_rgba(255,107,53,0.16)]">
       <div className="flex items-start gap-4">
         <div className="relative h-18 w-18 shrink-0">
-          <img
+          <Image
             src={teacher.photo_url}
             alt={teacher.name}
+            width={72}
+            height={72}
+            quality={80}
+            loading="lazy"
+            unoptimized
             className={`h-18 w-18 rounded-full object-cover ring-4 ${teacher.status === "verified" ? "ring-[rgba(255,107,53,0.4)]" : "ring-[var(--border)]"}`}
           />
           <span className={`absolute -right-1 bottom-0 h-4 w-4 rounded-full border-2 border-white ${teacher.status === "verified" ? "bg-[var(--success)]" : teacher.status === "pending" ? "bg-slate-400" : "bg-rose-500"}`} />

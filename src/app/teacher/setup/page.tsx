@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/toast-provider";
 import {
@@ -429,7 +430,9 @@ export default function TeacherSetupPage() {
                 <label className="block rounded-[1.5rem] border border-dashed border-[var(--border)] bg-[rgba(255,251,245,0.9)] p-6 text-center">
                   <input type="file" accept="image/*" className="hidden" onChange={(event) => handlePhotoUpload(event.target.files?.[0] ?? null)} />
                   <div className="mx-auto mb-4 flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-[var(--primary-soft)] text-lg font-semibold text-[var(--primary)]">
-                    {profilePhoto ? <img src={profilePhoto} alt="Profile preview" className="h-full w-full object-cover" /> : "Upload"}
+                    {profilePhoto ? (
+                      <Image src={profilePhoto} alt="Profile preview" width={112} height={112} quality={80} loading="lazy" unoptimized className="h-full w-full object-cover" />
+                    ) : "Upload"}
                   </div>
                   <span className="btn-secondary px-4 py-2 text-sm">Choose profile photo</span>
                 </label>
