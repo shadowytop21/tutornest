@@ -119,8 +119,8 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-10 lg:grid-cols-[1fr_0.9fr] lg:px-8 lg:py-20">
-      <section className="card-surface rounded-[2rem] p-8">
+    <div className="mx-auto grid w-full max-w-4xl gap-8 px-4 py-10 lg:grid-cols-[1fr_0.7fr] lg:px-8 lg:py-20">
+      <section className="card-surface rounded-2xl p-8">
         <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted)]">Parent and teacher sign up</p>
         <h1 className="mt-3 font-display text-4xl font-bold text-[var(--foreground)]">Sign up for Docent</h1>
         <p className="mt-4 max-w-xl text-lg leading-8 text-[var(--muted)]">
@@ -159,28 +159,12 @@ export default function AuthPage() {
       </section>
 
       <aside className="space-y-4">
-        <div className="card-soft rounded-[2rem] p-6">
-          <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted)]">Need admin access?</p>
-          <div className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
-            <p>Admin moderation has a separate hidden login page.</p>
-            <Link href="/admin/login" className="btn-secondary px-4 py-2 text-xs">
-              Open admin login
-            </Link>
-          </div>
-        </div>
-        <div className="card-soft rounded-[2rem] p-6">
-          <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted)]">Why this flow works</p>
-          <div className="mt-4 space-y-3 text-sm leading-6 text-[var(--muted)]">
-            <p>Simple verification keeps the parent and teacher flows lightweight.</p>
-            <p>The next screen asks for role so each user sees a focused experience.</p>
-            <p>Teacher profile creation and parent browsing both stay tied to the same local session.</p>
-          </div>
-        </div>
-        <div className="card-surface rounded-[2rem] p-6">
-          <p className="font-display text-2xl font-bold text-[var(--foreground)]">A cleaner first impression</p>
-          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-            Docent feels like a funded startup: warm, polished, and built to turn a local search into a real conversation.
-          </p>
+        <div className="card-soft rounded-2xl p-6">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Admin access</p>
+          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Admin moderation has a separate login page.</p>
+          <Link href="/admin/login" className="btn-secondary mt-4 inline-flex px-4 py-2 text-xs">
+            Open admin login
+          </Link>
         </div>
       </aside>
     </div>

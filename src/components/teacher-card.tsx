@@ -2,84 +2,66 @@ import Image from "next/image";
 import Link from "next/link";
 import { type TeacherProfile } from "@/lib/data";
 
-function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "green" | "saffron" }) {
-  const styles =
-    tone === "green"
-      ? "bg-[var(--success-soft)] text-[var(--success)]"
-      : tone === "saffron"
-        ? "bg-[var(--primary-soft)] text-[var(--primary)]"
-        : "bg-[var(--surface-alt)] text-[var(--foreground)]";
-
-  return <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${styles}`}>{children}</span>;
-}
-
 export function TeacherCard({ teacher }: { teacher: TeacherProfile }) {
   return (
-    <article className="group rounded-[1.6rem] border border-[var(--border)] bg-white p-5 shadow-[0_4px_24px_rgba(79,70,229,0.08)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_14px_28px_rgba(79,70,229,0.16)]">
-      <div className="flex items-start gap-4">
-        <div className="relative h-18 w-18 shrink-0">
+    <Link
+      href={`/teacher/${teacher.id}`}
+      className="group block rounded-2xl border border-[var(--border)] bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+    >
+      {/* Header */}
+      <div className="flex items-start gap-3">
+        <div className="relative shrink-0">
           <Image
             src={teacher.photo_url}
             alt={teacher.name}
-            width={72}
-            height={72}
+            width={56}
+            height={56}
             quality={80}
             loading="lazy"
             unoptimized
-            className={`h-18 w-18 rounded-full object-cover ring-4 ${teacher.status === "verified" ? "ring-[rgba(79,70,229,0.4)]" : "ring-[var(--border)]"}`}
+            className={`h-14 w-14 rounded-full object-cover ring-2 ${teacher.status === "verified" ? "ring-[var(--accent)]" : "ring-[var(--border)]"}`}
           />
-          <span className={`absolute -right-1 bottom-0 h-4 w-4 rounded-full border-2 border-white ${teacher.status === "verified" ? "bg-[var(--success)]" : teacher.status === "pending" ? "bg-slate-400" : "bg-rose-500"}`} />
+          <span className={`absolute -right-0.5 bottom-0 h-3 w-3 rounded-full border-2 border-white ${teacher.status === "verified" ? "bg-[var(--success)]" : teacher.status === "pending" ? "bg-slate-300" : "bg-rose-400"}`} />
         </div>
-
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-xl font-semibold text-[var(--foreground)] font-display">{teacher.name}</h3>
-            {teacher.status === "verified" ? <Badge tone="green">✓ Verified</Badge> : null}
-            {teacher.is_founding_member ? <Badge tone="saffron">★ Founding Member</Badge> : null}
-            {teacher.status === "pending" ? <Badge>Pending</Badge> : null}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <h3 className="truncate font-display text-base font-semibold text-[var(--foreground)]">{teacher.name}</h3>
+            {teacher.status === "verified" && (
+              <span className="rounded-full bg-[var(--success-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--success)]">✓ Verified</span>
+            )}
+            {teacher.is_founding_member && (
+              <span className="rounded-full bg-[var(--accent-light)] px-2 py-0.5 text-[10px] font-bold text-[var(--accent)]">★ Founding</span>
+            )}
           </div>
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{teacher.bio}</p>
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--muted)]">{teacher.bio}</p>
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        {teacher.subjects.slice(0, 4).map((subject) => (
-          <span key={subject} className="rounded-full bg-[var(--primary-soft)] px-3 py-1 text-xs font-semibold text-[var(--primary)]">
-            {subject}
-          </span>
+      {/* Subjects */}
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {teacher.subjects.slice(0, 4).map((s) => (
+          <span key={s} className="rounded-full bg-[var(--accent-light)] px-2.5 py-0.5 text-xs font-semibold text-[var(--accent)]">{s}</span>
         ))}
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-2xl bg-[var(--surface-alt)] p-3">
-          <div className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Grades</div>
-          <div className="mt-1 font-semibold text-[var(--foreground)]">{teacher.grades.join(", ")}</div>
+      {/* Meta row */}
+      <div className="mt-3 flex items-center justify-between text-sm">
+        <div className="text-[var(--muted)]">
+          <span className="font-medium text-[var(--foreground)]">{teacher.locality}</span>
+          {" · "}
+          {teacher.experience_years}yr exp
         </div>
-        <div className="rounded-2xl bg-[var(--surface-alt)] p-3">
-          <div className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Locality</div>
-          <div className="mt-1 font-semibold text-[var(--foreground)]">{teacher.locality}</div>
-        </div>
-      </div>
-
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <div>
-          <div className="text-sm text-[var(--muted)]">From</div>
-          <div className="text-2xl font-bold text-[var(--foreground)]">₹{teacher.price_per_month}</div>
-        </div>
-        <div className="text-right text-sm text-[var(--muted)]">
-          <div className="font-semibold text-[var(--foreground)]">{teacher.experience_years}+ yrs</div>
-          <div>{teacher.rating.toFixed(1)} rating</div>
+        <div className="text-right">
+          <span className="font-bold text-[var(--foreground)]">₹{teacher.price_per_month}</span>
+          <span className="text-xs text-[var(--muted)]">/mo</span>
         </div>
       </div>
 
-      <div className="mt-5">
-        <Link
-          href={`/teacher/${teacher.id}`}
-          className="inline-flex w-full items-center justify-center rounded-full border border-[var(--primary)] px-4 py-3 text-sm font-semibold text-[var(--primary)] transition hover:bg-[var(--primary-soft)]"
-        >
-          View profile
-        </Link>
+      {/* Rating + grades */}
+      <div className="mt-2 flex items-center justify-between text-xs text-[var(--muted)]">
+        <span>⭐ {teacher.rating.toFixed(1)}</span>
+        <span>{teacher.grades.slice(0, 3).join(", ")}</span>
       </div>
-    </article>
+    </Link>
   );
 }

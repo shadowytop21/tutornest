@@ -237,19 +237,19 @@ export default function TeacherProfilePage() {
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-3xl bg-[rgba(255,251,245,0.9)] p-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Locality</p>
                 <p className="mt-1 font-medium text-[var(--foreground)]">{currentTeacher.locality}</p>
               </div>
-              <div className="rounded-3xl bg-[rgba(255,251,245,0.9)] p-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Experience</p>
                 <p className="mt-1 font-medium text-[var(--foreground)]">{currentTeacher.experience_years} years</p>
               </div>
-              <div className="rounded-3xl bg-[rgba(255,251,245,0.9)] p-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Teaches at</p>
                 <p className="mt-1 font-medium text-[var(--foreground)] capitalize">{currentTeacher.teaches_at.replace("_", " ")}</p>
               </div>
-              <div className="rounded-3xl bg-[rgba(255,251,245,0.9)] p-4">
+              <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Reviews</p>
                 <p className="mt-1 font-medium text-[var(--foreground)]">{teacherReviews.length} reviews</p>
               </div>
@@ -326,7 +326,7 @@ export default function TeacherProfilePage() {
           <div className="mt-4 space-y-4">
             {teacherReviews.length ? (
               teacherReviews.map((review) => (
-                <div key={review.id} className="rounded-[1.5rem] bg-[rgba(255,251,245,0.92)] p-4">
+                <div key={review.id} className="rounded-2xl border border-[var(--border)] bg-white p-4">
                   <div className="flex items-center justify-between gap-3">
                     <p className="font-semibold text-[var(--foreground)]">{review.parent_name}</p>
                     <p className="text-sm text-[var(--muted)]">{review.rating} / 5</p>
@@ -336,7 +336,7 @@ export default function TeacherProfilePage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-[1.5rem] bg-[rgba(255,251,245,0.92)] p-4 text-sm text-[var(--muted)]">
+              <div className="rounded-2xl border border-[var(--border)] bg-white p-4 text-sm text-[var(--muted)]">
                 No reviews yet. Be the first parent to leave feedback.
               </div>
             )}
@@ -347,7 +347,7 @@ export default function TeacherProfilePage() {
           existingReview && !editingReview ? (
             <div className="card-surface rounded-[2rem] p-6">
               <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted)]">Your review</p>
-              <div className="mt-4 rounded-[1.5rem] bg-[rgba(255,251,245,0.92)] p-4">
+              <div className="mt-4 rounded-2xl border border-[var(--border)] bg-white p-4">
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-semibold text-[var(--foreground)]">{existingReview.parent_name}</p>
                   <p className="text-sm text-[var(--muted)]">{existingReview.rating} / 5</p>

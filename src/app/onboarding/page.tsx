@@ -109,31 +109,31 @@ export default function OnboardingPage() {
         <p className="mt-4 max-w-2xl text-lg leading-8 text-[var(--muted)]">
           We already have your session. Now choose the path that matches what you want to do on Docent.
         </p>
-        <div className="mt-6 rounded-3xl bg-[rgba(255,251,245,0.9)] p-5 text-sm text-[var(--muted)]">
+        <div className="mt-6 rounded-2xl border border-[var(--border)] bg-white p-4 text-sm text-[var(--muted)]">
           Signed in as <span className="font-semibold text-[var(--foreground)]">{snapshot.session?.name}</span> · {snapshot.session?.phone}
         </div>
         <div className="mt-8 grid gap-5 lg:grid-cols-2">
           <button
             type="button"
             onClick={() => chooseRole("parent")}
-            className="card-soft rounded-[2rem] border border-transparent p-6 text-left transition-all hover:-translate-y-1 hover:border-[var(--primary)]"
+            className="card-soft rounded-2xl border border-transparent p-6 text-left transition-all hover:-translate-y-1 hover:border-[var(--accent)]"
           >
             <span className="pill badge-verified">Parent</span>
-            <h2 className="mt-4 font-display text-3xl font-bold text-[var(--foreground)]">I want to find a tutor</h2>
+            <h2 className="mt-4 font-display text-2xl font-bold text-[var(--foreground)]">I want to find a tutor</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              Save your name, land on the browse page, and start discovering verified local tutors.
+              Browse verified local tutors and contact them directly.
             </p>
           </button>
 
           <button
             type="button"
             onClick={() => chooseRole("teacher")}
-            className="card-soft rounded-[2rem] border border-transparent p-6 text-left transition-all hover:-translate-y-1 hover:border-[var(--primary)]"
+            className="card-soft rounded-2xl border border-transparent p-6 text-left transition-all hover:-translate-y-1 hover:border-[var(--accent)]"
           >
             <span className="pill badge-founding">Teacher</span>
-            <h2 className="mt-4 font-display text-3xl font-bold text-[var(--foreground)]">I want students to find me</h2>
+            <h2 className="mt-4 font-display text-2xl font-bold text-[var(--foreground)]">I want students to find me</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
-              Continue to the profile builder and submit your teaching profile for verification.
+              Build your profile and get discovered by parents nearby.
             </p>
           </button>
         </div>
