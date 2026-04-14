@@ -18,7 +18,7 @@ import {
 import { loadAppState } from "@/lib/mock-db";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-const categoryChips = ["All", ...teacherSubjects.slice(0, 6)];
+const categoryChips = ["All", ...teacherSubjects];
 const PAGE_SIZE = 12;
 
 export default function BrowsePage() {
@@ -40,14 +40,23 @@ export default function BrowsePage() {
   const [remoteTeachers, setRemoteTeachers] = useState<TeacherRecord[] | null>(null);
   const [remoteTotal, setRemoteTotal] = useState(0);
 
-  useEffect(() => { setMounted(true); }, []);
-  useEffect(() => { setCurrentPage(1); }, [query, subject, grade, locality, board, availability, priceMax]);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, subject, grade, locality, board, availability, priceMax]);
 
   useEffect(() => {
     let active = true;
-    async function load() {
-      if (currentPage === 1) setCatalogLoaded(false);
-      else setIsLoadingMore(true);
+
+    async function loadRemoteCatalog() {
+      if (currentPage === 1) {
+        setCatalogLoaded(false);
+      } else {
+        setIsLoadingMore(true);
+      }
 
       const params = new URLSearchParams();
       params.set("page", String(currentPage));
@@ -60,189 +69,292 @@ export default function BrowsePage() {
       if (availability) params.set("availability", availability);
       if (priceMax < 5000) params.set("priceMax", String(priceMax));
 
-      const res = await fetch(`/api/browse?${params}`, { cache: "no-store" });
-      if (!active) return;
-
-      if (!res.ok) {
-        if (currentPage === 1) { setRemoteTeachers(null); setRemoteTotal(0); }
-        setCatalogLoaded(true); setIsLoadingMore(false); return;
+      const response = await fetch(`/api/browse?${params.toString()}`, { cache: "no-store" });
+      if (!active) {
+        return;
       }
 
-      const payload = await res.json() as { teachers?: TeacherRecord[]; total?: number; offline?: boolean };
+      if (!response.ok) {
+        if (currentPage === 1) {
+          setRemoteTeachers(null);
+          setRemoteTotal(0);
+        }
+        setCatalogLoaded(true);
+        setIsLoadingMore(false);
+        return;
+      }
+
+      const payload = (await response.json()) as {
+        teachers?: TeacherRecord[];
+        total?: number;
+        offline?: boolean;
+      };
+
       if (payload.offline) {
-        if (currentPage === 1) { setRemoteTeachers(null); setRemoteTotal(0); }
-        setCatalogLoaded(true); setIsLoadingMore(false); return;
+        if (currentPage === 1) {
+          setRemoteTeachers(null);
+          setRemoteTotal(0);
+        }
+        setCatalogLoaded(true);
+        setIsLoadingMore(false);
+        return;
       }
 
       const incoming = payload.teachers ?? [];
       if (currentPage === 1) {
         setRemoteTeachers(incoming);
       } else {
-        setRemoteTeachers((prev) => {
-          const map = new Map<string, TeacherRecord>();
-          for (const t of [...(prev ?? []), ...incoming]) map.set(t.id, t);
-          return Array.from(map.values());
+        setRemoteTeachers((existing) => {
+          const merged = [...(existing ?? []), ...incoming];
+          const uniqueById = new Map<string, TeacherRecord>();
+          for (const teacher of merged) {
+            uniqueById.set(teacher.id, teacher);
+          }
+          return Array.from(uniqueById.values());
         });
       }
+
       setRemoteTotal(payload.total ?? 0);
-      setCatalogLoaded(true); setIsLoadingMore(false);
+      setCatalogLoaded(true);
+      setIsLoadingMore(false);
     }
-    load();
-    return () => { active = false; };
+
+    loadRemoteCatalog();
+
+    return () => {
+      active = false;
+    };
   }, [availability, board, currentPage, grade, locality, priceMax, query, subject]);
 
   useEffect(() => {
-    const p = new URLSearchParams(searchParams.toString());
-    if (query) p.set("q", query); else p.delete("q");
-    if (subject) p.set("subject", subject); else p.delete("subject");
-    if (grade) p.set("grade", grade); else p.delete("grade");
-    if (locality) p.set("locality", locality); else p.delete("locality");
-    if (board) p.set("board", board); else p.delete("board");
-    if (availability) p.set("availability", availability); else p.delete("availability");
-    if (priceMax < 5000) p.set("priceMax", String(priceMax)); else p.delete("priceMax");
-    const qs = p.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    if (!("IntersectionObserver" in window)) {
+      return;
+    }
+
+    const cards = Array.from(document.querySelectorAll(".teacher-card"));
+    if (!cards.length) {
+      return;
+    }
+
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          (entry.target as HTMLElement).style.animationPlayState = "running";
+          revealObs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    cards.forEach((card) => {
+      (card as HTMLElement).style.animationPlayState = "paused";
+      revealObs.observe(card);
+    });
+
+    return () => {
+      revealObs.disconnect();
+    };
+  }, [catalogLoaded, currentPage]);
+
+  useEffect(() => {
+    const current = new URLSearchParams(searchParams.toString());
+    if (query) current.set("q", query); else current.delete("q");
+    if (subject) current.set("subject", subject); else current.delete("subject");
+    if (grade) current.set("grade", grade); else current.delete("grade");
+    if (locality) current.set("locality", locality); else current.delete("locality");
+    if (board) current.set("board", board); else current.delete("board");
+    if (availability) current.set("availability", availability); else current.delete("availability");
+    if (priceMax < 5000) current.set("priceMax", String(priceMax)); else current.delete("priceMax");
+    const next = current.toString();
+    const path = next ? `${pathname}?${next}` : pathname;
+    router.replace(path, { scroll: false });
   }, [availability, board, grade, locality, pathname, priceMax, query, router, searchParams, subject]);
 
   const fallbackSnapshot = mounted ? loadAppState() : { teachers: [], reviews: [] as ReviewRecord[] };
   const localTeachers = useMemo(
-    () => computeFilteredTeachers(
-      fallbackSnapshot.teachers ?? [],
-      { query, subject: subject || undefined, grade: grade || undefined, locality: locality || undefined, board: board || undefined, availability: availability || undefined, priceMax, includePending: true },
-      fallbackSnapshot.reviews ?? [],
-    ),
+    () =>
+      computeFilteredTeachers(
+        fallbackSnapshot.teachers ?? [],
+        {
+          query,
+          subject: subject || undefined,
+          grade: grade || undefined,
+          locality: locality || undefined,
+          board: board || undefined,
+          availability: availability || undefined,
+          priceMax,
+          includePending: true,
+        },
+        fallbackSnapshot.reviews ?? [],
+      ),
     [availability, board, fallbackSnapshot.reviews, fallbackSnapshot.teachers, grade, locality, priceMax, query, subject],
   );
 
-  const teachers = remoteTeachers ?? localTeachers.slice(0, currentPage * PAGE_SIZE);
+  const localVisible = localTeachers.slice(0, currentPage * PAGE_SIZE);
+  const teachers = remoteTeachers ?? localVisible;
   const totalCount = remoteTeachers !== null ? remoteTotal : localTeachers.length;
   const hasMore = teachers.length < totalCount;
-  const hasActiveFilters = Boolean(subject || grade || locality || board || availability || priceMax < 5000);
+  const catalogPool = fallbackSnapshot.teachers ?? [];
+
+  const counts = useMemo(() => {
+    const subjectMap = new Map<string, number>();
+    const gradeMap = new Map<string, number>();
+    const localityMap = new Map<string, number>();
+    const boardMap = new Map<string, number>();
+    const availabilityMap = new Map<string, number>();
+
+    catalogPool.forEach((teacher) => {
+      teacher.subjects.forEach((value) => subjectMap.set(value, (subjectMap.get(value) ?? 0) + 1));
+      teacher.grades.forEach((value) => gradeMap.set(value, (gradeMap.get(value) ?? 0) + 1));
+      localityMap.set(teacher.locality, (localityMap.get(teacher.locality) ?? 0) + 1);
+      teacher.boards.forEach((value) => boardMap.set(value, (boardMap.get(value) ?? 0) + 1));
+      teacher.availability.forEach((value) => availabilityMap.set(value, (availabilityMap.get(value) ?? 0) + 1));
+    });
+
+    return { subjectMap, gradeMap, localityMap, boardMap, availabilityMap };
+  }, [catalogPool]);
 
   function resetFilters() {
-    setQuery(""); setSubject(""); setGrade(""); setLocality(""); setBoard(""); setAvailability(""); setPriceMax(5000); setCurrentPage(1);
+    setQuery("");
+    setSubject("");
+    setGrade("");
+    setLocality("");
+    setBoard("");
+    setAvailability("");
+    setPriceMax(5000);
+    setCurrentPage(1);
     pushToast({ tone: "neutral", title: "Filters cleared" });
   }
 
+  function applyCategory(value: string) {
+    setSubject(value === "All" ? "" : value);
+    if (value !== "All") {
+      setQuery(value);
+    }
+  }
+
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-20">
+      {!catalogLoaded ? (
+        <section className="card-surface rounded-[2rem] p-10 text-center text-[var(--muted)]">
+          Loading shared teachers...
+        </section>
+      ) : null}
 
-      {/* Page header */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-[var(--foreground)]">Browse Experts</h1>
-          <p className="mt-1 text-sm text-[var(--muted)]">
-            {catalogLoaded ? `${totalCount} expert${totalCount !== 1 ? "s" : ""} found` : "Loading..."}
-          </p>
+      <section className="card-surface overflow-hidden rounded-[1rem]">
+        <div className="browse-hero">
+          <h1 className="browse-title">Find tutors in <em>Mathura</em></h1>
+          <p className="browse-sub">{totalCount} verified teachers · Filter by subject, grade, locality and more</p>
         </div>
-        <JoinAsTeacherAction className="btn-primary shrink-0 px-5 py-2.5 text-sm">
-          Join as Expert
-        </JoinAsTeacherAction>
-      </div>
 
-      {/* Search + chips */}
-      <input
-        className="field mb-4"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search by name, subject, or locality..."
-      />
-      <div className="mb-6 flex flex-wrap gap-2">
-        {categoryChips.map((item) => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => { setSubject(item === "All" ? "" : item); if (item !== "All") setQuery(item); }}
-            className={`pill ${subject === item || (item === "All" && !subject) ? "pill-active" : "pill-inactive"}`}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
+        <div className="flex flex-wrap items-center gap-3 border-b border-[var(--border)] bg-white px-6 py-5 lg:px-8">
+          {categoryChips.map((item) => (
+            <button key={item} type="button" onClick={() => applyCategory(item)} className={`filter-pill ${subject === item || (item === "All" && !subject) ? "active" : ""}`}>
+              {item}
+            </button>
+          ))}
+          <div className="ml-auto text-sm text-[var(--muted)]">Sort by: <strong className="text-[var(--navy)]">Best Match</strong></div>
+        </div>
 
-      <div className="flex gap-6 lg:items-start">
+        <div className="grid min-h-[600px] lg:grid-cols-[280px_1fr]">
+          <aside className="border-r border-[var(--border)] bg-white p-8">
+            <div className="mb-7">
+              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Search</p>
+              <input className="field" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tutors, locality..." />
+            </div>
 
-        {/* Sidebar */}
-        <aside className="hidden w-52 shrink-0 lg:block">
-          <div className="card-surface rounded-2xl p-5 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--muted)]">Filters</p>
-            <select className="select text-sm" value={subject} onChange={(e) => setSubject(e.target.value)}>
-              <option value="">All subjects</option>
-              {subjectOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select className="select text-sm" value={grade} onChange={(e) => setGrade(e.target.value)}>
-              <option value="">All grades</option>
-              {gradeOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select className="select text-sm" value={locality} onChange={(e) => setLocality(e.target.value)}>
-              <option value="">All localities</option>
-              {localityOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select className="select text-sm" value={board} onChange={(e) => setBoard(e.target.value)}>
-              <option value="">All boards</option>
-              {boardOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select className="select text-sm" value={availability} onChange={(e) => setAvailability(e.target.value)}>
-              <option value="">Any availability</option>
-              {availabilityOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
+            <div className="mb-7">
+              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Subject</p>
+              <div className="flex flex-col gap-2">
+                {subjectOptions.map((value) => (
+                  <button key={value} type="button" onClick={() => setSubject(subject === value ? "" : value)} className={`filter-option ${subject === value ? "selected" : ""}`}>
+                    <span>{value}</span>
+                    <span className="filter-count">{counts.subjectMap.get(value) ?? 0}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-7">
+              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Grade</p>
+              <div className="flex flex-col gap-2">
+                {gradeOptions.map((value) => (
+                  <button key={value} type="button" onClick={() => setGrade(grade === value ? "" : value)} className={`filter-option ${grade === value ? "selected" : ""}`}>
+                    <span>{value}</span>
+                    <span className="filter-count">{counts.gradeMap.get(value) ?? 0}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-7">
+              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Locality</p>
+              <div className="flex flex-col gap-2">
+                {localityOptions.map((value) => (
+                  <button key={value} type="button" onClick={() => setLocality(locality === value ? "" : value)} className={`filter-option ${locality === value ? "selected" : ""}`}>
+                    <span>{value}</span>
+                    <span className="filter-count">{counts.localityMap.get(value) ?? 0}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-7">
+              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Board</p>
+              <div className="flex flex-col gap-2">
+                {boardOptions.map((value) => (
+                  <button key={value} type="button" onClick={() => setBoard(board === value ? "" : value)} className={`filter-option ${board === value ? "selected" : ""}`}>
+                    <span>{value}</span>
+                    <span className="filter-count">{counts.boardMap.get(value) ?? 0}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-7">
+              <p className="mb-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Availability</p>
+              <div className="flex flex-col gap-2">
+                {availabilityOptions.map((value) => (
+                  <button key={value} type="button" onClick={() => setAvailability(availability === value ? "" : value)} className={`filter-option ${availability === value ? "selected" : ""}`}>
+                    <span>{value}</span>
+                    <span className="filter-count">{counts.availabilityMap.get(value) ?? 0}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div>
-              <label className="mb-1 block text-xs font-semibold text-[var(--muted)]">Max price: ₹{priceMax}</label>
-              <input className="w-full accent-[var(--accent)]" type="range" min="0" max="5000" step="100" value={priceMax} onChange={(e) => setPriceMax(Number(e.target.value))} />
+              <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Price range</p>
+              <label className="mb-2 block text-sm text-[var(--muted)]">Max: ₹{priceMax}</label>
+              <input className="w-full accent-[var(--saffron)]" type="range" min="0" max="5000" step="100" value={priceMax} onChange={(event) => setPriceMax(Number(event.target.value))} />
             </div>
-            {hasActiveFilters && (
-              <button type="button" onClick={resetFilters} className="w-full text-center text-xs font-semibold text-[var(--accent)] hover:underline">
-                Clear all
-              </button>
+
+            <button type="button" onClick={resetFilters} className="btn-secondary mt-6 w-full px-4 py-3 text-sm">Clear all filters</button>
+          </aside>
+
+          <section className="teacher-grid">
+            {teachers.length ? (
+              teachers.map((teacher) => <TeacherCard key={teacher.id} teacher={teacher} />)
+            ) : (
+              <div className="card-surface col-span-full rounded-[1rem] p-10 text-center">
+                <h2 className="font-display text-3xl font-medium text-[var(--foreground)]">No teachers found for these filters.</h2>
+                <p className="mt-3 text-base text-[var(--muted)]">Try adjusting your subject, locality, or price range.</p>
+                <div className="mt-6 flex justify-center gap-3">
+                  <button type="button" onClick={resetFilters} className="btn-primary px-6 py-3 text-sm">Clear all filters</button>
+                  <JoinAsTeacherAction className="btn-secondary px-6 py-3 text-sm">Add a teacher profile</JoinAsTeacherAction>
+                </div>
+              </div>
             )}
-          </div>
-        </aside>
-
-        {/* Results */}
-        <div className="min-w-0 flex-1">
-          {/* Mobile filter row */}
-          <div className="mb-4 flex flex-wrap gap-2 lg:hidden">
-            <select className="select flex-1 text-sm" value={subject} onChange={(e) => setSubject(e.target.value)}>
-              <option value="">Subject</option>
-              {subjectOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            <select className="select flex-1 text-sm" value={locality} onChange={(e) => setLocality(e.target.value)}>
-              <option value="">Locality</option>
-              {localityOptions.map((v) => <option key={v} value={v}>{v}</option>)}
-            </select>
-            {hasActiveFilters && (
-              <button type="button" onClick={resetFilters} className="btn-ghost px-4 py-2 text-sm">Clear</button>
-            )}
-          </div>
-
-          {!catalogLoaded ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-64 animate-pulse rounded-2xl bg-[var(--border)]" />
-              ))}
-            </div>
-          ) : teachers.length ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {teachers.map((t) => <TeacherCard key={t.id} teacher={t} />)}
-            </div>
-          ) : (
-            <div className="card-surface rounded-2xl p-10 text-center">
-              <p className="text-3xl">🔍</p>
-              <h2 className="mt-3 font-display text-xl font-bold text-[var(--foreground)]">No experts found</h2>
-              <p className="mt-2 text-sm text-[var(--muted)]">Try adjusting your filters or search term.</p>
-              <button type="button" onClick={resetFilters} className="btn-primary mt-5 px-6 py-2.5 text-sm">Clear filters</button>
-            </div>
-          )}
-
-          {hasMore && (
-            <div className="mt-8 flex justify-center">
-              <button type="button" className="btn-secondary px-6 py-2.5 text-sm" onClick={() => setCurrentPage((p) => p + 1)} disabled={isLoadingMore}>
-                {isLoadingMore ? "Loading..." : "Load more"}
-              </button>
-            </div>
-          )}
+          </section>
         </div>
-      </div>
+      </section>
+
+      {teachers.length && hasMore ? (
+        <div className="mt-8 flex justify-center">
+          <button type="button" className="btn-primary px-6 py-3 text-sm" onClick={() => setCurrentPage((value) => value + 1)} disabled={isLoadingMore}>
+            {isLoadingMore ? "Loading..." : "Load More"}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

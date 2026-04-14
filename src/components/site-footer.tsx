@@ -4,34 +4,21 @@ import { JoinAsTeacherAction } from "@/components/join-as-teacher-action";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-[var(--border)] bg-white">
-      <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
-        <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
-
-          {/* Brand */}
-          <div>
-            <Link href="/" className="flex items-center gap-2">
-              <Image src="/docent-mark-v2.png?v=4" alt="Docent" width={96} height={96} quality={80} loading="lazy" className="h-8 w-auto" />
-              <span className="font-display text-lg font-bold text-navy">Docent</span>
-            </Link>
-            <p className="mt-3 max-w-xs text-sm leading-6 text-[var(--muted)]">
-              Verified local experts for every need — starting with Mathura.
-            </p>
-          </div>
-
-          {/* Links */}
-          <nav className="flex flex-col gap-2 text-sm text-[var(--muted)]">
-            <Link href="/browse" className="hover:text-[var(--accent)] transition-colors">Browse Experts</Link>
-            <JoinAsTeacherAction className="text-left hover:text-[var(--accent)] transition-colors">Join as Expert</JoinAsTeacherAction>
-            <Link href="/auth" className="hover:text-[var(--accent)] transition-colors">Sign In</Link>
-            <a href="mailto:docentsupport@gmail.com" className="hover:text-[var(--accent)] transition-colors">Contact</a>
-          </nav>
-
+    <footer className="border-t border-white/10 bg-[#111827]">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-6 py-12 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <div className="flex items-center gap-3">
+          <Image src="/docent-mark-v2.png?v=4" alt="Docent logo" width={20} height={20} quality={80} loading="lazy" className="h-5 w-5 invert" />
+          <div className="font-mono text-[15px] tracking-[0.08em] text-white/50">Docent</div>
         </div>
 
-        <p className="mt-8 border-t border-[var(--border)] pt-6 text-xs text-[var(--muted)]">
-          © {new Date().getFullYear()} Docent. All rights reserved.
-        </p>
+        <div className="flex flex-wrap items-center gap-6 text-sm text-white/40">
+          <Link href="/browse" className="transition hover:text-white/70">Browse Teachers</Link>
+          <JoinAsTeacherAction className="transition hover:text-white/70">Join as Teacher</JoinAsTeacherAction>
+          <Link href="/auth" className="transition hover:text-white/70">Login</Link>
+          <a href="mailto:docentsupport@gmail.com" className="transition hover:text-white/70">docentsupport@gmail.com</a>
+        </div>
+
+        <p className="text-xs text-white/30">© {new Date().getFullYear()} Docent · Mathura</p>
       </div>
     </footer>
   );

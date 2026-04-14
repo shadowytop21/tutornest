@@ -1,67 +1,85 @@
-import Image from "next/image";
 import Link from "next/link";
 import { type TeacherProfile } from "@/lib/data";
 
+function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "green" | "saffron" }) {
+  const styles =
+    tone === "green"
+      ? "bg-[var(--success-soft)] text-[var(--success)]"
+      : tone === "saffron"
+        ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+        : "bg-[var(--surface-alt)] text-[var(--foreground)]";
+
+  return <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${styles}`}>{children}</span>;
+}
+
 export function TeacherCard({ teacher }: { teacher: TeacherProfile }) {
+  const initials = teacher.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
-    <Link
-      href={`/teacher/${teacher.id}`}
-      className="group block rounded-2xl border border-[var(--border)] bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-    >
-      {/* Header */}
-      <div className="flex items-start gap-3">
-        <div className="relative shrink-0">
-          <Image
-            src={teacher.photo_url}
-            alt={teacher.name}
-            width={56}
-            height={56}
-            quality={80}
-            loading="lazy"
-            unoptimized
-            className={`h-14 w-14 rounded-full object-cover ring-2 ${teacher.status === "verified" ? "ring-[var(--accent)]" : "ring-[var(--border)]"}`}
-          />
-          <span className={`absolute -right-0.5 bottom-0 h-3 w-3 rounded-full border-2 border-white ${teacher.status === "verified" ? "bg-[var(--success)]" : teacher.status === "pending" ? "bg-slate-300" : "bg-rose-400"}`} />
+    <article className="teacher-card group">
+      <div className="card-header">
+        <div className="card-badges">
+          {teacher.status === "verified" ? <Badge tone="green">Verified</Badge> : null}
+          {teacher.status === "pending" ? <Badge>Pending</Badge> : null}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <h3 className="truncate font-display text-base font-semibold text-[var(--foreground)]">{teacher.name}</h3>
-            {teacher.status === "verified" && (
-              <span className="rounded-full bg-[var(--success-soft)] px-2 py-0.5 text-[10px] font-bold text-[var(--success)]">✓ Verified</span>
-            )}
-            {teacher.is_founding_member && (
-              <span className="rounded-full bg-[var(--accent-light)] px-2 py-0.5 text-[10px] font-bold text-[var(--accent)]">★ Founding</span>
-            )}
+
+        <div className="card-teacher-row">
+          <div className="card-avatar relative">
+            <span className="font-display text-base font-semibold text-[var(--navy)]">{initials}</span>
+            <span className={`absolute -right-0.5 bottom-0 h-3.5 w-3.5 rounded-full border-2 border-white ${teacher.status === "verified" ? "bg-[var(--success)]" : teacher.status === "pending" ? "bg-slate-400" : "bg-rose-500"}`} />
           </div>
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-[var(--muted)]">{teacher.bio}</p>
+
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-xl font-semibold text-[var(--foreground)] font-display">{teacher.name}</h3>
+            <p className="mt-2 line-clamp-2 text-sm leading-6 text-[var(--muted)]">{teacher.bio}</p>
+          </div>
         </div>
       </div>
 
-      {/* Subjects */}
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {teacher.subjects.slice(0, 4).map((s) => (
-          <span key={s} className="rounded-full bg-[var(--accent-light)] px-2.5 py-0.5 text-xs font-semibold text-[var(--accent)]">{s}</span>
-        ))}
+      <div className="card-body">
+        <div className="subject-pills">
+          {teacher.subjects.slice(0, 4).map((subject) => (
+            <span key={subject} className="subject-pill">
+              {subject}
+            </span>
+          ))}
+        </div>
+
+        <div className="card-details text-sm">
+          <div className="card-detail">
+            <div className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Grades</div>
+            <div className="mt-1 font-semibold text-[var(--foreground)]">{teacher.grades.join(", ")}</div>
+          </div>
+          <div className="card-detail">
+            <div className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Locality</div>
+            <div className="mt-1 font-semibold text-[var(--foreground)]">{teacher.locality}</div>
+          </div>
+        </div>
       </div>
 
-      {/* Meta row */}
-      <div className="mt-3 flex items-center justify-between text-sm">
-        <div className="text-[var(--muted)]">
-          <span className="font-medium text-[var(--foreground)]">{teacher.locality}</span>
-          {" · "}
-          {teacher.experience_years}yr exp
+      <div className="card-footer">
+        <div className="min-w-0">
+          <div className="text-sm text-[var(--muted)]">From</div>
+          <div className="card-price">₹{teacher.price_per_month}</div>
         </div>
-        <div className="text-right">
-          <span className="font-bold text-[var(--foreground)]">₹{teacher.price_per_month}</span>
-          <span className="text-xs text-[var(--muted)]">/mo</span>
-        </div>
-      </div>
 
-      {/* Rating + grades */}
-      <div className="mt-2 flex items-center justify-between text-xs text-[var(--muted)]">
-        <span>⭐ {teacher.rating.toFixed(1)}</span>
-        <span>{teacher.grades.slice(0, 3).join(", ")}</span>
+        <div className="text-right text-sm text-[var(--muted)] min-w-0">
+          <div className="font-semibold text-[var(--foreground)]">{teacher.experience_years}+ yrs</div>
+          <div>{teacher.rating.toFixed(1)} rating</div>
+        </div>
+
+        <Link
+          href={`/teacher/${teacher.id}`}
+          className="card-btn inline-flex items-center justify-center text-sm"
+        >
+          View Profile
+        </Link>
       </div>
-    </Link>
+    </article>
   );
 }
