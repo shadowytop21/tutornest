@@ -57,6 +57,53 @@ export default function AuthPage() {
     }
   }, [searchParams, pushToast]);
 
+  useEffect(() => {
+    let active = true;
+
+    async function hydrateGoogleSetupFromSupabaseSession() {
+      if (showGoogleSetupModal) {
+        return;
+      }
+
+      const snapshot = loadAppState();
+      if (snapshot.session) {
+        return;
+      }
+
+      const client = getSupabaseBrowserClient();
+      if (!client) {
+        return;
+      }
+
+      const userResult = await client.auth.getUser();
+      const user = userResult.data.user;
+      if (!active || userResult.error || !user?.email) {
+        return;
+      }
+
+      const roleParam = searchParams.get("role");
+      if (roleParam === "teacher" || roleParam === "parent") {
+        setSelectedRole(roleParam);
+      }
+
+      const inferredName =
+        (user.user_metadata?.full_name as string | undefined) ||
+        (user.user_metadata?.name as string | undefined) ||
+        "";
+
+      setEmail(user.email);
+      setGoogleName(inferredName || googleName);
+      setAcceptedTerms(true);
+      setShowGoogleSetupModal(true);
+    }
+
+    hydrateGoogleSetupFromSupabaseSession();
+
+    return () => {
+      active = false;
+    };
+  }, [searchParams, showGoogleSetupModal, googleName]);
+
   function resolvePostLoginRoute(role?: "teacher" | "parent") {
     if (returnTo && returnTo.startsWith("/")) {
       return returnTo;
