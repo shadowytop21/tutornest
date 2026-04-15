@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/toast-provider";
 import { clearSession, loadAppState, saveSession, updateProfile } from "@/lib/mock-db";
+import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -17,11 +18,25 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const roleParam = searchParams.get("role");
   const preferredRole: "teacher" | "parent" | null = roleParam === "teacher" || roleParam === "parent" ? roleParam : null;
   const [selectedRole, setSelectedRole] = useState<"teacher" | "parent">(preferredRole ?? "parent");
   const returnTo = searchParams.get("next");
+
+  useEffect(() => {
+    const oauthEmail = searchParams.get("email");
+    const oauthName = searchParams.get("name");
+
+    if (oauthEmail) {
+      setEmail(oauthEmail);
+    }
+
+    if (oauthName) {
+      setName(oauthName);
+    }
+  }, [searchParams]);
 
   function resolvePostLoginRoute(role?: "teacher" | "parent") {
     if (returnTo && returnTo.startsWith("/")) {
@@ -61,6 +76,36 @@ export default function AuthPage() {
     clearSession();
     setHasSession(false);
     pushToast({ tone: "success", title: "Signed out" });
+  }
+
+  async function continueWithGoogle() {
+    const client = getSupabaseBrowserClient();
+    if (!client) {
+      pushToast({ tone: "error", title: "Supabase is not configured for Google login." });
+      return;
+    }
+
+    setIsGoogleLoading(true);
+    const callbackParams = new URLSearchParams();
+    if (selectedRole) {
+      callbackParams.set("role", selectedRole);
+    }
+    if (returnTo && returnTo.startsWith("/")) {
+      callbackParams.set("next", returnTo);
+    }
+
+    const redirectTo = `${window.location.origin}/auth/callback?${callbackParams.toString()}`;
+    const { error } = await client.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+      },
+    });
+
+    if (error) {
+      setIsGoogleLoading(false);
+      pushToast({ tone: "error", title: error.message || "Google login failed." });
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -149,6 +194,16 @@ export default function AuthPage() {
               </div>
             </div>
           ) : null}
+
+          <button
+            type="button"
+            onClick={continueWithGoogle}
+            disabled={isGoogleLoading}
+            className="btn-secondary mb-4 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm"
+          >
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[var(--border)] bg-white text-xs font-bold">G</span>
+            {isGoogleLoading ? "Connecting to Google..." : "Continue with Google"}
+          </button>
 
           <form onSubmit={handleSubmit}>
             <div className="role-toggle">
