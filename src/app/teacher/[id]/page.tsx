@@ -176,6 +176,13 @@ export default function TeacherProfilePage() {
   const teacherReviews = snapshot.reviews.filter((item) => item.teacher_id === params.id);
   const session = snapshot.session;
   const hasLocalTeacher = Boolean(cachedTeacher) || fallbackSnapshot.teachers.some((item) => item.id === params.id);
+  const currentTeacher = teacher ?? null;
+  const isRejected = currentTeacher?.status === "rejected";
+  const isParent = session?.role === "parent";
+  const existingReview = isParent && currentTeacher
+    ? teacherReviews.find((review) => review.parent_id === session?.id) ?? null
+    : null;
+  const initials = currentTeacher?.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() ?? "";
 
   useEffect(() => {
     const controller = new AbortController();
@@ -189,45 +196,6 @@ export default function TeacherProfilePage() {
     };
   }, [hasLocalTeacher, loadRemoteCatalog]);
 
-  const showLoading = !teacher && isRemoteLoading;
-
-  if (!mounted || showLoading) {
-    return <div className="mx-auto max-w-2xl px-4 py-24 text-center text-[var(--muted)]">Loading profile...</div>;
-  }
-
-  if (!teacher) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-24 text-center">
-        <h1 className="font-display text-4xl font-bold text-[var(--foreground)]">Teacher not found</h1>
-        <p className="mt-4 text-lg text-[var(--muted)]">The tutor you are looking for may not exist or may not be public yet.</p>
-        <button type="button" onClick={() => router.push("/browse")} className="btn-primary mt-8 px-6 py-3 text-sm">Back to browse</button>
-      </div>
-    );
-  }
-
-  const currentTeacher = teacher;
-  const isPublicProfileVisible = isTeacherVisiblePublicly(currentTeacher);
-  const isRejected = currentTeacher.status === "rejected";
-
-  if (isRejected) {
-    return (
-      <div className="mx-auto max-w-3xl px-4 py-24 text-center">
-        <h1 className="font-display text-4xl font-bold text-[var(--foreground)]">Teacher not found</h1>
-        <p className="mt-4 text-lg text-[var(--muted)]">The tutor you are looking for may not exist or may not be public yet.</p>
-        <button type="button" onClick={() => router.push("/browse")} className="btn-primary mt-8 px-6 py-3 text-sm">Back to browse</button>
-      </div>
-    );
-  }
-
-  const isParent = session?.role === "parent";
-  const isTeacherOwner = Boolean(session?.id && currentTeacher.user_id === session.id);
-  const isTeacherSession = session?.role === "teacher" || isTeacherOwner;
-  const isSelfTeacher = Boolean(session?.id && currentTeacher.user_id === session.id);
-  const existingReview = isParent
-    ? teacherReviews.find((review) => review.parent_id === session?.id) ?? null
-    : null;
-  const initials = currentTeacher.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-
   useEffect(() => {
     if (!mounted || !currentTeacher) {
       return;
@@ -239,21 +207,47 @@ export default function TeacherProfilePage() {
 
     viewedTeacherIdRef.current = currentTeacher.id;
     recordTeacherProfileView(currentTeacher.id);
-  }, [currentTeacher]);
+  }, [currentTeacher, mounted]);
 
   useEffect(() => {
-    if (!isParent || !session?.id) {
+    if (!isParent || !session?.id || !currentTeacher) {
       setIsSavedByParent(false);
       return;
     }
 
     setIsSavedByParent(isTeacherSaved(currentTeacher.id, session.id));
-  }, [currentTeacher.id, isParent, session?.id]);
+  }, [currentTeacher, isParent, session?.id]);
+
+  const showLoading = !currentTeacher && isRemoteLoading;
+
+  if (!mounted || showLoading) {
+    return <div className="mx-auto max-w-2xl px-4 py-24 text-center text-[var(--muted)]">Loading profile...</div>;
+  }
+
+  if (!currentTeacher || isRejected) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-24 text-center">
+        <h1 className="font-display text-4xl font-bold text-[var(--foreground)]">Teacher not found</h1>
+        <p className="mt-4 text-lg text-[var(--muted)]">The tutor you are looking for may not exist or may not be public yet.</p>
+        <button type="button" onClick={() => router.push("/browse")} className="btn-primary mt-8 px-6 py-3 text-sm">Back to browse</button>
+      </div>
+    );
+  }
+
+  const isPublicProfileVisible = isTeacherVisiblePublicly(currentTeacher);
+  const isTeacherOwner = Boolean(session?.id && currentTeacher.user_id === session.id);
+  const isTeacherSession = session?.role === "teacher" || isTeacherOwner;
+  const isSelfTeacher = Boolean(session?.id && currentTeacher.user_id === session.id);
 
   async function handleReviewSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const teacherForAction = currentTeacher;
+    if (!teacherForAction) {
+      return;
+    }
+
     if (!session || !isParent) {
-      router.push(`/auth?role=parent&next=/teacher/${currentTeacher.id}`);
+      router.push(`/auth?role=parent&next=/teacher/${teacherForAction.id}`);
       return;
     }
 
@@ -261,7 +255,7 @@ export default function TeacherProfilePage() {
 
     try {
       submitReview({
-        teacherId: currentTeacher.id,
+        teacherId: teacherForAction.id,
         parentId: session.id,
         parentName: actualParentName,
         rating,
@@ -282,6 +276,11 @@ export default function TeacherProfilePage() {
   }
 
   async function handleContactTeacher() {
+    const teacherForAction = currentTeacher;
+    if (!teacherForAction) {
+      return;
+    }
+
     if (!session) {
       setShowContactLoginModal(true);
       return;
@@ -297,15 +296,15 @@ export default function TeacherProfilePage() {
       return;
     }
 
-    if (!currentTeacher.whatsapp_number) {
+    if (!teacherForAction.whatsapp_number) {
       pushToast({ tone: "error", title: "WhatsApp number is not available for this teacher." });
       return;
     }
 
     setIsContactLoading(true);
-    recordTeacherContact(currentTeacher.id);
+    recordTeacherContact(teacherForAction.id);
     window.open(
-      whatsappLink(currentTeacher.whatsapp_number, "Hi, I found your profile on Docent and I'm interested in home tuition for my child."),
+      whatsappLink(teacherForAction.whatsapp_number, "Hi, I found your profile on Docent and I'm interested in home tuition for my child."),
       "_blank",
       "noopener,noreferrer",
     );
@@ -313,8 +312,13 @@ export default function TeacherProfilePage() {
   }
 
   function handleSaveProfile() {
+    const teacherForAction = currentTeacher;
+    if (!teacherForAction) {
+      return;
+    }
+
     if (!session) {
-      router.push(`/auth?role=parent&next=/teacher/${currentTeacher.id}`);
+      router.push(`/auth?role=parent&next=/teacher/${teacherForAction.id}`);
       return;
     }
 
@@ -323,7 +327,7 @@ export default function TeacherProfilePage() {
       return;
     }
 
-    const nextSaved = toggleTeacherSaved(currentTeacher.id, session.id);
+    const nextSaved = toggleTeacherSaved(teacherForAction.id, session.id);
     setIsSavedByParent(nextSaved);
     pushToast({ tone: "success", title: nextSaved ? "Profile saved" : "Profile removed from saved list" });
   }

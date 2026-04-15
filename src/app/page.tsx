@@ -171,7 +171,7 @@ export default function HomePage() {
 
       <div className="page-section" id="subjects">
         <div className="subjects-section">
-          <p className="section-eyebrow text-white/35">Browse by subject</p>
+          <p className="section-eyebrow">Browse by subject</p>
           <h2 className="subjects-title">Every subject,<br /><em>one platform.</em></h2>
           <p className="subjects-sub">Click any subject to see available tutors in your area</p>
           <div className="subjects-grid">

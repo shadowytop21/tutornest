@@ -17,6 +17,7 @@ export default function AuthPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const roleParam = searchParams.get("role");
   const preferredRole: "teacher" | "parent" | null = roleParam === "teacher" || roleParam === "parent" ? roleParam : null;
   const [selectedRole, setSelectedRole] = useState<"teacher" | "parent">(preferredRole ?? "parent");
@@ -65,6 +66,11 @@ export default function AuthPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (!acceptedTerms) {
+      pushToast({ tone: "error", title: "Please accept Terms and Privacy to continue." });
+      return;
+    }
+
     const response = await fetch("/api/account/profile", {
       method: "POST",
       headers: {
@@ -75,6 +81,7 @@ export default function AuthPage() {
         name: name.trim(),
         phone: phone.trim(),
         role: selectedRole,
+        acceptedTerms,
       }),
     });
 
@@ -115,8 +122,8 @@ export default function AuthPage() {
       <div className="auth-page">
         <div className="auth-left">
           <div className="mb-8 flex items-center gap-3">
-            <div className="rounded-lg bg-white/10 p-2">
-              <Image src="/docent-mark-v2.png?v=4" alt="Docent logo" width={22} height={22} priority className="h-[22px] w-[22px] invert" />
+            <div className="rounded-lg bg-white/85 p-2">
+              <Image src="/docent-mark-v2.png?v=5" alt="Docent logo" width={22} height={22} priority className="h-[22px] w-[22px]" />
             </div>
             <div className="font-mono text-[15px] tracking-[0.06em] text-white">Docent</div>
           </div>
@@ -169,7 +176,20 @@ export default function AuthPage() {
               <input className="form-input" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Min. 8 characters" required />
             </div>
 
-            <button type="submit" className="btn-primary mt-2 w-full rounded-xl py-3 text-sm">Create Account</button>
+            <label className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm text-[var(--foreground)]">
+              <input
+                type="checkbox"
+                className="mt-1 h-4 w-4 accent-[var(--navy)]"
+                checked={acceptedTerms}
+                onChange={(event) => setAcceptedTerms(event.target.checked)}
+                required
+              />
+              <span>
+                I agree to the <Link href="/company/legal/terms" className="underline decoration-[var(--border2)] underline-offset-2 hover:text-[var(--navy)]">Terms and Conditions</Link> and <Link href="/company/legal/privacy" className="underline decoration-[var(--border2)] underline-offset-2 hover:text-[var(--navy)]">Privacy Policy</Link>.
+              </span>
+            </label>
+
+            <button type="submit" className="btn-primary mt-3 w-full rounded-xl py-3 text-sm" disabled={!acceptedTerms}>Create Account</button>
           </form>
         </div>
       </div>

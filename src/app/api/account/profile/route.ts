@@ -7,6 +7,7 @@ type ProfileRequest = {
   name?: string;
   phone?: string;
   role?: "teacher" | "parent";
+  acceptedTerms?: boolean;
 };
 
 async function getOrCreateUserId(email: string, name: string, phone: string) {
@@ -50,6 +51,10 @@ export async function POST(request: Request) {
     const payload = (await request.json().catch(() => null)) as ProfileRequest | null;
     if (!payload?.email || !payload?.name || !payload?.phone || !payload?.role) {
       return NextResponse.json({ message: "Missing profile fields." }, { status: 400 });
+    }
+
+    if (payload.acceptedTerms !== true) {
+      return NextResponse.json({ message: "Terms and Privacy acceptance is required." }, { status: 400 });
     }
 
     const email = payload.email.trim().toLowerCase();

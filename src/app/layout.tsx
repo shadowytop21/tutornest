@@ -3,6 +3,7 @@ import { Fraunces, JetBrains_Mono, Outfit } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ToastProvider } from "@/components/toast-provider";
+import { CookieConsent } from "@/components/cookie-consent";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -42,6 +43,7 @@ export default function RootLayout({
             <SiteHeader />
             <main className="flex-1">{children}</main>
             <SiteFooter />
+            <CookieConsent />
           </div>
         </ToastProvider>
       </body>

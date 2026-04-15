@@ -60,8 +60,8 @@ export function SiteHeader() {
     <header className={`sticky top-0 z-40 border-b border-[var(--border)] bg-[rgba(253,250,244,0.9)] backdrop-blur-md px-3 sm:px-4 lg:px-8 ${isScrolled ? "shadow-[0_10px_30px_rgba(26,39,68,0.09)]" : "shadow-[0_1px_0_rgba(26,39,68,0.04)]"}`}>
       <div className="mx-auto flex h-[64px] w-full max-w-7xl items-center justify-between gap-2 rounded-full">
         <Link href="/" className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-white/90 px-2.5 py-1.5 shadow-[0_1px_0_rgba(26,39,68,0.03)] transition hover:-translate-y-0.5 hover:border-[var(--border2)]">
-          <div className="rounded-full bg-[var(--navy)] p-1.5">
-            <Image src="/docent-mark-v2.png?v=4" alt="Docent logo" width={18} height={18} quality={80} priority className="h-[18px] w-[18px] invert" />
+          <div className="rounded-full bg-[var(--ivory2)] p-1.5">
+            <Image src="/docent-mark-v2.png?v=5" alt="Docent logo" width={18} height={18} quality={80} priority className="h-[18px] w-[18px]" />
           </div>
           <div className="font-mono text-[14px] font-medium tracking-[0.08em] text-[var(--navy)]">Docent</div>
         </Link>
