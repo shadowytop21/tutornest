@@ -52,7 +52,8 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      const role = searchParams.get("role");
+      const roleParam = searchParams.get("role");
+      const role: "teacher" | "parent" = roleParam === "teacher" ? "teacher" : "parent";
       const next = searchParams.get("next");
       const nameFromProvider =
         (user.user_metadata?.full_name as string | undefined) ||
@@ -60,18 +61,14 @@ export default function AuthCallbackPage() {
         buildFallbackName(user.email);
 
       const params = new URLSearchParams();
+      params.set("oauth", "google");
       params.set("email", user.email);
       params.set("name", nameFromProvider);
-
-      if (role === "teacher" || role === "parent") {
-        params.set("role", role);
-      }
-
+      params.set("role", role);
       if (next && next.startsWith("/")) {
         params.set("next", next);
       }
 
-      params.set("oauth", "google");
       router.replace(`/auth?${params.toString()}`);
     }
 

@@ -19,6 +19,10 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isGoogleSetupSubmitting, setIsGoogleSetupSubmitting] = useState(false);
+  const [showGoogleSetupModal, setShowGoogleSetupModal] = useState(false);
+  const [googleName, setGoogleName] = useState("");
+  const [googlePassword, setGooglePassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const roleParam = searchParams.get("role");
   const preferredRole: "teacher" | "parent" | null = roleParam === "teacher" || roleParam === "parent" ? roleParam : null;
@@ -28,6 +32,8 @@ export default function AuthPage() {
   useEffect(() => {
     const oauthEmail = searchParams.get("email");
     const oauthName = searchParams.get("name");
+    const oauthProvider = searchParams.get("oauth");
+    const oauthError = searchParams.get("oauthError");
 
     if (oauthEmail) {
       setEmail(oauthEmail);
@@ -36,7 +42,20 @@ export default function AuthPage() {
     if (oauthName) {
       setName(oauthName);
     }
-  }, [searchParams]);
+
+    if (oauthEmail) {
+      setAcceptedTerms(true);
+    }
+
+    if (oauthProvider === "google") {
+      setGoogleName(oauthName ?? "");
+      setShowGoogleSetupModal(true);
+    }
+
+    if (oauthError) {
+      pushToast({ tone: "error", title: "Google login failed. Please try again." });
+    }
+  }, [searchParams, pushToast]);
 
   function resolvePostLoginRoute(role?: "teacher" | "parent") {
     if (returnTo && returnTo.startsWith("/")) {
@@ -106,6 +125,91 @@ export default function AuthPage() {
       setIsGoogleLoading(false);
       pushToast({ tone: "error", title: error.message || "Google login failed." });
     }
+  }
+
+  async function completeGoogleSetup() {
+    const client = getSupabaseBrowserClient();
+    if (!client) {
+      pushToast({ tone: "error", title: "Supabase is not configured for Google login." });
+      return;
+    }
+
+    const trimmedName = googleName.trim();
+    if (trimmedName.length < 2) {
+      pushToast({ tone: "error", title: "Please enter your full name." });
+      return;
+    }
+
+    if (googlePassword.length < 8) {
+      pushToast({ tone: "error", title: "Password must be at least 8 characters." });
+      return;
+    }
+
+    setIsGoogleSetupSubmitting(true);
+
+    const userResult = await client.auth.getUser();
+    const user = userResult.data.user;
+    if (userResult.error || !user?.email) {
+      setIsGoogleSetupSubmitting(false);
+      pushToast({ tone: "error", title: "Unable to read Google account details." });
+      return;
+    }
+
+    const passwordUpdate = await client.auth.updateUser({ password: googlePassword });
+    if (passwordUpdate.error) {
+      setIsGoogleSetupSubmitting(false);
+      pushToast({ tone: "error", title: passwordUpdate.error.message || "Unable to set password." });
+      return;
+    }
+
+    const syntheticPhone = `oauth-${user.id.replace(/-/g, "").slice(0, 12)}`;
+    const response = await fetch("/api/account/profile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: user.email,
+        name: trimmedName,
+        phone: syntheticPhone,
+        role: selectedRole,
+        acceptedTerms: true,
+      }),
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as { message?: string; userId?: string };
+    if (!response.ok || !payload.userId) {
+      setIsGoogleSetupSubmitting(false);
+      pushToast({ tone: "error", title: payload.message ?? "Google account setup failed." });
+      return;
+    }
+
+    saveSession({
+      id: payload.userId,
+      phone: syntheticPhone,
+      name: trimmedName,
+      email: user.email,
+      role: selectedRole,
+    });
+
+    updateProfile({
+      id: payload.userId,
+      role: selectedRole,
+      name: trimmedName,
+      phone: syntheticPhone,
+      email: user.email,
+      created_at: new Date().toISOString(),
+    });
+
+    setIsGoogleSetupSubmitting(false);
+    setShowGoogleSetupModal(false);
+    pushToast({ tone: "success", title: "Google account connected", description: "Your account is ready." });
+
+    router.push(
+      selectedRole === "teacher"
+        ? (returnTo && returnTo.startsWith("/") ? returnTo : "/teacher/setup")
+        : resolvePostLoginRoute("parent"),
+    );
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -248,6 +352,57 @@ export default function AuthPage() {
           </form>
         </div>
       </div>
+
+      {showGoogleSetupModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+          <div className="card-surface w-full max-w-md rounded-[1.5rem] p-6">
+            <p className="text-sm uppercase tracking-[0.2em] text-[var(--muted)]">Google Sign-In</p>
+            <h2 className="mt-2 font-display text-2xl font-bold text-[var(--foreground)]">Complete your account</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Set your display name and password to finish account creation.</p>
+
+            <div className="mt-5 space-y-4">
+              <div className="form-group">
+                <label className="form-label">Full Name</label>
+                <input
+                  className="form-input"
+                  value={googleName}
+                  onChange={(event) => setGoogleName(event.target.value)}
+                  placeholder="Your full name"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Password</label>
+                <input
+                  className="form-input"
+                  type="password"
+                  value={googlePassword}
+                  onChange={(event) => setGooglePassword(event.target.value)}
+                  placeholder="At least 8 characters"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                className="btn-secondary w-full px-4 py-3 text-sm"
+                onClick={() => setShowGoogleSetupModal(false)}
+                disabled={isGoogleSetupSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-primary w-full px-4 py-3 text-sm"
+                onClick={completeGoogleSetup}
+                disabled={isGoogleSetupSubmitting}
+              >
+                {isGoogleSetupSubmitting ? "Saving..." : "Create Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
