@@ -107,8 +107,8 @@ export function SiteHeader() {
         </div>
 
         <div className="md:hidden">
-          <Link href={sessionRole === "teacher" ? "/teacher/dashboard" : "/browse"} className="btn-primary inline-flex h-10 items-center px-4 text-sm">
-            {sessionName ? "Dashboard" : "Browse"}
+          <Link href={sessionName ? (sessionRole === "teacher" ? "/teacher/dashboard" : "/browse") : "/auth"} className="btn-primary inline-flex h-10 items-center px-4 text-sm"> {/* Show direct mobile Login link to /auth when logged out. */}
+            {sessionName ? "Dashboard" : "Login"} {/* Match mobile CTA label to the /auth destination. */}
           </Link>
         </div>
       </div>
