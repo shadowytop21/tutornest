@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { saveSession, updateProfile } from "@/lib/mock-db";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 
 function buildFallbackName(email: string) {
@@ -60,16 +61,51 @@ export default function AuthCallbackPage() {
         (user.user_metadata?.name as string | undefined) ||
         buildFallbackName(user.email);
 
-      const params = new URLSearchParams();
-      params.set("oauth", "google");
-      params.set("email", user.email);
-      params.set("name", nameFromProvider);
-      params.set("role", role);
-      if (next && next.startsWith("/")) {
-        params.set("next", next);
+      const phoneDigits = user.id.replace(/\D/g, "").slice(0, 10).padEnd(10, "0");
+      const syntheticPhone = `+91${phoneDigits}`;
+      const response = await fetch("/api/account/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: user.email,
+          name: nameFromProvider,
+          phone: syntheticPhone,
+          role,
+          acceptedTerms: true,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as { message?: string; userId?: string };
+      if (!response.ok || !payload.userId) {
+        await client.auth.signOut();
+        router.replace("/auth?oauthError=1");
+        return;
       }
 
-      router.replace(`/auth?${params.toString()}`);
+      saveSession({
+        id: payload.userId,
+        phone: syntheticPhone,
+        name: nameFromProvider,
+        email: user.email,
+        role,
+      });
+
+      updateProfile({
+        id: payload.userId,
+        role,
+        name: nameFromProvider,
+        phone: syntheticPhone,
+        email: user.email,
+        created_at: new Date().toISOString(),
+      });
+
+      router.replace(
+        role === "teacher"
+          ? (next && next.startsWith("/") ? next : "/teacher/setup")
+          : (next && next.startsWith("/") ? next : "/browse"),
+      );
     }
 
     completeGoogleLogin();
