@@ -5,10 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { JoinAsTeacherAction } from "@/components/join-as-teacher-action";
 import { clearSession, loadAppState } from "@/lib/mock-db";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export function SiteHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [sessionName, setSessionName] = useState<string | null>(null);
   const [sessionRole, setSessionRole] = useState<"teacher" | "parent" | null>(null);
@@ -106,10 +107,21 @@ export function SiteHeader() {
           )}
         </div>
 
-        <div className="md:hidden">
-          <Link href={sessionName ? (sessionRole === "teacher" ? "/teacher/dashboard" : "/browse") : "/auth"} className="btn-primary inline-flex h-10 items-center px-4 text-sm"> {/* Show direct mobile Login link to /auth when logged out. */}
-            {sessionName ? "Dashboard" : "Login"} {/* Match mobile CTA label to the /auth destination. */}
-          </Link>
+        <div className="md:hidden flex items-center gap-2">
+          {!sessionName && pathname === "/" ? (
+            <>
+              <Link href="/browse" className="btn-primary inline-flex h-10 items-center px-4 text-sm">
+                Browse
+              </Link>
+              <Link href="/auth" className="btn-secondary inline-flex h-10 items-center px-4 text-sm">
+                Login
+              </Link>
+            </>
+          ) : (
+            <Link href={sessionRole === "teacher" ? "/teacher/dashboard" : "/browse"} className="btn-primary inline-flex h-10 items-center px-4 text-sm">
+              {sessionName ? "Dashboard" : "Browse"}
+            </Link>
+          )}
         </div>
       </div>
     </header>
