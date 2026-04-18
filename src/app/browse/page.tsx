@@ -235,7 +235,7 @@ export default function BrowsePage() {
           board: board || undefined,
           availability: availability || undefined,
           priceMax,
-          includePending: true,
+          includePending: false,
         },
         fallbackSnapshot.reviews ?? [],
       ),

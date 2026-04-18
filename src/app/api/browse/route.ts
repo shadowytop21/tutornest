@@ -29,7 +29,7 @@ async function getFacetCounts(adminSupabase: any) {
   const { data: facetRows } = await adminSupabase
     .from("teacher_profiles")
     .select("subjects,grades,boards,locality,availability")
-    .neq("status", "rejected");
+    .eq("status", "verified");
 
   for (const row of (facetRows ?? []) as any[]) {
     for (const value of (row.subjects ?? []) as string[]) {
@@ -85,7 +85,7 @@ export async function GET(request: Request) {
     let teacherQuery = adminSupabase
       .from("teacher_profiles")
       .select("id,user_id,photo_url,bio,subjects,grades,boards,locality,price_per_month,teaches_at,availability,experience_years,whatsapp_number,status,is_founding_member,created_at", { count: "exact" })
-      .neq("status", "rejected")
+      .eq("status", "verified")
       .order("status", { ascending: false })
       .range(start, end);
 
