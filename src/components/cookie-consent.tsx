@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 type CookieConsentValue = {
   essential: true;
@@ -53,10 +53,18 @@ function persistConsent(consent: CookieConsentValue) {
 }
 
 export function CookieConsent() {
-  const initial = useMemo(readConsent, []);
-  const [open, setOpen] = useState(!initial);
-  const [analytics, setAnalytics] = useState(initial?.analytics ?? false);
-  const [marketing, setMarketing] = useState(initial?.marketing ?? false);
+  const [mounted, setMounted] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [analytics, setAnalytics] = useState(false);
+  const [marketing, setMarketing] = useState(false);
+
+  useEffect(() => {
+    const initial = readConsent();
+    setAnalytics(initial?.analytics ?? false);
+    setMarketing(initial?.marketing ?? false);
+    setOpen(!initial);
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleOpenSettings = () => setOpen(true);
@@ -81,16 +89,12 @@ export function CookieConsent() {
     setOpen(false);
   }
 
+  if (!mounted) {
+    return null;
+  }
+
   if (!open) {
-    return (
-      <button
-        type="button"
-        className="cookie-manage-btn"
-        onClick={() => setOpen(true)}
-      >
-        Cookie settings
-      </button>
-    );
+    return null;
   }
 
   return (

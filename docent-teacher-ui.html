@@ -1,0 +1,1750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docent — Teacher UI Design System</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+/* =============================================
+   DESIGN SYSTEM
+============================================= */
+:root {
+  --ivory:         #FDFAF4;
+  --ivory2:        #F5EFE0;
+  --ivory3:        #EDE4D0;
+  --navy:          #1A2744;
+  --navy2:         #243154;
+  --navy3:         #0F1829;
+  --saffron:       #E8860A;
+  --saffron-light: #FEF3E2;
+  --saffron-mid:   #FDDFA0;
+  --saffron-deep:  #C46D00;
+  --green:         #2D6A4F;
+  --green-light:   #EDFAF3;
+  --green-mid:     #6EE7B7;
+  --muted:         #7A7060;
+  --muted2:        #9A9080;
+  --border:        #E0D8C8;
+  --border2:       #C8BEA8;
+  --white:         #FFFFFF;
+  --red:           #DC2626;
+  --red-light:     #FEF2F2;
+  --blue:          #2563EB;
+  --blue-light:    #EFF6FF;
+  --shadow-sm:     0 2px 12px rgba(26,39,68,0.06);
+  --shadow:        0 4px 32px rgba(26,39,68,0.08);
+  --shadow-lg:     0 12px 48px rgba(26,39,68,0.14);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--ivory);
+  color: var(--navy);
+}
+
+/* Section dividers */
+.section-divider {
+  display: flex; align-items: center; gap: 1.5rem;
+  padding: 4rem 3rem 2rem;
+}
+.sdiv-line { flex: 1; height: 1px; background: var(--border2); }
+.sdiv-label {
+  font-family: 'Fraunces', serif;
+  font-size: 26px; font-weight: 300; font-style: italic;
+  color: var(--muted); white-space: nowrap;
+}
+.sdiv-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.14em;
+  color: var(--border2); text-transform: uppercase;
+}
+
+.design-frame {
+  margin: 0 3rem 3rem;
+  border: 1.5px dashed var(--border2);
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+}
+.frame-label {
+  position: absolute; top: 16px; left: 16px; z-index: 100;
+  background: var(--navy); color: white;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 100px;
+}
+
+/* =============================================
+   SHARED COMPONENTS
+============================================= */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 100px;
+  font-size: 11px; font-weight: 500;
+}
+.badge-verified { background: var(--green-light); color: var(--green); border: 1px solid rgba(45,106,79,0.2); }
+.badge-founding { background: var(--saffron-light); color: var(--saffron); border: 1px solid rgba(232,134,10,0.2); }
+.badge-new { background: var(--blue-light); color: var(--blue); border: 1px solid rgba(37,99,235,0.15); }
+.badge-pending { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+.badge-demo { background: var(--green-light); color: var(--green); border: 1px solid rgba(45,106,79,0.2); }
+.badge-unavail { background: var(--ivory3); color: var(--muted); border: 1px solid var(--border2); }
+
+/* Pill */
+.subj-pill {
+  display: inline-block;
+  padding: 5px 13px;
+  background: var(--saffron-light);
+  color: var(--saffron);
+  border-radius: 100px;
+  font-size: 12px; font-weight: 500;
+}
+
+/* Mono label */
+.mono-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted2);
+  margin-bottom: 4px;
+}
+
+/* =============================================
+   SECTION 1: TEACHER CARDS
+============================================= */
+
+/* --- CARD GRID WRAPPER --- */
+.cards-showcase {
+  background: var(--ivory);
+  padding: 3rem;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+/* ====== TEACHER CARD ====== */
+.tcard {
+  width: 300px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+}
+.tcard:hover {
+  border-color: var(--border2);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-6px);
+}
+
+/* Card top gradient band */
+.tcard-band {
+  height: 6px;
+  background: linear-gradient(90deg, var(--saffron) 0%, var(--saffron-mid) 100%);
+}
+.tcard-band.green { background: linear-gradient(90deg, var(--green) 0%, #6EE7B7 100%); }
+.tcard-band.blue  { background: linear-gradient(90deg, #2563EB 0%, #93C5FD 100%); }
+
+.tcard-header {
+  padding: 20px 22px 16px;
+  position: relative;
+}
+
+/* Bookmark icon */
+.tcard-bookmark {
+  position: absolute; top: 16px; right: 18px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--ivory2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; cursor: pointer;
+  transition: all 0.2s;
+}
+.tcard-bookmark:hover { background: var(--saffron-light); border-color: var(--saffron); }
+.tcard-bookmark.saved { background: var(--saffron-light); border-color: var(--saffron); }
+
+.tcard-top-row {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-bottom: 14px;
+}
+
+/* Avatar */
+.tcard-avatar {
+  width: 58px; height: 58px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fraunces', serif;
+  font-size: 20px; font-weight: 700; color: var(--navy);
+  flex-shrink: 0;
+  position: relative;
+  border: 3px solid var(--white);
+  box-shadow: 0 0 0 2px var(--border);
+}
+.tcard-avatar.av1 { background: var(--saffron-mid); }
+.tcard-avatar.av2 { background: #BBF7D0; }
+.tcard-avatar.av3 { background: #BAE6FD; }
+.tcard-avatar.av4 { background: #FDE68A; }
+
+/* Online dot */
+.online-dot {
+  position: absolute; bottom: 2px; right: 2px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: #22C55E;
+  border: 2px solid white;
+}
+
+.tcard-name-block { flex: 1; padding-right: 30px; }
+.tcard-name {
+  font-family: 'Fraunces', serif;
+  font-size: 18px; font-weight: 500; color: var(--navy);
+  margin-bottom: 3px; line-height: 1.2;
+}
+.tcard-loc {
+  font-size: 12px; color: var(--muted);
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* Badge row */
+.tcard-badges {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+/* Subject pills */
+.tcard-subjects {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+/* Details grid */
+.tcard-details {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.tcd-item { }
+.tcd-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted2);
+  margin-bottom: 3px;
+}
+.tcd-val { font-size: 13px; font-weight: 500; color: var(--navy); }
+.tcd-val.green { color: var(--green); }
+
+/* Rating row */
+.tcard-rating-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 14px;
+}
+.stars { color: var(--saffron); font-size: 13px; letter-spacing: 1px; }
+.rating-num { font-size: 14px; font-weight: 600; color: var(--navy); }
+.rating-count { font-size: 12px; color: var(--muted); }
+.views-pill {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 4px;
+  padding: 3px 10px;
+  background: var(--ivory2); border-radius: 100px;
+  font-size: 11px; color: var(--muted);
+}
+
+/* Card footer */
+.tcard-footer {
+  padding: 14px 22px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.tcard-price {
+  font-family: 'Fraunces', serif;
+  font-size: 26px; font-weight: 400; color: var(--navy);
+}
+.tcard-price span { font-size: 13px; font-weight: 300; color: var(--muted); }
+.tcard-btn {
+  padding: 10px 20px;
+  background: var(--navy);
+  color: white; border: none;
+  border-radius: 100px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+  font-family: 'Outfit', sans-serif;
+}
+.tcard-btn:hover { background: var(--saffron); transform: translateY(-1px); }
+
+/* =============================================
+   SECTION 2: TEACHER PROFILE PAGE
+============================================= */
+.profile-page {
+  background: var(--ivory);
+  min-height: 800px;
+}
+
+/* Sticky topbar */
+.profile-topbar {
+  background: rgba(253,250,244,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 3rem;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.ptbar-left {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--muted);
+}
+.ptbar-left a { color: var(--saffron); text-decoration: none; font-weight: 500; }
+.ptbar-breadcrumb { font-size: 13px; color: var(--muted); }
+.ptbar-right { display: flex; gap: 10px; }
+.ptbar-btn {
+  padding: 7px 16px; border-radius: 100px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  font-family: 'Outfit', sans-serif; transition: all 0.2s;
+}
+.ptbar-share { background: var(--ivory2); border: 1px solid var(--border2); color: var(--navy); }
+.ptbar-share:hover { border-color: var(--navy); }
+.ptbar-save { background: var(--ivory2); border: 1px solid var(--border2); color: var(--navy); }
+.ptbar-save:hover { background: var(--saffron-light); border-color: var(--saffron); color: var(--saffron); }
+
+/* Hero banner */
+.profile-hero-banner {
+  height: 180px;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 60%, #1E3A6E 100%);
+  position: relative; overflow: hidden;
+}
+.phb-pattern {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 80% 50%, rgba(232,134,10,0.12) 0%, transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(255,255,255,0.03) 0%, transparent 40%);
+}
+.phb-ring1 {
+  position: absolute; top: -60px; right: -60px;
+  width: 250px; height: 250px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.phb-ring2 {
+  position: absolute; bottom: -80px; left: 200px;
+  width: 200px; height: 200px; border-radius: 50%;
+  border: 1px solid rgba(232,134,10,0.1);
+}
+
+/* Profile main layout */
+.profile-body {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 0;
+  max-width: 100%;
+}
+
+/* Profile main content */
+.profile-main {
+  padding: 0 3rem 3rem;
+}
+
+/* Profile top: avatar + name */
+.profile-identity {
+  display: flex;
+  align-items: flex-end;
+  gap: 2rem;
+  margin-top: -54px;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 10;
+}
+.profile-avatar-wrap { position: relative; }
+.profile-avatar {
+  width: 108px; height: 108px; border-radius: 50%;
+  background: var(--saffron-mid);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fraunces', serif;
+  font-size: 38px; font-weight: 700; color: var(--navy);
+  border: 5px solid var(--white);
+  box-shadow: 0 4px 20px rgba(26,39,68,0.15);
+}
+.profile-avail-badge {
+  position: absolute; bottom: 6px; right: 2px;
+  display: flex; align-items: center; gap: 4px;
+  background: #DCFCE7; border: 2px solid white;
+  border-radius: 100px; padding: 3px 8px;
+  font-size: 10px; font-weight: 600; color: #166534;
+}
+.avail-green-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #22C55E;
+  animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.profile-name-block {
+  padding-bottom: 8px;
+  flex: 1;
+}
+.profile-name {
+  font-family: 'Fraunces', serif;
+  font-size: 34px; font-weight: 400; color: var(--navy);
+  margin-bottom: 4px; line-height: 1.1;
+}
+.profile-tagline { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+.profile-badges-row { display: flex; gap: 7px; flex-wrap: wrap; }
+
+/* Stats strip */
+.profile-stats-strip {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 1px; background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  margin-bottom: 2.5rem;
+}
+.pstat-box {
+  background: var(--white);
+  padding: 18px 16px; text-align: center;
+  transition: background 0.2s;
+}
+.pstat-box:hover { background: var(--ivory2); }
+.pstat-num {
+  font-family: 'Fraunces', serif;
+  font-size: 26px; font-weight: 400; color: var(--navy);
+  display: block; margin-bottom: 3px;
+}
+.pstat-lbl { font-size: 11px; color: var(--muted); }
+
+/* Section titles */
+.profile-sec-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--muted2);
+  margin-bottom: 1.2rem;
+  display: flex; align-items: center; gap: 10px;
+}
+.profile-sec-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.profile-section { margin-bottom: 2.5rem; }
+
+/* Bio */
+.profile-bio {
+  font-size: 15px; line-height: 1.85; color: var(--navy);
+  max-width: 640px;
+}
+
+/* Subjects */
+.profile-subjects { display: flex; gap: 8px; flex-wrap: wrap; }
+.profile-subj {
+  padding: 8px 18px;
+  background: var(--saffron-light);
+  border: 1.5px solid rgba(232,134,10,0.2);
+  color: var(--saffron);
+  border-radius: 100px; font-size: 13px; font-weight: 500;
+}
+
+/* Details grid */
+.profile-details-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.pdetail-box {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  transition: all 0.2s;
+}
+.pdetail-box:hover { border-color: var(--border2); box-shadow: var(--shadow-sm); }
+.pdb-icon { font-size: 18px; margin-bottom: 8px; }
+.pdb-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted2);
+  margin-bottom: 5px;
+}
+.pdb-val { font-size: 14px; font-weight: 500; color: var(--navy); line-height: 1.4; }
+.pdb-val.green { color: var(--green); }
+
+/* Reviews */
+.review-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin-bottom: 14px;
+  transition: all 0.2s;
+}
+.review-card:hover { box-shadow: var(--shadow-sm); }
+.rev-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; margin-bottom: 12px;
+}
+.rev-reviewer {
+  display: flex; align-items: center; gap: 12px;
+}
+.rev-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--ivory3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: var(--navy);
+}
+.rev-name { font-size: 14px; font-weight: 500; color: var(--navy); margin-bottom: 2px; }
+.rev-date { font-size: 11px; color: var(--muted); }
+.rev-stars { color: var(--saffron); font-size: 13px; letter-spacing: 2px; }
+.rev-text { font-size: 14px; line-height: 1.75; color: var(--muted); }
+.rev-helpful {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 12px; font-size: 12px; color: var(--muted2);
+}
+.rev-helpful-btn {
+  padding: 3px 10px; background: var(--ivory2);
+  border: 1px solid var(--border); border-radius: 6px;
+  font-size: 11px; cursor: pointer; transition: all 0.2s;
+}
+.rev-helpful-btn:hover { border-color: var(--green); color: var(--green); }
+
+/* Similar teachers */
+.similar-row { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; }
+.similar-mini {
+  flex-shrink: 0; width: 200px;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px;
+  cursor: pointer; transition: all 0.2s;
+}
+.similar-mini:hover { border-color: var(--border2); box-shadow: var(--shadow-sm); transform: translateY(-3px); }
+.sim-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fraunces', serif; font-size: 16px; font-weight: 700;
+  color: var(--navy); margin-bottom: 10px;
+}
+.sim-name { font-size: 14px; font-weight: 500; color: var(--navy); margin-bottom: 3px; }
+.sim-subj { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+.sim-price { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; color: var(--navy); }
+
+/* Profile sidebar */
+.profile-sidebar {
+  border-left: 1px solid var(--border);
+  background: var(--white);
+  padding: 2rem;
+  position: sticky; top: 60px;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+.profile-sidebar::-webkit-scrollbar { width: 3px; }
+.profile-sidebar::-webkit-scrollbar-thumb { background: var(--border2); }
+
+/* Contact card */
+.contact-card {
+  background: var(--navy);
+  border-radius: 20px; padding: 24px;
+  margin-bottom: 20px;
+  position: relative; overflow: hidden;
+}
+.contact-card::before {
+  content: '';
+  position: absolute; top: -60px; right: -60px;
+  width: 180px; height: 180px; border-radius: 50%;
+  background: rgba(232,134,10,0.1);
+  pointer-events: none;
+}
+.cc-price {
+  font-family: 'Fraunces', serif;
+  font-size: 42px; font-weight: 300; color: white;
+  line-height: 1; margin-bottom: 2px;
+  position: relative; z-index: 1;
+}
+.cc-price sup { font-size: 18px; vertical-align: super; }
+.cc-price-note {
+  font-size: 12px; color: rgba(255,255,255,0.4);
+  margin-bottom: 22px; position: relative; z-index: 1;
+}
+
+.btn-whatsapp {
+  width: 100%; padding: 13px;
+  background: #25D366; color: white; border: none;
+  border-radius: 12px; font-size: 14px; font-weight: 500;
+  cursor: pointer; font-family: 'Outfit', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; transition: all 0.2s; margin-bottom: 10px;
+  position: relative; z-index: 1;
+  animation: wa-pulse 3s ease-in-out infinite;
+}
+@keyframes wa-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(37,211,102,0.35); }
+  50%      { box-shadow: 0 0 0 8px rgba(37,211,102,0); }
+}
+.btn-whatsapp:hover { background: #1EA952; transform: translateY(-2px); }
+
+.btn-save-profile {
+  width: 100%; padding: 11px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.65);
+  border-radius: 12px; font-size: 13px;
+  cursor: pointer; font-family: 'Outfit', sans-serif;
+  transition: all 0.2s; position: relative; z-index: 1;
+}
+.btn-save-profile:hover { background: rgba(255,255,255,0.14); color: white; }
+
+/* Sidebar info rows */
+.sidebar-info { margin-top: 4px; }
+.sinfo-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 13px 0; border-bottom: 1px solid var(--border);
+}
+.sinfo-row:last-child { border-bottom: none; }
+.sinfo-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: var(--ivory2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0; margin-top: 1px;
+}
+.sinfo-label { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+.sinfo-val { font-size: 13px; font-weight: 500; color: var(--navy); }
+
+/* =============================================
+   SECTION 3: TEACHER DASHBOARD
+============================================= */
+.dashboard-wrapper {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 860px;
+  background: var(--ivory);
+}
+
+/* Dashboard sidebar */
+.dash-sidebar {
+  background: var(--navy3);
+  padding: 0;
+  display: flex; flex-direction: column;
+}
+
+.dsb-logo {
+  padding: 1.8rem 1.8rem 1.5rem;
+  display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.dsb-logo-mark {
+  width: 32px; height: 32px;
+  background: var(--saffron); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+}
+.dsb-logo-mark svg { width: 18px; height: 18px; }
+.dsb-logo-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px; font-weight: 500;
+  letter-spacing: 0.08em; color: white;
+}
+
+/* User chip */
+.dsb-user {
+  margin: 1.5rem 1.5rem 0.5rem;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.dsb-user-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--saffron-mid);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fraunces', serif; font-size: 15px;
+  font-weight: 700; color: var(--navy); flex-shrink: 0;
+}
+.dsb-user-name { font-size: 13px; font-weight: 500; color: white; margin-bottom: 2px; }
+.dsb-user-status {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--green-mid);
+}
+.dsb-user-dot { width: 5px; height: 5px; border-radius: 50%; background: #22C55E; }
+
+/* Nav */
+.dsb-nav { padding: 1rem 1rem; flex: 1; }
+.dsb-nav-section {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.14em;
+  color: rgba(255,255,255,0.2); text-transform: uppercase;
+  padding: 0 10px; margin-bottom: 6px; margin-top: 14px;
+}
+.dsb-nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 10px;
+  font-size: 13px; color: rgba(255,255,255,0.5);
+  cursor: pointer; transition: all 0.2s; margin-bottom: 2px;
+  position: relative;
+}
+.dsb-nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
+.dsb-nav-item.active {
+  background: rgba(232,134,10,0.15);
+  color: var(--saffron-mid);
+  font-weight: 500;
+}
+.dsb-nav-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 25%; bottom: 25%;
+  width: 3px; background: var(--saffron);
+  border-radius: 0 3px 3px 0;
+}
+.dsb-nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.dsb-nav-badge {
+  margin-left: auto;
+  background: var(--saffron); color: white;
+  font-size: 10px; font-weight: 600;
+  padding: 2px 7px; border-radius: 100px;
+}
+
+.dsb-bottom {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.dsb-bottom-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 10px;
+  font-size: 13px; color: rgba(255,255,255,0.4);
+  cursor: pointer; transition: all 0.2s; margin-bottom: 2px;
+}
+.dsb-bottom-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.7); }
+
+/* Dashboard main */
+.dash-main { background: var(--ivory); overflow: hidden; }
+
+/* Dashboard topbar */
+.dash-topbar {
+  background: rgba(253,250,244,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2.5rem;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.dash-topbar-title {
+  font-family: 'Fraunces', serif;
+  font-size: 18px; font-weight: 400; color: var(--navy);
+}
+.dash-topbar-right { display: flex; align-items: center; gap: 12px; }
+.notif-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--ivory2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; cursor: pointer; position: relative;
+  transition: all 0.2s;
+}
+.notif-btn:hover { border-color: var(--border2); }
+.notif-dot {
+  position: absolute; top: 4px; right: 4px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--saffron); border: 1.5px solid var(--ivory);
+}
+.preview-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  background: var(--white); border: 1.5px solid var(--border2);
+  border-radius: 100px; font-size: 12px; font-weight: 500;
+  color: var(--navy); cursor: pointer; transition: all 0.2s;
+}
+.preview-btn:hover { border-color: var(--navy); }
+.availability-toggle {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px;
+  background: #DCFCE7; border: 1.5px solid #86EFAC;
+  border-radius: 100px; font-size: 12px; font-weight: 500; color: #166534;
+  cursor: pointer; transition: all 0.2s;
+}
+.toggle-dot { width: 8px; height: 8px; border-radius: 50%; background: #22C55E; }
+
+/* Dashboard content */
+.dash-content { padding: 2rem 2.5rem; overflow-y: auto; max-height: calc(860px - 60px); }
+.dash-content::-webkit-scrollbar { width: 4px; }
+.dash-content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Welcome banner */
+.welcome-banner {
+  background: var(--navy);
+  border-radius: 20px; padding: 24px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem; position: relative; overflow: hidden;
+}
+.welcome-banner::before {
+  content: '';
+  position: absolute; top: -80px; right: 100px;
+  width: 240px; height: 240px; border-radius: 50%;
+  background: rgba(232,134,10,0.08); pointer-events: none;
+}
+.wb-text { position: relative; z-index: 1; }
+.wb-greeting {
+  font-family: 'Fraunces', serif;
+  font-size: 22px; font-weight: 400; color: white;
+  margin-bottom: 4px;
+}
+.wb-sub { font-size: 13px; color: rgba(255,255,255,0.45); }
+.wb-badge {
+  background: rgba(45,106,79,0.3);
+  border: 1px solid rgba(45,106,79,0.5);
+  color: var(--green-mid);
+  padding: 6px 14px; border-radius: 100px;
+  font-size: 12px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+  position: relative; z-index: 1;
+}
+
+/* Stats row */
+.dash-stats-row {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin-bottom: 1.5rem;
+}
+.dstat-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 18px; padding: 20px;
+  transition: all 0.2s; cursor: default;
+}
+.dstat-card:hover { border-color: var(--border2); box-shadow: var(--shadow-sm); transform: translateY(-2px); }
+.dstat-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.dstat-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.dsi-saffron { background: var(--saffron-light); }
+.dsi-green { background: var(--green-light); }
+.dsi-blue { background: var(--blue-light); }
+.dsi-purple { background: #F5F3FF; }
+.dstat-trend {
+  font-size: 11px; font-weight: 500;
+  padding: 3px 8px; border-radius: 100px;
+}
+.trend-up { background: var(--green-light); color: var(--green); }
+.trend-neutral { background: var(--ivory2); color: var(--muted); }
+.dstat-num {
+  font-family: 'Fraunces', serif;
+  font-size: 32px; font-weight: 400; color: var(--navy);
+  margin-bottom: 3px; line-height: 1;
+}
+.dstat-label { font-size: 12px; color: var(--muted); }
+
+/* Main dash grid */
+.dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+
+/* Completion card */
+.dcard {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 18px; padding: 22px 24px;
+}
+.dcard-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted2);
+  margin-bottom: 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.dcard-link {
+  color: var(--saffron); text-decoration: none;
+  font-size: 11px; text-transform: none; letter-spacing: 0;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Profile completion */
+.completion-header {
+  display: flex; align-items: baseline;
+  justify-content: space-between; margin-bottom: 10px;
+}
+.completion-pct {
+  font-family: 'Fraunces', serif;
+  font-size: 48px; font-weight: 300; color: var(--navy); line-height: 1;
+}
+.completion-note { font-size: 13px; color: var(--muted); max-width: 200px; text-align: right; line-height: 1.5; }
+
+.completion-bar-bg {
+  height: 10px; background: var(--ivory2);
+  border-radius: 100px; overflow: hidden; margin-bottom: 20px;
+}
+.completion-bar-fill {
+  height: 100%; border-radius: 100px;
+  background: linear-gradient(90deg, var(--saffron) 0%, var(--saffron-mid) 100%);
+  transition: width 1s ease;
+}
+.completion-fill-green {
+  background: linear-gradient(90deg, var(--green) 0%, var(--green-mid) 100%);
+}
+
+.completion-items { display: flex; flex-direction: column; gap: 8px; }
+.ci {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 10px;
+  transition: background 0.2s; cursor: default;
+}
+.ci:hover { background: var(--ivory2); }
+.ci-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0;
+}
+.ci-done-icon { background: var(--green-light); }
+.ci-todo-icon { background: var(--ivory3); }
+.ci-text { flex: 1; font-size: 13px; }
+.ci-text.done { color: var(--navy); }
+.ci-text.todo { color: var(--muted); }
+.ci-pct { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); }
+
+/* Verify box */
+.verify-box {
+  background: var(--saffron-light);
+  border: 1.5px solid rgba(232,134,10,0.2);
+  border-radius: 16px; padding: 22px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.vb-icon { font-size: 28px; }
+.vb-title {
+  font-family: 'Fraunces', serif;
+  font-size: 20px; font-weight: 500; color: var(--navy);
+  margin-bottom: 6px;
+}
+.vb-desc { font-size: 13px; color: var(--muted); line-height: 1.65; }
+.vb-perks { display: flex; flex-direction: column; gap: 6px; }
+.vb-perk {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--navy);
+}
+.vb-perk-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--saffron); flex-shrink: 0; }
+.btn-verify {
+  padding: 12px; background: var(--saffron); color: white;
+  border: none; border-radius: 12px;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  font-family: 'Outfit', sans-serif; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-verify:hover { background: var(--saffron-deep); transform: translateY(-1px); }
+
+/* Activity list */
+.activity-list { display: flex; flex-direction: column; gap: 0; }
+.activity-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.ai-view { background: var(--blue-light); }
+.ai-whatsapp { background: #DCFCE7; }
+.ai-review { background: var(--saffron-light); }
+.ai-save { background: #FDF4FF; }
+.activity-text { flex: 1; }
+.activity-main { font-size: 13px; color: var(--navy); font-weight: 500; }
+.activity-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.activity-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--muted2);
+}
+
+/* Weekly chart placeholder */
+.chart-area {
+  height: 100px; margin: 10px 0 6px;
+  display: flex; align-items: flex-end; gap: 8px;
+}
+.chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.chart-bar {
+  width: 100%; border-radius: 6px 6px 0 0;
+  background: var(--saffron-mid);
+  transition: all 0.3s;
+}
+.chart-bar.highlight { background: var(--saffron); }
+.chart-bar-label { font-size: 10px; color: var(--muted2); }
+.chart-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--navy); font-weight: 500;
+}
+</style>
+</head>
+<body>
+
+<!-- ==========================================
+     SECTION 1: TEACHER CARDS
+=========================================== -->
+<div class="section-divider">
+  <div class="sdiv-num">01</div>
+  <div class="sdiv-line"></div>
+  <div class="sdiv-label">Teacher Cards</div>
+  <div class="sdiv-line"></div>
+</div>
+
+<div class="design-frame">
+  <span class="frame-label">Teacher Card — All States</span>
+  <div class="cards-showcase">
+
+    <!-- CARD 1: Verified + Founding -->
+    <div class="tcard">
+      <div class="tcard-band"></div>
+      <div class="tcard-header">
+        <div class="tcard-bookmark saved">🤍</div>
+        <div class="tcard-top-row">
+          <div class="tcard-avatar av1">
+            PS
+            <div class="online-dot"></div>
+          </div>
+          <div class="tcard-name-block">
+            <div class="tcard-name">Priya Sharma</div>
+            <div class="tcard-loc">📍 Civil Lines · 7 yrs</div>
+          </div>
+        </div>
+        <div class="tcard-badges">
+          <span class="badge badge-verified">✓ Verified</span>
+          <span class="badge badge-founding">★ Founding</span>
+        </div>
+        <div class="tcard-subjects">
+          <span class="subj-pill">Maths</span>
+          <span class="subj-pill">Physics</span>
+        </div>
+        <div class="tcard-details">
+          <div class="tcd-item">
+            <div class="tcd-label">Grades</div>
+            <div class="tcd-val">Class 9–12</div>
+          </div>
+          <div class="tcd-item">
+            <div class="tcd-label">Board</div>
+            <div class="tcd-val">CBSE</div>
+          </div>
+          <div class="tcd-item">
+            <div class="tcd-label">Teaches at</div>
+            <div class="tcd-val">Both homes</div>
+          </div>
+          <div class="tcd-item">
+            <div class="tcd-label">Demo class</div>
+            <div class="tcd-val green">✓ Free demo</div>
+          </div>
+        </div>
+        <div class="tcard-rating-row">
+          <span class="stars">★★★★★</span>
+          <span class="rating-num">4.9</span>
+          <span class="rating-count">(48 reviews)</span>
+          <div class="views-pill">👁 247 views</div>
+        </div>
+      </div>
+      <div class="tcard-footer">
+        <div>
+          <div class="tcard-price">₹1,200 <span>/ mo</span></div>
+        </div>
+        <button class="tcard-btn">View Profile</button>
+      </div>
+    </div>
+
+    <!-- CARD 2: Verified + New -->
+    <div class="tcard">
+      <div class="tcard-band green"></div>
+      <div class="tcard-header">
+        <div class="tcard-bookmark">🤍</div>
+        <div class="tcard-top-row">
+          <div class="tcard-avatar av2">RM</div>
+          <div class="tcard-name-block">
+            <div class="tcard-name">Rahul Mehta</div>
+            <div class="tcard-loc">📍 Vrindavan · 9 yrs</div>
+          </div>
+        </div>
+        <div class="tcard-badges">
+          <span class="badge badge-verified">✓ Verified</span>
+          <span class="badge badge-new">✦ New</span>
+          <span class="badge badge-demo">🎓 Free Demo</span>
+        </div>
+        <div class="tcard-subjects">
+          <span class="subj-pill">Chemistry</span>
+          <span class="subj-pill">Biology</span>
+        </div>
+        <div class="tcard-details">
+          <div class="tcd-item">
+            <div class="tcd-label">Grades</div>
+            <div class="tcd-val">Class 11–12</div>
+          </div>
+          <div class="tcd-item">
+            <div class="tcd-label">Board</div>
+            <div class="tcd-val">CBSE / UP</div>
+          </div>
+          <div class="tcd-item">
+            <div class="tcd-label">Teaches at</div>
+            <div class="tcd-val">My home</div>
+          </div>
+          <div class="tcd-item">
+            <div class="tcd-label">Availability</div>
+            <div class="tcd-val">Morning</div>
+          </div>
+        </div>
+        <div class="tcard-rating-row">
+          <span class="stars">★★★★★</span>
+          <span class="rating-num">4.8</span>
+          <span class="rating-count">(61 reviews)</span>
+          <div class="views-pill">👁 183 views</div>
+        </div>
+      </div>
+      <div class="tcard-footer">
+        <div>
+          <div class="tcard-price">₹1,500 <span>/ mo</span></div>
+        </div>
+        <button class="tcard-btn">View Profile</button>
+      </div>
+    </div>
+
+    <!-- CARD 3: Verified only, unavailable state -->
+    <div class="tcard" style="opacity:0.75;">
+      <div class="tcard-band blue"></div>
+      <div class="tcard-header">
+        <div class="tcard-bookmark">🤍</div>
+        <div class="tcard-top-row">
+          <div class="tcard-avatar av3">AV</div>
+          <div class="tcard-name-block">
+            <div class="tcard-name">Anjali Verma</div>
+            <div class="tcard-loc">📍 Krishna Nagar · 5 yrs</div>
+          </div>
+        </div>
+        <div class="tcard-badges">
+          <span class="badge badge-verified">✓ Verified</span>
+          <span class="badge badge-unavail">⏸ Unavailable</span>
+        </div>
+        <div class="tcard-subjects">
+          <span class="subj-pill">English</span>
+          <span class="subj-pill">Hindi</span>
+        </div>
+        <div class="tcard-details">
+          <div class="tcd-item">
+            <div class="tcd-label">Grades</div>
+            <div class="tcd-val">Class 6–10</div>
+          </div>
+          <div class="tcd-item">
+            <div class="tcd-label">Board</div>
+            <div class="tcd-val">UP Board</div>
+          </div>
+          <div class="tcd-item">
+            <div class="tcd-label">Teaches at</div>
+            <div class="tcd-val">Both homes</div>
+          </div>
+          <div class="tcd-item">
+            <div class="tcd-label">Availability</div>
+            <div class="tcd-val">Eve + Wknd</div>
+          </div>
+        </div>
+        <div class="tcard-rating-row">
+          <span class="stars">★★★★☆</span>
+          <span class="rating-num">4.6</span>
+          <span class="rating-count">(33 reviews)</span>
+          <div class="views-pill">👁 94 views</div>
+        </div>
+      </div>
+      <div class="tcard-footer">
+        <div>
+          <div class="tcard-price">₹800 <span>/ mo</span></div>
+        </div>
+        <button class="tcard-btn" style="background:var(--muted2);">View Profile</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==========================================
+     SECTION 2: TEACHER PROFILE PAGE
+=========================================== -->
+<div class="section-divider">
+  <div class="sdiv-num">02</div>
+  <div class="sdiv-line"></div>
+  <div class="sdiv-label">Teacher Profile Page</div>
+  <div class="sdiv-line"></div>
+</div>
+
+<div class="design-frame">
+  <span class="frame-label">Teacher Public Profile — /teacher/[id]</span>
+  <div class="profile-page">
+
+    <!-- Sticky topbar -->
+    <div class="profile-topbar">
+      <div class="ptbar-left">
+        <a href="#">← Browse</a>
+        <span class="ptbar-breadcrumb">/ Priya Sharma</span>
+      </div>
+      <div class="ptbar-right">
+        <button class="ptbar-btn ptbar-share">🔗 Share Profile</button>
+        <button class="ptbar-btn ptbar-save">🤍 Save</button>
+      </div>
+    </div>
+
+    <!-- Hero banner -->
+    <div class="profile-hero-banner">
+      <div class="phb-pattern"></div>
+      <div class="phb-ring1"></div>
+      <div class="phb-ring2"></div>
+    </div>
+
+    <div class="profile-body">
+      <div class="profile-main">
+
+        <!-- Identity -->
+        <div class="profile-identity">
+          <div class="profile-avatar-wrap">
+            <div class="profile-avatar">PS</div>
+            <div class="profile-avail-badge">
+              <div class="avail-green-dot"></div>
+              Available
+            </div>
+          </div>
+          <div class="profile-name-block">
+            <h1 class="profile-name">Priya Sharma</h1>
+            <p class="profile-tagline">Mathematics & Physics · Civil Lines, Mathura · 7 years experience</p>
+            <div class="profile-badges-row">
+              <span class="badge badge-verified">✓ Verified Teacher</span>
+              <span class="badge badge-founding">★ Founding Member</span>
+              <span class="badge" style="background:var(--blue-light);color:var(--blue);border:1px solid rgba(37,99,235,0.15);">⚡ Replies in 1hr</span>
+              <span class="badge badge-demo">🎓 Free Demo Class</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats strip -->
+        <div class="profile-stats-strip">
+          <div class="pstat-box">
+            <span class="pstat-num">4.9</span>
+            <span class="pstat-lbl">Rating</span>
+          </div>
+          <div class="pstat-box">
+            <span class="pstat-num">48</span>
+            <span class="pstat-lbl">Reviews</span>
+          </div>
+          <div class="pstat-box">
+            <span class="pstat-num">7 yrs</span>
+            <span class="pstat-lbl">Experience</span>
+          </div>
+          <div class="pstat-box">
+            <span class="pstat-num">120+</span>
+            <span class="pstat-lbl">Students</span>
+          </div>
+          <div class="pstat-box">
+            <span class="pstat-num">247</span>
+            <span class="pstat-lbl">Views/week</span>
+          </div>
+        </div>
+
+        <!-- About -->
+        <div class="profile-section">
+          <div class="profile-sec-title">About</div>
+          <p class="profile-bio">IIT Delhi alumna with 7 years of teaching experience in Mathematics and Physics. I specialise in making complex concepts approachable through real-world examples and a structured problem-solving approach. My students have consistently scored 90+ in board exams, and I have helped 14 students clear JEE Mains. I offer both home visits and tuition at my own home in Civil Lines.</p>
+        </div>
+
+        <!-- Subjects -->
+        <div class="profile-section">
+          <div class="profile-sec-title">Subjects Taught</div>
+          <div class="profile-subjects">
+            <span class="profile-subj">Mathematics</span>
+            <span class="profile-subj">Physics</span>
+          </div>
+        </div>
+
+        <!-- Details grid -->
+        <div class="profile-section">
+          <div class="profile-sec-title">Details</div>
+          <div class="profile-details-grid">
+            <div class="pdetail-box">
+              <div class="pdb-icon">📚</div>
+              <div class="pdb-label">Grades</div>
+              <div class="pdb-val">Class 9, 10, 11, 12</div>
+            </div>
+            <div class="pdetail-box">
+              <div class="pdb-icon">📋</div>
+              <div class="pdb-label">Board</div>
+              <div class="pdb-val">CBSE, UP Board</div>
+            </div>
+            <div class="pdetail-box">
+              <div class="pdb-icon">🏠</div>
+              <div class="pdb-label">Teaches at</div>
+              <div class="pdb-val">Student's home & my home</div>
+            </div>
+            <div class="pdetail-box">
+              <div class="pdb-icon">🕐</div>
+              <div class="pdb-label">Availability</div>
+              <div class="pdb-val">Evenings & Weekends</div>
+            </div>
+            <div class="pdetail-box">
+              <div class="pdb-icon">📍</div>
+              <div class="pdb-label">Locality</div>
+              <div class="pdb-val">Civil Lines, Mathura</div>
+            </div>
+            <div class="pdetail-box">
+              <div class="pdb-icon">🎓</div>
+              <div class="pdb-label">Demo Class</div>
+              <div class="pdb-val green">Free first demo</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="profile-section">
+          <div class="profile-sec-title">Parent Reviews (48)</div>
+
+          <div class="review-card">
+            <div class="rev-top">
+              <div class="rev-reviewer">
+                <div class="rev-avatar">SG</div>
+                <div>
+                  <div class="rev-name">Sunita Gupta</div>
+                  <div class="rev-date">2 weeks ago · Verified Parent</div>
+                </div>
+              </div>
+              <div class="rev-stars">★★★★★</div>
+            </div>
+            <p class="rev-text">Priya ma'am is absolutely exceptional. My son's Maths marks improved from 62 to 94 in just 4 months. She explains every concept with such patience and clarity, and her method of breaking down difficult problems is unlike anything I've seen. Highly recommend to any parent.</p>
+            <div class="rev-helpful">
+              <span>Was this helpful?</span>
+              <button class="rev-helpful-btn">👍 Yes (12)</button>
+            </div>
+          </div>
+
+          <div class="review-card">
+            <div class="rev-top">
+              <div class="rev-reviewer">
+                <div class="rev-avatar">RK</div>
+                <div>
+                  <div class="rev-name">Rakesh Kumar</div>
+                  <div class="rev-date">1 month ago · Verified Parent</div>
+                </div>
+              </div>
+              <div class="rev-stars">★★★★★</div>
+            </div>
+            <p class="rev-text">Best physics tutor in Civil Lines without question. My daughter is preparing for JEE and Priya ji's structured teaching style is exactly what she needed. Very punctual, dedicated, and always available for doubt clearing between sessions.</p>
+            <div class="rev-helpful">
+              <span>Was this helpful?</span>
+              <button class="rev-helpful-btn">👍 Yes (8)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Similar teachers -->
+        <div class="profile-section">
+          <div class="profile-sec-title">Other tutors in Civil Lines</div>
+          <div class="similar-row">
+            <div class="similar-mini">
+              <div class="sim-avatar av2" style="background:#BBF7D0;">SK</div>
+              <div class="sim-name">Suresh Kumar</div>
+              <div class="sim-subj">Maths · Class 9–10</div>
+              <div class="sim-price">₹900/mo</div>
+            </div>
+            <div class="similar-mini">
+              <div class="sim-avatar av4" style="background:#FDE68A;">MR</div>
+              <div class="sim-name">Meera Rao</div>
+              <div class="sim-subj">Physics · Class 11–12</div>
+              <div class="sim-price">₹1,100/mo</div>
+            </div>
+            <div class="similar-mini">
+              <div class="sim-avatar av3" style="background:#BAE6FD;">AT</div>
+              <div class="sim-name">Arjun Tiwari</div>
+              <div class="sim-subj">Maths · JEE Prep</div>
+              <div class="sim-price">₹1,400/mo</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Sidebar -->
+      <div class="profile-sidebar">
+        <div class="contact-card">
+          <div class="cc-price"><sup>₹</sup>1,200</div>
+          <div class="cc-price-note">Per student · per month · Negotiable for siblings</div>
+          <button class="btn-whatsapp">
+            <span>💬</span> Contact on WhatsApp
+          </button>
+          <button class="btn-save-profile">🤍 Save this Profile</button>
+        </div>
+
+        <div class="sidebar-info">
+          <div class="sinfo-row">
+            <div class="sinfo-icon">📍</div>
+            <div>
+              <div class="sinfo-label">Location</div>
+              <div class="sinfo-val">Civil Lines, Mathura</div>
+            </div>
+          </div>
+          <div class="sinfo-row">
+            <div class="sinfo-icon">🕐</div>
+            <div>
+              <div class="sinfo-label">Availability</div>
+              <div class="sinfo-val">Evenings & Weekends</div>
+            </div>
+          </div>
+          <div class="sinfo-row">
+            <div class="sinfo-icon">⚡</div>
+            <div>
+              <div class="sinfo-label">Response time</div>
+              <div class="sinfo-val">Usually within 1 hour</div>
+            </div>
+          </div>
+          <div class="sinfo-row">
+            <div class="sinfo-icon">👥</div>
+            <div>
+              <div class="sinfo-label">Parents contacted</div>
+              <div class="sinfo-val">84 parents this month</div>
+            </div>
+          </div>
+          <div class="sinfo-row">
+            <div class="sinfo-icon">🎓</div>
+            <div>
+              <div class="sinfo-label">Demo class</div>
+              <div class="sinfo-val" style="color:var(--green);">Free first session</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================
+     SECTION 3: TEACHER DASHBOARD
+=========================================== -->
+<div class="section-divider">
+  <div class="sdiv-num">03</div>
+  <div class="sdiv-line"></div>
+  <div class="sdiv-label">Teacher Dashboard</div>
+  <div class="sdiv-line"></div>
+</div>
+
+<div class="design-frame">
+  <span class="frame-label">Teacher Dashboard — /teacher/dashboard</span>
+  <div class="dashboard-wrapper">
+
+    <!-- Sidebar -->
+    <div class="dash-sidebar">
+      <div class="dsb-logo">
+        <div class="dsb-logo-mark">
+          <svg viewBox="0 0 24 24" fill="white" width="18" height="18">
+            <path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm-1.5 13V8l7 4-7 4z"/>
+          </svg>
+        </div>
+        <span class="dsb-logo-text">Docent</span>
+      </div>
+
+      <div class="dsb-user">
+        <div class="dsb-user-avatar">PS</div>
+        <div>
+          <div class="dsb-user-name">Priya Sharma</div>
+          <div class="dsb-user-status">
+            <div class="dsb-user-dot"></div>
+            Profile Live
+          </div>
+        </div>
+      </div>
+
+      <div class="dsb-nav">
+        <div class="dsb-nav-section">Main</div>
+        <div class="dsb-nav-item active">
+          <span class="dsb-nav-icon">🏠</span> Dashboard
+        </div>
+        <div class="dsb-nav-item">
+          <span class="dsb-nav-icon">👤</span> My Profile
+        </div>
+        <div class="dsb-nav-item">
+          <span class="dsb-nav-icon">✏️</span> Edit Profile
+        </div>
+
+        <div class="dsb-nav-section">Insights</div>
+        <div class="dsb-nav-item">
+          <span class="dsb-nav-icon">📊</span> Analytics
+        </div>
+        <div class="dsb-nav-item">
+          <span class="dsb-nav-icon">⭐</span> Reviews
+          <span class="dsb-nav-badge">3</span>
+        </div>
+
+        <div class="dsb-nav-section">Account</div>
+        <div class="dsb-nav-item">
+          <span class="dsb-nav-icon">🔔</span> Notifications
+        </div>
+        <div class="dsb-nav-item">
+          <span class="dsb-nav-icon">⚙️</span> Settings
+        </div>
+      </div>
+
+      <div class="dsb-bottom">
+        <div class="dsb-bottom-btn">
+          <span class="dsb-nav-icon">🔗</span> Share my Profile
+        </div>
+        <div class="dsb-bottom-btn">
+          <span class="dsb-nav-icon">🚪</span> Logout
+        </div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="dash-main">
+      <div class="dash-topbar">
+        <div class="dash-topbar-title">Dashboard</div>
+        <div class="dash-topbar-right">
+          <div class="notif-btn">
+            🔔
+            <div class="notif-dot"></div>
+          </div>
+          <button class="preview-btn">👁 Preview Profile</button>
+          <div class="availability-toggle">
+            <div class="toggle-dot"></div>
+            Accepting Students
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-content">
+
+        <!-- Welcome banner -->
+        <div class="welcome-banner">
+          <div class="wb-text">
+            <div class="wb-greeting">Good evening, Priya 👋</div>
+            <div class="wb-sub">Your profile has been viewed 247 times this week — up 18% from last week</div>
+          </div>
+          <div class="wb-badge">
+            <span>✓</span> Profile Verified & Live
+          </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="dash-stats-row">
+          <div class="dstat-card">
+            <div class="dstat-top">
+              <div class="dstat-icon dsi-saffron">👁</div>
+              <span class="dstat-trend trend-up">↑ 18%</span>
+            </div>
+            <div class="dstat-num">247</div>
+            <div class="dstat-label">Profile views this week</div>
+          </div>
+          <div class="dstat-card">
+            <div class="dstat-top">
+              <div class="dstat-icon dsi-green">💬</div>
+              <span class="dstat-trend trend-up">↑ 6%</span>
+            </div>
+            <div class="dstat-num">84</div>
+            <div class="dstat-label">WhatsApp contacts</div>
+          </div>
+          <div class="dstat-card">
+            <div class="dstat-top">
+              <div class="dstat-icon dsi-blue">🔖</div>
+              <span class="dstat-trend trend-up">↑ 4</span>
+            </div>
+            <div class="dstat-num">32</div>
+            <div class="dstat-label">Parents saved profile</div>
+          </div>
+          <div class="dstat-card">
+            <div class="dstat-top">
+              <div class="dstat-icon dsi-purple">⭐</div>
+              <span class="dstat-trend trend-neutral">→ stable</span>
+            </div>
+            <div class="dstat-num">4.9</div>
+            <div class="dstat-label">Average rating (48 reviews)</div>
+          </div>
+        </div>
+
+        <!-- Main grid -->
+        <div class="dash-grid">
+
+          <!-- Left: Completion + Activity -->
+          <div style="display:flex;flex-direction:column;gap:14px;">
+
+            <!-- Profile completion -->
+            <div class="dcard">
+              <div class="dcard-title">
+                Profile Completion
+                <a href="#" class="dcard-link">Edit profile →</a>
+              </div>
+              <div class="completion-header">
+                <div class="completion-pct">80%</div>
+                <div class="completion-note">Upload a document to unlock verification</div>
+              </div>
+              <div class="completion-bar-bg">
+                <div class="completion-bar-fill" style="width:80%"></div>
+              </div>
+              <div class="completion-items">
+                <div class="ci">
+                  <div class="ci-icon ci-done-icon">✓</div>
+                  <div class="ci-text done">Profile photo uploaded</div>
+                  <div class="ci-pct">+20%</div>
+                </div>
+                <div class="ci">
+                  <div class="ci-icon ci-done-icon">✓</div>
+                  <div class="ci-text done">Bio written (150+ chars)</div>
+                  <div class="ci-pct">+10%</div>
+                </div>
+                <div class="ci">
+                  <div class="ci-icon ci-done-icon">✓</div>
+                  <div class="ci-text done">Subjects & grades filled</div>
+                  <div class="ci-pct">+30%</div>
+                </div>
+                <div class="ci">
+                  <div class="ci-icon ci-done-icon">✓</div>
+                  <div class="ci-text done">Location & price set</div>
+                  <div class="ci-pct">+20%</div>
+                </div>
+                <div class="ci">
+                  <div class="ci-icon ci-todo-icon">📄</div>
+                  <div class="ci-text todo">Upload verification document</div>
+                  <div class="ci-pct">+20%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Weekly views chart -->
+            <div class="dcard">
+              <div class="dcard-title">
+                Profile Views — This Week
+                <a href="#" class="dcard-link">See all analytics →</a>
+              </div>
+              <div class="chart-area">
+                <div class="chart-bar-wrap">
+                  <div class="chart-val">28</div>
+                  <div class="chart-bar" style="height:38px;"></div>
+                  <div class="chart-bar-label">Mon</div>
+                </div>
+                <div class="chart-bar-wrap">
+                  <div class="chart-val">34</div>
+                  <div class="chart-bar" style="height:46px;"></div>
+                  <div class="chart-bar-label">Tue</div>
+                </div>
+                <div class="chart-bar-wrap">
+                  <div class="chart-val">42</div>
+                  <div class="chart-bar" style="height:56px;"></div>
+                  <div class="chart-bar-label">Wed</div>
+                </div>
+                <div class="chart-bar-wrap">
+                  <div class="chart-val">38</div>
+                  <div class="chart-bar" style="height:50px;"></div>
+                  <div class="chart-bar-label">Thu</div>
+                </div>
+                <div class="chart-bar-wrap">
+                  <div class="chart-val">51</div>
+                  <div class="chart-bar highlight" style="height:68px;"></div>
+                  <div class="chart-bar-label">Fri</div>
+                </div>
+                <div class="chart-bar-wrap">
+                  <div class="chart-val">62</div>
+                  <div class="chart-bar highlight" style="height:82px;"></div>
+                  <div class="chart-bar-label">Sat</div>
+                </div>
+                <div class="chart-bar-wrap">
+                  <div class="chart-val">44</div>
+                  <div class="chart-bar" style="height:58px;"></div>
+                  <div class="chart-bar-label">Sun</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent activity -->
+            <div class="dcard">
+              <div class="dcard-title">Recent Activity</div>
+              <div class="activity-list">
+                <div class="activity-item">
+                  <div class="activity-icon ai-whatsapp">💬</div>
+                  <div class="activity-text">
+                    <div class="activity-main">Parent contacted via WhatsApp</div>
+                    <div class="activity-sub">From Vrindavan area — Maths Class 10</div>
+                  </div>
+                  <div class="activity-time">2 hrs ago</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-icon ai-review">⭐</div>
+                  <div class="activity-text">
+                    <div class="activity-main">New 5-star review received</div>
+                    <div class="activity-sub">Sunita Gupta — "Excellent teacher!"</div>
+                  </div>
+                  <div class="activity-time">5 hrs ago</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-icon ai-save">🔖</div>
+                  <div class="activity-text">
+                    <div class="activity-main">Parent saved your profile</div>
+                    <div class="activity-sub">From Civil Lines area</div>
+                  </div>
+                  <div class="activity-time">1 day ago</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-icon ai-view">👁</div>
+                  <div class="activity-text">
+                    <div class="activity-main">Profile viewed 18 times</div>
+                    <div class="activity-sub">12 from Maths search, 6 from Physics</div>
+                  </div>
+                  <div class="activity-time">Today</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Verify + Quick actions -->
+          <div style="display:flex;flex-direction:column;gap:14px;">
+
+            <!-- Verification -->
+            <div class="verify-box">
+              <div class="vb-icon">🏅</div>
+              <div>
+                <div class="vb-title">Get Verified</div>
+                <div class="vb-desc">Verified teachers appear at the top of search results and get 3x more profile views.</div>
+              </div>
+              <div class="vb-perks">
+                <div class="vb-perk"><div class="vb-perk-dot"></div>Top of search results</div>
+                <div class="vb-perk"><div class="vb-perk-dot"></div>Verified badge on profile</div>
+                <div class="vb-perk"><div class="vb-perk-dot"></div>3× more views on average</div>
+                <div class="vb-perk"><div class="vb-perk-dot"></div>Higher parent trust</div>
+              </div>
+              <button class="btn-verify">📄 Upload & Request Verification</button>
+            </div>
+
+            <!-- Quick share -->
+            <div class="dcard">
+              <div class="dcard-title">Share Your Profile</div>
+              <div style="background:var(--ivory2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:12px;word-break:break-all;line-height:1.6;">
+                docent.in/teacher/priya-sharma-civil-lines
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button style="flex:1;padding:9px;background:var(--navy);color:white;border:none;border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;">📋 Copy Link</button>
+                <button style="flex:1;padding:9px;background:#25D366;color:white;border:none;border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;font-family:'Outfit',sans-serif;">💬 Share on WhatsApp</button>
+              </div>
+            </div>
+
+            <!-- Profile preview card -->
+            <div class="dcard" style="padding:0;overflow:hidden;">
+              <div style="padding:16px 20px 12px;border-bottom:1px solid var(--border);">
+                <div class="dcard-title" style="margin-bottom:0;">How Parents See You</div>
+              </div>
+              <div style="padding:16px 20px;">
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                  <div style="width:46px;height:46px;border-radius:50%;background:var(--saffron-mid);display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:17px;font-weight:700;color:var(--navy);border:2px solid white;box-shadow:0 0 0 2px var(--border);">PS</div>
+                  <div>
+                    <div style="font-family:'Fraunces',serif;font-size:15px;font-weight:500;color:var(--navy);">Priya Sharma</div>
+                    <div style="font-size:11px;color:var(--muted);">📍 Civil Lines · 7 yrs exp</div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:5px;margin-bottom:8px;">
+                  <span class="badge badge-verified" style="font-size:10px;padding:3px 8px;">✓ Verified</span>
+                  <span class="badge badge-founding" style="font-size:10px;padding:3px 8px;">★ Founding</span>
+                </div>
+                <div style="display:flex;gap:5px;margin-bottom:10px;">
+                  <span class="subj-pill" style="font-size:11px;padding:4px 10px;">Maths</span>
+                  <span class="subj-pill" style="font-size:11px;padding:4px 10px;">Physics</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                  <div style="font-family:'Fraunces',serif;font-size:20px;font-weight:400;color:var(--navy);">₹1,200 <span style="font-size:11px;font-weight:300;color:var(--muted);">/mo</span></div>
+                  <div style="display:flex;align-items:center;gap:3px;font-size:12px;color:var(--muted);">⭐ 4.9 (48)</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="height:4rem;"></div>
+
+</body>
+</html>

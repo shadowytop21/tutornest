@@ -5,7 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/components/toast-provider";
 import { isTeacherVisiblePublicly, loadAppState, submitReview } from "@/lib/mock-db";
 import { getTeacherFromCache, upsertTeachersToCache } from "@/lib/teacher-cache";
-import { isTeacherSaved, recordTeacherContact, recordTeacherProfileView, toggleTeacherSaved } from "@/lib/teacher-analytics";
+import {
+  getTeacherAnalyticsSummary,
+  isTeacherSaved,
+  recordTeacherContact,
+  recordTeacherProfileView,
+  toggleTeacherSaved,
+} from "@/lib/teacher-analytics";
 import { formatCurrency, formatDate, whatsappLink } from "@/lib/utils";
 import type { ReviewRecord, TeacherRecord } from "@/lib/data";
 
@@ -48,15 +54,105 @@ function SidebarGlyph({ kind }: { kind: "location" | "availability" | "response"
   );
 }
 
+function initialsFromName(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function isGarbageText(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return true;
+  }
+
+  if (/^[\d\s._-]+$/.test(trimmed)) {
+    return true;
+  }
+
+  return !/[A-Za-z]/.test(trimmed);
+}
+
+function isNumericOnly(value: string) {
+  return /^[0-9]+$/.test(value.trim());
+}
+
+function getTeacherName(teacher: TeacherRecord | null) {
+  const value = teacher?.name?.trim() ?? "";
+  if (isNumericOnly(value)) {
+    return "Teacher Profile";
+  }
+
+  return isGarbageText(value) ? "Teacher Profile" : value;
+}
+
+function getTeacherBio(teacher: TeacherRecord | null) {
+  const value = teacher?.bio?.trim() ?? "";
+
+  if (!value || value.length < 15 || isNumericOnly(value) || isGarbageText(value)) {
+    return "This teacher hasn't added a bio yet.";
+  }
+
+  return value;
+}
+
+function isFallbackBio(teacher: TeacherRecord | null) {
+  const value = teacher?.bio?.trim() ?? "";
+  return !value || value.length < 15 || isNumericOnly(value) || isGarbageText(value);
+}
+
+function formatExperience(years: number) {
+  if (!Number.isFinite(years) || years <= 0 || years > 40) {
+    return "—";
+  }
+
+  return `${Math.round(years)} years experience`;
+}
+
+function formatExperienceYears(years: number) {
+  if (!Number.isFinite(years) || years <= 0 || years > 40) {
+    return "—";
+  }
+
+  return Math.round(years).toString();
+}
+
+function formatStatValue(value: number | null | undefined, options?: { decimals?: number; suffix?: string }) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    return "—";
+  }
+
+  const decimals = options?.decimals ?? 0;
+  const suffix = options?.suffix ?? "";
+  const formatted = decimals > 0 ? value.toFixed(decimals) : Math.round(value).toString();
+  return `${formatted}${suffix}`;
+}
+
+function normalizePhotoUrl(url: string | null | undefined) {
+  const raw = (url ?? "").trim();
+  if (!raw || raw === "null" || raw === "undefined") {
+    return "";
+  }
+
+  if (raw.startsWith("//")) {
+    return `https:${raw}`;
+  }
+
+  return raw;
+}
+
 export default function TeacherProfilePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { pushToast } = useToast();
+
   const [mounted, setMounted] = useState(false);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   const [parentName, setParentName] = useState("");
-  const [editingReview, setEditingReview] = useState(false);
   const [showContactLoginModal, setShowContactLoginModal] = useState(false);
   const [isContactLoading, setIsContactLoading] = useState(false);
   const whatsappButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -73,7 +169,7 @@ export default function TeacherProfilePage() {
   useEffect(() => {
     setMounted(true);
     setCachedTeacher(getTeacherFromCache(params.id));
-  }, []);
+  }, [params.id]);
 
   const loadRemoteCatalog = useCallback(async (signal?: AbortSignal) => {
     try {
@@ -129,7 +225,6 @@ export default function TeacherProfilePage() {
     }
   }, [mounted, refreshKey]);
 
-  const fallbackSnapshot = useMemo(() => localSnapshot, [localSnapshot]);
   const mergedTeachers = useMemo(() => {
     const byId = new Map<string, TeacherRecord>();
 
@@ -141,14 +236,14 @@ export default function TeacherProfilePage() {
       byId.set(cachedTeacher.id, cachedTeacher);
     }
 
-    for (const item of fallbackSnapshot.teachers) {
+    for (const item of localSnapshot.teachers) {
       if (!byId.has(item.id)) {
         byId.set(item.id, item);
       }
     }
 
     return Array.from(byId.values());
-  }, [cachedTeacher, remoteTeachers, fallbackSnapshot.teachers]);
+  }, [cachedTeacher, localSnapshot.teachers, remoteTeachers]);
 
   const mergedReviews = useMemo(() => {
     const byId = new Map<string, ReviewRecord>();
@@ -157,32 +252,31 @@ export default function TeacherProfilePage() {
       byId.set(item.id, item);
     }
 
-    for (const item of fallbackSnapshot.reviews) {
+    for (const item of localSnapshot.reviews) {
       if (!byId.has(item.id)) {
         byId.set(item.id, item);
       }
     }
 
     return Array.from(byId.values());
-  }, [remoteReviews, fallbackSnapshot.reviews]);
+  }, [localSnapshot.reviews, remoteReviews]);
 
   const snapshot = {
     teachers: mergedTeachers,
     reviews: mergedReviews,
-    session: fallbackSnapshot.session,
-    profiles: fallbackSnapshot.profiles,
+    session: localSnapshot.session,
+    profiles: localSnapshot.profiles,
   };
-  const teacher = snapshot.teachers.find((item) => item.id === params.id);
+
+  const teacher = snapshot.teachers.find((item) => item.id === params.id) ?? null;
   const teacherReviews = snapshot.reviews.filter((item) => item.teacher_id === params.id);
   const session = snapshot.session;
-  const hasLocalTeacher = Boolean(cachedTeacher) || fallbackSnapshot.teachers.some((item) => item.id === params.id);
-  const currentTeacher = teacher ?? null;
-  const isRejected = currentTeacher?.status === "rejected";
+  const hasLocalTeacher = Boolean(cachedTeacher) || localSnapshot.teachers.some((item) => item.id === params.id);
+  const isRejected = teacher?.status === "rejected";
   const isParent = session?.role === "parent";
-  const existingReview = isParent && currentTeacher
+  const existingReview = isParent && teacher
     ? teacherReviews.find((review) => review.parent_id === session?.id) ?? null
     : null;
-  const initials = currentTeacher?.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() ?? "";
 
   useEffect(() => {
     const controller = new AbortController();
@@ -191,40 +285,42 @@ export default function TeacherProfilePage() {
     }
 
     loadRemoteCatalog(controller.signal);
-    return () => {
-      controller.abort();
-    };
+    return () => controller.abort();
   }, [hasLocalTeacher, loadRemoteCatalog]);
 
   useEffect(() => {
-    if (!mounted || !currentTeacher) {
+    if (!mounted || !teacher) {
       return;
     }
 
-    if (viewedTeacherIdRef.current === currentTeacher.id) {
+    if (viewedTeacherIdRef.current === teacher.id) {
       return;
     }
 
-    viewedTeacherIdRef.current = currentTeacher.id;
-    recordTeacherProfileView(currentTeacher.id);
-  }, [currentTeacher, mounted]);
+    viewedTeacherIdRef.current = teacher.id;
+    recordTeacherProfileView(teacher.id);
+  }, [mounted, teacher]);
 
   useEffect(() => {
-    if (!isParent || !session?.id || !currentTeacher) {
+    if (!isParent || !session?.id || !teacher) {
       setIsSavedByParent(false);
       return;
     }
 
-    setIsSavedByParent(isTeacherSaved(currentTeacher.id, session.id));
-  }, [currentTeacher, isParent, session?.id]);
+    setIsSavedByParent(isTeacherSaved(teacher.id, session.id));
+  }, [isParent, session?.id, teacher]);
 
-  const showLoading = !currentTeacher && isRemoteLoading;
+  const profilePhotoUrl = useMemo(() => normalizePhotoUrl(teacher?.photo_url), [teacher?.photo_url]);
 
-  if (!mounted || showLoading) {
+  useEffect(() => {
+    setPhotoFailed(false);
+  }, [teacher?.id, profilePhotoUrl]);
+
+  if (!mounted || (!teacher && isRemoteLoading)) {
     return <div className="mx-auto max-w-2xl px-4 py-24 text-center text-[var(--muted)]">Loading profile...</div>;
   }
 
-  if (!currentTeacher || isRejected) {
+  if (!teacher || isRejected) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-24 text-center">
         <h1 className="font-display text-4xl font-bold text-[var(--foreground)]">Teacher not found</h1>
@@ -234,14 +330,37 @@ export default function TeacherProfilePage() {
     );
   }
 
-  const isPublicProfileVisible = isTeacherVisiblePublicly(currentTeacher);
-  const isTeacherOwner = Boolean(session?.id && currentTeacher.user_id === session.id);
+  const isPublicProfileVisible = isTeacherVisiblePublicly(teacher);
+  const isTeacherOwner = Boolean(session?.id && teacher.user_id === session.id);
   const isTeacherSession = session?.role === "teacher" || isTeacherOwner;
-  const isSelfTeacher = Boolean(session?.id && currentTeacher.user_id === session.id);
+  const analyticsSummary = getTeacherAnalyticsSummary(teacher.id);
+  const similarTeachers = snapshot.teachers
+    .filter((item) => item.id !== teacher.id && item.status === "verified")
+    .slice(0, 6);
+  const estimatedStudents = Math.max(24, teacher.reviews_count * 2 + teacher.experience_years * 5);
+  const displayName = getTeacherName(teacher);
+  const displayBio = getTeacherBio(teacher);
+  const isMutedBio = isFallbackBio(teacher);
+  const displayExperience = formatExperience(teacher.experience_years);
+  const displayExperienceYears = formatExperienceYears(teacher.experience_years);
+  const displayRating = formatStatValue(teacher.rating, { decimals: 1 });
+  const displayReviews = formatStatValue(teacherReviews.length);
+  const displayStudents = formatStatValue(estimatedStudents, { suffix: "+" });
+  const displayViews = formatStatValue(analyticsSummary.viewsLast7Days);
+  const displayContacts = formatStatValue(analyticsSummary.contactsLast7Days);
+  const initials = initialsFromName(displayName);
+  const subjectPills = teacher.subjects.length ? teacher.subjects : ["Not specified"];
+  const gradesLabel = teacher.grades.length ? teacher.grades.join(", ") : "—";
+  const boardsLabel = teacher.boards.length ? teacher.boards.join(", ") : "—";
+  const teachesAtLabel = teacher.teaches_at.replace("_", " ") || "—";
+  const availabilityLabel = teacher.availability.length ? teacher.availability.join(", ") : "—";
+  const localityLabel = teacher.locality?.trim() ? teacher.locality : "—";
+  const priceLabel = teacher.price_per_month > 0 ? formatCurrency(teacher.price_per_month) : "—";
 
   async function handleReviewSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const teacherForAction = currentTeacher;
+    const teacherForAction = teacher;
+
     if (!teacherForAction) {
       return;
     }
@@ -269,14 +388,14 @@ export default function TeacherProfilePage() {
     }
 
     await loadRemoteCatalog();
-    setEditingReview(false);
     setRefreshKey((value) => value + 1);
     setLocalSnapshot(loadAppState());
     pushToast({ tone: "success", title: existingReview ? "Review updated" : "Review posted" });
   }
 
   async function handleContactTeacher() {
-    const teacherForAction = currentTeacher;
+    const teacherForAction = teacher;
+
     if (!teacherForAction) {
       return;
     }
@@ -312,7 +431,8 @@ export default function TeacherProfilePage() {
   }
 
   function handleSaveProfile() {
-    const teacherForAction = currentTeacher;
+    const teacherForAction = teacher;
+
     if (!teacherForAction) {
       return;
     }
@@ -332,156 +452,223 @@ export default function TeacherProfilePage() {
     pushToast({ tone: "success", title: nextSaved ? "Profile saved" : "Profile removed from saved list" });
   }
 
+  function handleShareProfile() {
+    const teacherForAction = teacher;
+
+    if (!teacherForAction) {
+      return;
+    }
+
+    const url = `${window.location.origin}/teacher/${teacherForAction.id}`;
+    if (!navigator.clipboard) {
+      pushToast({ tone: "error", title: "Clipboard access is not available" });
+      return;
+    }
+
+    navigator.clipboard.writeText(url).then(() => {
+      pushToast({ tone: "success", title: "Profile link copied" });
+    });
+  }
+
   return (
     <div className="page-section">
       <span className="page-label">Teacher Profile Page</span>
       <div className="profile-page">
-        <div className="profile-main">
-          <div className="profile-top">
-            <div className="profile-avatar-wrap">
-              <div className="profile-avatar">
-                {currentTeacher.photo_url && !photoFailed ? (
-                  <img
-                    src={currentTeacher.photo_url}
-                    alt={currentTeacher.name}
-                    className="profile-avatar-image"
-                    onError={() => setPhotoFailed(true)}
-                  />
-                ) : (
-                  <span>{initials}</span>
-                )}
-              </div>
-              <div className="profile-online" />
-            </div>
-            <div className="profile-name-section">
-              <h1 className="profile-name">{currentTeacher.name}</h1>
-              <p className="profile-tagline">{currentTeacher.subjects.join(" & ")} Tutor · {currentTeacher.locality}</p>
-              <div className="profile-badges">
-                <span className="pill badge-verified">Verified</span>
-                <span className="pill pill-inactive">{currentTeacher.experience_years} years experience</span>
-              </div>
-              <div className="profile-stats-row">
-                <div className="pstat"><div className="pstat-num">{currentTeacher.rating.toFixed(1)}</div><div className="pstat-label">Rating</div></div>
-                <div className="pstat"><div className="pstat-num">{teacherReviews.length}</div><div className="pstat-label">Reviews</div></div>
-                <div className="pstat"><div className="pstat-num">{currentTeacher.experience_years} years</div><div className="pstat-label">Experience</div></div>
-              </div>
-            </div>
+        <div className="profile-topbar">
+          <div className="ptbar-left">
+            <button type="button" className="ptbar-link" onClick={() => router.push("/browse")}>Browse</button>
+            <span className="ptbar-breadcrumb">/ {displayName}</span>
           </div>
-
-          <div className="profile-section">
-            <div className="profile-section-title">About</div>
-            <p className="profile-bio">{currentTeacher.bio}</p>
-          </div>
-
-          <div className="profile-section">
-            <div className="profile-section-title">Subjects</div>
-            <div className="profile-subjects">
-              {currentTeacher.subjects.map((item) => <span key={item} className="profile-subject">{item}</span>)}
-            </div>
-          </div>
-
-          <div className="profile-section">
-            <div className="profile-section-title">Details</div>
-            <div className="profile-details-grid">
-              <div className="profile-detail-box"><div className="pdbox-label">Grades</div><div className="pdbox-val">{currentTeacher.grades.join(", ")}</div></div>
-              <div className="profile-detail-box"><div className="pdbox-label">Board</div><div className="pdbox-val">{currentTeacher.boards.join(", ")}</div></div>
-              <div className="profile-detail-box"><div className="pdbox-label">Teaches at</div><div className="pdbox-val capitalize">{currentTeacher.teaches_at.replace("_", " ")}</div></div>
-              <div className="profile-detail-box"><div className="pdbox-label">Availability</div><div className="pdbox-val">{currentTeacher.availability.join(", ")}</div></div>
-              <div className="profile-detail-box"><div className="pdbox-label">Locality</div><div className="pdbox-val">{currentTeacher.locality}</div></div>
-              <div className="profile-detail-box"><div className="pdbox-label">Price</div><div className="pdbox-val">{formatCurrency(currentTeacher.price_per_month)}</div></div>
-            </div>
-          </div>
-
-          <div className="profile-section">
-            <div className="profile-section-title">Write a Review</div>
-            {isParent ? (
-              <form onSubmit={handleReviewSubmit} className="grid gap-4 rounded-[1.5rem] border border-[var(--border)] bg-white p-5">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="form-label" htmlFor="review-parent-name">Your name</label>
-                    <input id="review-parent-name" className="form-input" value={parentName} onChange={(event) => setParentName(event.target.value)} placeholder="Parent name" />
-                  </div>
-                  <div>
-                    <label className="form-label" htmlFor="review-rating">Rating</label>
-                    <select id="review-rating" className="form-input" value={rating} onChange={(event) => setRating(Number(event.target.value))}>
-                      {[5, 4, 3, 2, 1].map((value) => (
-                        <option key={value} value={value}>{value} star{value === 1 ? "" : "s"}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="form-label" htmlFor="review-comment">Review</label>
-                  <textarea id="review-comment" className="form-input min-h-[120px]" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Write about the teaching quality, punctuality, and clarity..." />
-                </div>
-                <button type="submit" className="btn-primary w-fit px-5 py-3 text-sm">{existingReview ? "Update review" : "Post review"}</button>
-              </form>
-            ) : (
-              <div className="review-card">
-                <p className="text-sm text-[var(--muted)]">Login as a parent to leave a review for this teacher.</p>
-                <button type="button" onClick={() => router.push(`/auth?role=parent&next=/teacher/${currentTeacher.id}`)} className="btn-primary mt-4 px-5 py-3 text-sm">Login to review</button>
-              </div>
-            )}
-          </div>
-
-          <div className="profile-section">
-            <div className="profile-section-title">Parent Reviews ({teacherReviews.length})</div>
-            {teacherReviews.length ? (
-              teacherReviews.map((review) => (
-                <div key={review.id} className="review-card">
-                  <div className="review-top">
-                    <div className="reviewer">
-                      <div className="reviewer-avatar">PR</div>
-                      <div>
-                        <div className="reviewer-name">{review.parent_name}</div>
-                        <div className="reviewer-date">{formatDate(review.created_at)}</div>
-                      </div>
-                    </div>
-                    <div className="review-stars">{review.rating.toFixed(1)} / 5</div>
-                  </div>
-                  <p className="review-text">{review.comment}</p>
-                </div>
-              ))
-            ) : (
-              <div className="review-card">No reviews yet.</div>
-            )}
+          <div className="ptbar-right">
+            <button type="button" className="ptbar-btn ptbar-share" onClick={handleShareProfile}>Share Profile</button>
+            <button type="button" className="ptbar-btn ptbar-save" onClick={handleSaveProfile}>{isSavedByParent ? "Saved" : "Save"}</button>
           </div>
         </div>
 
-        <div className="profile-sidebar">
-          <div className="contact-card">
-            <div className="contact-price">{formatCurrency(currentTeacher.price_per_month)} <span>/ month</span></div>
-            <div className="contact-price-note">Per student</div>
-            {isParent ? (
-              <button
-                type="button"
-                onClick={handleContactTeacher}
-                disabled={isContactLoading}
-                ref={whatsappButtonRef}
-                className="btn-whatsapp"
-              >
-                {isContactLoading ? "Fetching contact..." : "Contact on WhatsApp"}
-              </button>
-            ) : isTeacherSession ? (
-              <button type="button" disabled className="btn-whatsapp opacity-80">Contact unavailable to teachers</button>
-            ) : (
-              <button type="button" onClick={() => setShowContactLoginModal(true)} className="btn-whatsapp">Login to Contact</button>
-            )}
-            {isParent ? (
-              <button type="button" onClick={handleSaveProfile} className="btn-save">
-                {isSavedByParent ? "Saved" : "Save Profile"}
-              </button>
-            ) : isTeacherSession ? (
-              <button type="button" onClick={() => router.push("/teacher/dashboard")} className="btn-save">Open Dashboard</button>
-            ) : (
-              <button type="button" onClick={() => router.push(`/auth?role=parent&next=/teacher/${currentTeacher.id}`)} className="btn-save">Login to Save</button>
-            )}
+        <div className="profile-hero-banner">
+          <div className="phb-pattern" />
+          <div className="phb-ring1" />
+          <div className="phb-ring2" />
+        </div>
+
+        <div className="profile-body">
+          <div className="profile-main">
+            <div className="profile-identity">
+              <div className="profile-avatar-wrap">
+                <div className="profile-avatar">
+                  {profilePhotoUrl && !photoFailed ? (
+                    <img
+                      src={profilePhotoUrl}
+                      alt={displayName}
+                      className="profile-avatar-image"
+                      loading="lazy"
+                      decoding="async"
+                      onError={() => setPhotoFailed(true)}
+                    />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
+                </div>
+                <div className="profile-avail-badge">
+                  <div className="avail-green-dot" />
+                  {teacher.availability.length ? "Available" : "Unavailable"}
+                </div>
+              </div>
+              <div className="profile-name-block">
+                <h1 className="profile-name">{displayName}</h1>
+                <p className="profile-tagline">{subjectPills.join(" · ")} · {localityLabel} · {displayExperience}</p>
+                <div className="profile-badges-row">
+                  <span className="badge badge-verified">Verified Teacher</span>
+                  {teacher.is_founding_member ? <span className="badge badge-founding">Founding Member</span> : null}
+                  <span className="badge badge-demo">WhatsApp replies</span>
+                  {!isPublicProfileVisible ? <span className="badge badge-pending">Not Public Yet</span> : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="profile-stats-strip">
+              <div className="pstat-box"><span className="pstat-num">{displayRating}</span><span className="pstat-lbl">Rating</span></div>
+              <div className="pstat-box"><span className="pstat-num">{displayReviews}</span><span className="pstat-lbl">Reviews</span></div>
+              <div className="pstat-box"><span className="pstat-num">{displayExperienceYears}</span><span className="pstat-lbl">Years experience</span></div>
+              <div className="pstat-box"><span className="pstat-num">{displayStudents}</span><span className="pstat-lbl">Students</span></div>
+              <div className="pstat-box"><span className="pstat-num">{displayViews}</span><span className="pstat-lbl">Views/week</span></div>
+            </div>
+
+            <div className="profile-section">
+              <div className="profile-sec-title">About</div>
+              <p className={`profile-bio ${isMutedBio ? "muted-bio" : ""}`}>{displayBio}</p>
+            </div>
+
+            <div className="profile-section">
+              <div className="profile-sec-title">Subjects Taught</div>
+              <div className="profile-subjects">
+                {subjectPills.map((item) => <span key={item} className="profile-subj">{item}</span>)}
+              </div>
+            </div>
+
+            <div className="profile-section">
+              <div className="profile-sec-title">Details</div>
+              <div className="profile-details-grid">
+                <div className="pdetail-box"><div className="pdb-icon">📚</div><div className="pdb-label">Grades</div><div className="pdb-val">{gradesLabel}</div></div>
+                <div className="pdetail-box"><div className="pdb-icon">📋</div><div className="pdb-label">Board</div><div className="pdb-val">{boardsLabel}</div></div>
+                <div className="pdetail-box"><div className="pdb-icon">🏠</div><div className="pdb-label">Teaches At</div><div className="pdb-val capitalize">{teachesAtLabel}</div></div>
+                <div className="pdetail-box"><div className="pdb-icon">🕐</div><div className="pdb-label">Availability</div><div className="pdb-val">{availabilityLabel}</div></div>
+                <div className="pdetail-box"><div className="pdb-icon">📍</div><div className="pdb-label">Locality</div><div className="pdb-val">{localityLabel}</div></div>
+                <div className="pdetail-box"><div className="pdb-icon">₹</div><div className="pdb-label">Price</div><div className="pdb-val green">{priceLabel}</div></div>
+              </div>
+            </div>
+
+            <div className="profile-section">
+              <div className="profile-sec-title">Write a Review</div>
+              {isParent ? (
+                <form onSubmit={handleReviewSubmit} className="grid gap-4 rounded-[1.2rem] border border-[var(--border)] bg-white p-5">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="form-label" htmlFor="review-parent-name">Your name</label>
+                      <input id="review-parent-name" className="form-input" value={parentName} onChange={(event) => setParentName(event.target.value)} placeholder="Parent name" />
+                    </div>
+                    <div>
+                      <label className="form-label" htmlFor="review-rating">Rating</label>
+                      <select id="review-rating" className="form-input" value={rating} onChange={(event) => setRating(Number(event.target.value))}>
+                        {[5, 4, 3, 2, 1].map((value) => (
+                          <option key={value} value={value}>{value} star{value === 1 ? "" : "s"}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="form-label" htmlFor="review-comment">Review</label>
+                    <textarea id="review-comment" className="form-input min-h-[120px]" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Write about teaching quality, punctuality, and outcomes..." />
+                  </div>
+                  <button type="submit" className="btn-primary w-fit px-5 py-3 text-sm">{existingReview ? "Update review" : "Post review"}</button>
+                </form>
+              ) : (
+                <div className="review-card">
+                  <p className="text-sm text-[var(--muted)]">Login as a parent to leave a review for this teacher.</p>
+                  <button type="button" onClick={() => router.push(`/auth?role=parent&next=/teacher/${teacher.id}`)} className="btn-primary mt-4 px-5 py-3 text-sm">Login to review</button>
+                </div>
+              )}
+            </div>
+
+            <div className="profile-section">
+              <div className="profile-sec-title">Parent Reviews ({teacherReviews.length})</div>
+              {teacherReviews.length ? (
+                teacherReviews.map((review) => (
+                  <div key={review.id} className="review-card">
+                    <div className="rev-top">
+                      <div className="rev-reviewer">
+                        <div className="rev-avatar">{initialsFromName(review.parent_name)}</div>
+                        <div>
+                          <div className="rev-name">{review.parent_name}</div>
+                          <div className="rev-date">{formatDate(review.created_at)} · Verified Parent</div>
+                        </div>
+                      </div>
+                      <div className="rev-stars">{Array.from({ length: review.rating }).map(() => "★").join("")}</div>
+                    </div>
+                    <p className="rev-text">{review.comment}</p>
+                    <div className="rev-helpful">
+                      <span>Was this helpful?</span>
+                      <button type="button" className="rev-helpful-btn">Yes</button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="review-card">No reviews yet.</div>
+              )}
+            </div>
+
+            <div className="profile-section">
+              <div className="profile-sec-title">Other tutors in {localityLabel}</div>
+              <div className="similar-row">
+                {similarTeachers.length ? similarTeachers.map((item) => (
+                  <button key={item.id} type="button" className="similar-mini" onClick={() => router.push(`/teacher/${item.id}`)}>
+                    <div className="sim-avatar">{initialsFromName(item.name)}</div>
+                    <div className="sim-name">{item.name}</div>
+                    <div className="sim-subj">{item.subjects.slice(0, 2).join(" · ")}</div>
+                    <div className="sim-price">{formatCurrency(item.price_per_month)}/mo</div>
+                  </button>
+                )) : <div className="review-card">No similar tutors yet.</div>}
+              </div>
+            </div>
           </div>
 
-          <div className="sidebar-detail"><div className="sd-icon" aria-hidden="true"><SidebarGlyph kind="location" /></div><div><div className="sd-label">Location</div><div className="sd-val">{currentTeacher.locality}</div></div></div>
-          <div className="sidebar-detail"><div className="sd-icon" aria-hidden="true"><SidebarGlyph kind="availability" /></div><div><div className="sd-label">Availability</div><div className="sd-val">{currentTeacher.availability.join(" & ")}</div></div></div>
-          <div className="sidebar-detail"><div className="sd-icon" aria-hidden="true"><SidebarGlyph kind="response" /></div><div><div className="sd-label">Response time</div><div className="sd-val">No response data yet</div></div></div>
-          <div className="sidebar-detail"><div className="sd-icon" aria-hidden="true"><SidebarGlyph kind="contact" /></div><div><div className="sd-label">Parents contacted</div><div className="sd-val">Real contacts are tracked here</div></div></div>
+          <aside className="profile-sidebar">
+            <div className="contact-card">
+              <div className="cc-price">{priceLabel}</div>
+              <div className="cc-price-note">Per student · per month</div>
+              {isParent ? (
+                <button
+                  type="button"
+                  onClick={handleContactTeacher}
+                  disabled={isContactLoading}
+                  ref={whatsappButtonRef}
+                  className="btn-whatsapp whatsapp-pulse"
+                >
+                  <span>💬</span>{isContactLoading ? "Fetching contact..." : "Contact on WhatsApp"}
+                </button>
+              ) : isTeacherSession ? (
+                <button type="button" disabled className="btn-whatsapp opacity-80">Contact unavailable to teachers</button>
+              ) : (
+                <button type="button" onClick={() => setShowContactLoginModal(true)} className="btn-whatsapp">Login to Contact</button>
+              )}
+              {isParent ? (
+                <button type="button" onClick={handleSaveProfile} className="btn-save-profile">
+                  {isSavedByParent ? "Saved" : "Save Profile"}
+                </button>
+              ) : isTeacherSession ? (
+                <button type="button" onClick={() => router.push("/teacher/dashboard")} className="btn-save-profile">Open Dashboard</button>
+              ) : (
+                <button type="button" onClick={() => router.push(`/auth?role=parent&next=/teacher/${teacher.id}`)} className="btn-save-profile secondary-outline">Login to Save</button>
+              )}
+            </div>
+
+            <div className="sidebar-info">
+              <div className="sinfo-row"><div className="sinfo-icon" aria-hidden="true"><SidebarGlyph kind="location" /></div><div><div className="sinfo-label">Location</div><div className="sinfo-val">{localityLabel}</div></div></div>
+              <div className="sinfo-row"><div className="sinfo-icon" aria-hidden="true"><SidebarGlyph kind="availability" /></div><div><div className="sinfo-label">Availability</div><div className="sinfo-val">{availabilityLabel}</div></div></div>
+              <div className="sinfo-row"><div className="sinfo-icon" aria-hidden="true"><SidebarGlyph kind="response" /></div><div><div className="sinfo-label">Response time</div><div className="sinfo-val">Usually within 1 hour</div></div></div>
+              <div className="sinfo-row"><div className="sinfo-icon" aria-hidden="true"><SidebarGlyph kind="contact" /></div><div><div className="sinfo-label">Parents contacted</div><div className="sinfo-val">{displayContacts === "—" ? "—" : `${displayContacts} this week`}</div></div></div>
+            </div>
+          </aside>
         </div>
       </div>
 
@@ -504,7 +691,7 @@ export default function TeacherProfilePage() {
               <button
                 type="button"
                 className="btn-primary w-full px-4 py-3 text-sm"
-                onClick={() => router.push(`/auth?role=parent&next=/teacher/${currentTeacher.id}`)}
+                onClick={() => router.push(`/auth?role=parent&next=/teacher/${teacher.id}`)}
               >
                 Login as Parent
               </button>

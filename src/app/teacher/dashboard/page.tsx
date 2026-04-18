@@ -7,28 +7,45 @@ import { useToast } from "@/components/toast-provider";
 import { loadAppState } from "@/lib/mock-db";
 import { getTeacherAnalyticsSummary } from "@/lib/teacher-analytics";
 
+function makeWeeklyBars(total: number) {
+  const base = [0.11, 0.12, 0.13, 0.12, 0.16, 0.2, 0.16];
+  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const values = base.map((ratio) => Math.max(0, Math.round(total * ratio)));
+  const peak = Math.max(...values, 1);
+
+  return labels.map((label, index) => ({
+    label,
+    value: values[index],
+    height: 26 + Math.round((values[index] / peak) * 64),
+    highlight: index >= 4,
+  }));
+}
+
 export default function TeacherDashboardPage() {
   const router = useRouter();
   const { pushToast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [analyticsTick, setAnalyticsTick] = useState(0);
+  const [isAccepting, setIsAccepting] = useState(true);
+
   const snapshot = loadAppState();
   const session = snapshot.session;
   const teacher = session ? snapshot.teachers.find((item) => item.user_id === session.id || item.name === session.name) : null;
   const teacherId = teacher?.id ?? "";
+
   const analytics = useMemo(
     () => (teacherId ? getTeacherAnalyticsSummary(teacherId) : { viewsLast7Days: 0, contactsLast7Days: 0, savedCount: 0, lastViewedAt: null, lastContactedAt: null, lastSavedAt: null }),
     [teacherId, analyticsTick],
   );
 
   useEffect(() => {
-    const snapshot = loadAppState();
-    if (!snapshot.session) {
+    const freshSnapshot = loadAppState();
+    if (!freshSnapshot.session) {
       router.replace("/auth");
       return;
     }
 
-    if (snapshot.session.role !== "teacher") {
+    if (freshSnapshot.session.role !== "teacher") {
       router.replace("/browse");
       return;
     }
@@ -46,7 +63,6 @@ export default function TeacherDashboardPage() {
     refreshAnalytics();
     window.addEventListener("docent-teacher-analytics-change", refreshAnalytics);
     window.addEventListener("storage", refreshAnalytics);
-
     const intervalId = window.setInterval(refreshAnalytics, 15000);
 
     return () => {
@@ -60,7 +76,7 @@ export default function TeacherDashboardPage() {
     return <div className="mx-auto max-w-2xl px-4 py-24 text-center text-[var(--muted)]">Loading dashboard...</div>;
   }
 
-  if (!teacher) {
+  if (!teacher || !session) {
     return (
       <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center px-4 py-16 sm:px-6 lg:px-8">
         <div className="card-surface w-full rounded-[2rem] p-10 text-center">
@@ -75,25 +91,23 @@ export default function TeacherDashboardPage() {
     );
   }
 
-  const currentSession = session!;
-  const currentTeacher = teacher!;
-
-  const profileCompletionItems = useMemo(() => {
-    const items = [
-      { label: "Profile photo uploaded", done: Boolean(currentTeacher.photo_url) },
-      { label: "Bio written", done: Boolean(currentTeacher.bio.trim()) },
-      { label: "Subjects & grades filled", done: currentTeacher.subjects.length > 0 && currentTeacher.grades.length > 0 },
-      { label: "Location & price set", done: Boolean(currentTeacher.locality.trim()) && currentTeacher.price_per_month > 0 },
-      { label: "WhatsApp number added", done: Boolean(currentTeacher.whatsapp_number.trim()) },
-    ];
-
-    return items;
-  }, [currentTeacher.bio, currentTeacher.grades.length, currentTeacher.locality, currentTeacher.photo_url, currentTeacher.price_per_month, currentTeacher.subjects.length, currentTeacher.whatsapp_number]);
+  const profileCompletionItems = [
+    { label: "Profile photo uploaded", done: Boolean(teacher.photo_url), pct: "+20%" },
+    { label: "Bio written", done: Boolean(teacher.bio.trim()), pct: "+10%" },
+    { label: "Subjects & grades filled", done: teacher.subjects.length > 0 && teacher.grades.length > 0, pct: "+30%" },
+    { label: "Location & price set", done: Boolean(teacher.locality.trim()) && teacher.price_per_month > 0, pct: "+20%" },
+    { label: "WhatsApp number added", done: Boolean(teacher.whatsapp_number.trim()), pct: "+20%" },
+  ];
 
   const completionPercent = Math.round((profileCompletionItems.filter((item) => item.done).length / profileCompletionItems.length) * 100);
+  const weeklyBars = makeWeeklyBars(analytics.viewsLast7Days);
 
   function copyProfileLink() {
-    const profileUrl = `${window.location.origin}/teacher/${currentTeacher.id}`;
+    if (!teacher) {
+      return;
+    }
+
+    const profileUrl = `${window.location.origin}/teacher/${teacher.id}`;
 
     if (!navigator.clipboard) {
       pushToast({ tone: "error", title: "Clipboard access is not available" });
@@ -105,135 +119,193 @@ export default function TeacherDashboardPage() {
     });
   }
 
-  const completionItems = [
-    ...profileCompletionItems,
-  ];
-
   return (
     <div className="page-section">
       <span className="page-label">Teacher Dashboard</span>
-      <div className="dashboard-layout">
-        <div className="dash-sidebar">
-          <div className="dash-sidebar-profile">
-            <div className="dash-sidebar-kicker">
-              Logged in as
-            </div>
-            <div className="dash-sidebar-name">{currentSession.name}</div>
-            <div className="dash-sidebar-role">Teacher</div>
+      <div className="dashboard-wrapper">
+        <aside className="dash-sidebar">
+          <div className="dsb-logo">
+            <div className="dsb-logo-mark">D</div>
+            <span className="dsb-logo-text">Docent</span>
           </div>
-          <Link href="/teacher/dashboard" className="dash-nav-item active" aria-current="page"><span className="dash-nav-icon">DB</span> Dashboard</Link>
-          <Link href={`/teacher/${currentTeacher.id}`} className="dash-nav-item"><span className="dash-nav-icon">PR</span> My Profile</Link>
-          <Link href="#analytics" className="dash-nav-item"><span className="dash-nav-icon">AN</span> Analytics</Link>
-          <Link href="#reviews" className="dash-nav-item"><span className="dash-nav-icon">RV</span> Reviews</Link>
-          <div className="dash-nav-divider" />
-          <Link href="/teacher/setup?edit=1" className="dash-nav-item"><span className="dash-nav-icon">ST</span> Settings</Link>
-          <button type="button" onClick={copyProfileLink} className="dash-nav-item dash-nav-button w-full text-left"><span className="dash-nav-icon">LK</span> Copy Link</button>
-        </div>
+
+          <div className="dsb-user">
+            <div className="dsb-user-avatar">{session.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</div>
+            <div>
+              <div className="dsb-user-name">{session.name}</div>
+              <div className="dsb-user-status"><div className="dsb-user-dot" /> Profile Live</div>
+            </div>
+          </div>
+
+          <div className="dsb-nav">
+            <div className="dsb-nav-section">Main</div>
+            <Link href="/teacher/dashboard" className="dsb-nav-item active"><span className="dsb-nav-icon">DB</span> Dashboard</Link>
+            <Link href={`/teacher/${teacher.id}`} className="dsb-nav-item"><span className="dsb-nav-icon">PR</span> My Profile</Link>
+            <Link href="/teacher/setup?edit=1" className="dsb-nav-item"><span className="dsb-nav-icon">ED</span> Edit Profile</Link>
+
+            <div className="dsb-nav-section">Insights</div>
+            <a href="#analytics" className="dsb-nav-item"><span className="dsb-nav-icon">AN</span> Analytics</a>
+            <a href="#reviews" className="dsb-nav-item"><span className="dsb-nav-icon">RV</span> Reviews <span className="dsb-nav-badge">{teacher.reviews_count}</span></a>
+          </div>
+
+          <div className="dsb-bottom">
+            <button type="button" className="dsb-bottom-btn" onClick={copyProfileLink}><span className="dsb-nav-icon">LK</span> Share profile</button>
+            <button type="button" className="dsb-bottom-btn" onClick={() => router.push("/auth")}><span className="dsb-nav-icon">LO</span> Logout</button>
+          </div>
+        </aside>
 
         <div className="dash-main">
-          <div className="dash-header">
-            <div>
-              <h1 className="dash-title">Welcome back, {currentSession.name}</h1>
-              <p className="dash-sub">Your profile is {currentTeacher.status} · Last updated recently</p>
-            </div>
-            <div className="dash-actions" aria-label="Quick actions">
-              <Link href={`/teacher/${currentTeacher.id}`} className="dash-action-btn">View Profile</Link>
-              <Link href="/teacher/setup?edit=1" className="dash-action-btn">Edit Profile</Link>
-              <button type="button" onClick={copyProfileLink} className="dash-action-btn">Share Link</button>
-            </div>
-          </div>
-
-          <div className="dash-stats">
-            <div className="dash-stat-card">
-              <div className="dash-stat-icon">VW</div>
-              <div className="dash-stat-num">{analytics.viewsLast7Days}</div>
-              <div className="dash-stat-label">Profile views this week</div>
-            </div>
-            <div className="dash-stat-card">
-              <div className="dash-stat-icon">CT</div>
-              <div className="dash-stat-num">{analytics.contactsLast7Days}</div>
-              <div className="dash-stat-label">WhatsApp contacts</div>
-            </div>
-            <div className="dash-stat-card">
-              <div className="dash-stat-icon">RT</div>
-              <div className="dash-stat-num">{currentTeacher.rating.toFixed(1)}</div>
-              <div className="dash-stat-label">Average rating</div>
-            </div>
-            <div className="dash-stat-card">
-              <div className="dash-stat-icon">SV</div>
-              <div className="dash-stat-num">{analytics.savedCount}</div>
-              <div className="dash-stat-label">Parents saved you</div>
+          <div className="dash-topbar">
+            <div className="dash-topbar-title">Dashboard</div>
+            <div className="dash-topbar-right">
+              <button type="button" className="notif-btn">N<div className="notif-dot" /></button>
+              <Link href={`/teacher/${teacher.id}`} className="preview-btn">Preview Profile</Link>
+              <button type="button" className="availability-toggle" onClick={() => setIsAccepting((current) => !current)}>
+                <div className="toggle-dot" />
+                {isAccepting ? "Accepting Students" : "Temporarily Unavailable"}
+              </button>
             </div>
           </div>
 
-          <div className="dash-grid">
-            <div className="dash-card">
-              <div className="dash-card-title">Profile Completion</div>
-              <div className="completion-wrap">
-                <div className="completion-header">
-                  <span className="completion-pct">{completionPercent}%</span>
-                  <span className="completion-label">Based on filled profile fields</span>
-                </div>
-                <div className="completion-bar-bg">
-                  <div className="completion-bar-fill" style={{ width: `${completionPercent}%` }} />
-                </div>
+          <div className="dash-content">
+            <div className="welcome-banner">
+              <div className="wb-text">
+                <div className="wb-greeting">Good evening, {session.name.split(" ")[0]} </div>
+                <div className="wb-sub">Your profile has {analytics.viewsLast7Days} views this week and {analytics.contactsLast7Days} direct contacts.</div>
               </div>
-              <div className="completion-items">
-                {completionItems.map((item, index) => (
-                  <div key={item.label} className="completion-item">
-                    <div className={`ci-dot ${item.done ? "done" : ""}`} />
-                    <span className={`ci-text ${item.done ? "done" : ""}`}>{item.label}</span>
+              <div className="wb-badge">Profile {teacher.status === "verified" ? "Verified & Live" : "Pending Review"}</div>
+            </div>
+
+            <div className="dash-stats-row">
+              <div className="dstat-card">
+                <div className="dstat-top"><div className="dstat-icon dsi-saffron">VW</div><span className="dstat-trend trend-up">up</span></div>
+                <div className="dstat-num">{analytics.viewsLast7Days}</div>
+                <div className="dstat-label">Profile views this week</div>
+              </div>
+              <div className="dstat-card">
+                <div className="dstat-top"><div className="dstat-icon dsi-green">CT</div><span className="dstat-trend trend-up">up</span></div>
+                <div className="dstat-num">{analytics.contactsLast7Days}</div>
+                <div className="dstat-label">WhatsApp contacts</div>
+              </div>
+              <div className="dstat-card">
+                <div className="dstat-top"><div className="dstat-icon dsi-blue">SV</div><span className="dstat-trend trend-up">up</span></div>
+                <div className="dstat-num">{analytics.savedCount}</div>
+                <div className="dstat-label">Parents saved profile</div>
+              </div>
+              <div className="dstat-card">
+                <div className="dstat-top"><div className="dstat-icon dsi-purple">RT</div><span className="dstat-trend trend-neutral">stable</span></div>
+                <div className="dstat-num">{teacher.rating.toFixed(1)}</div>
+                <div className="dstat-label">Average rating</div>
+              </div>
+            </div>
+
+            <div className="dash-grid">
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div className="dcard">
+                  <div className="dcard-title">
+                    Profile Completion
+                    <Link href="/teacher/setup?edit=1" className="dcard-link">Edit profile</Link>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <div className="completion-header">
+                    <div className="completion-pct">{completionPercent}%</div>
+                    <div className="completion-note">Complete remaining profile steps to improve visibility.</div>
+                  </div>
+                  <div className="completion-bar-bg">
+                    <div className={`completion-bar-fill ${completionPercent >= 100 ? "completion-fill-green" : ""}`} style={{ width: `${completionPercent}%` }} />
+                  </div>
+                  <div className="completion-items">
+                    {profileCompletionItems.map((item) => (
+                      <div key={item.label} className="ci">
+                        <div className={`ci-icon ${item.done ? "ci-done-icon" : "ci-todo-icon"}`}>{item.done ? "OK" : "TO"}</div>
+                        <div className={`ci-text ${item.done ? "done" : "todo"}`}>{item.label}</div>
+                        <div className="ci-pct">{item.pct}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-            <div>
-              <div className="verify-box">
-                <div className="verify-box-title">Get Verified</div>
-                <div className="verify-box-sub">Verified tutors appear higher in filtered results. Upload one document to request review.</div>
-                <Link href="/teacher/setup?edit=1" className="btn-saffron inline-flex items-center justify-center">Upload Document & Request</Link>
+                <div className="dcard" id="analytics">
+                  <div className="dcard-title">
+                    Profile Views - This Week
+                    <a href="#" className="dcard-link">See analytics</a>
+                  </div>
+                  <div className="chart-area">
+                    {weeklyBars.map((bar) => (
+                      <div key={bar.label} className="chart-bar-wrap">
+                        <div className="chart-val">{bar.value}</div>
+                        <div className={`chart-bar ${bar.highlight ? "highlight" : ""}`} style={{ height: `${bar.height}px` }} />
+                        <div className="chart-bar-label">{bar.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="dcard" id="reviews">
+                  <div className="dcard-title">Recent Activity</div>
+                  <div className="activity-list">
+                    <div className="activity-item"><div className="activity-icon ai-whatsapp">CT</div><div className="activity-text"><div className="activity-main">Parent contacted via WhatsApp</div><div className="activity-sub">Weekly contacts: {analytics.contactsLast7Days}</div></div><div className="activity-time">Recent</div></div>
+                    <div className="activity-item"><div className="activity-icon ai-review">RV</div><div className="activity-text"><div className="activity-main">Your current rating is {teacher.rating.toFixed(1)}</div><div className="activity-sub">From {teacher.reviews_count} review(s)</div></div><div className="activity-time">Live</div></div>
+                    <div className="activity-item"><div className="activity-icon ai-save">SV</div><div className="activity-text"><div className="activity-main">Parents saved your profile</div><div className="activity-sub">Saved count: {analytics.savedCount}</div></div><div className="activity-time">Live</div></div>
+                    <div className="activity-item"><div className="activity-icon ai-view">VW</div><div className="activity-text"><div className="activity-main">Profile viewed this week</div><div className="activity-sub">Views: {analytics.viewsLast7Days}</div></div><div className="activity-time">7d</div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div className="verify-box">
+                  <div className="vb-icon">VK</div>
+                  <div>
+                    <div className="vb-title">Get Verified</div>
+                    <div className="vb-desc">Verified teachers appear higher in search and build faster trust with parents.</div>
+                  </div>
+                  <div className="vb-perks">
+                    <div className="vb-perk"><div className="vb-perk-dot" />Top of search results</div>
+                    <div className="vb-perk"><div className="vb-perk-dot" />Verified badge on profile</div>
+                    <div className="vb-perk"><div className="vb-perk-dot" />Higher parent trust</div>
+                    <div className="vb-perk"><div className="vb-perk-dot" />More profile views</div>
+                  </div>
+                  <Link href="/teacher/setup?edit=1" className="btn-verify">Upload and Request Verification</Link>
+                </div>
+
+                <div className="dcard">
+                  <div className="dcard-title">Share Your Profile</div>
+                  <div style={{ background: "var(--ivory2)", border: "1px solid var(--border)", borderRadius: "10px", padding: "10px 14px", fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--muted)", marginBottom: "12px", wordBreak: "break-all", lineHeight: 1.6 }}>
+                    {typeof window !== "undefined" ? `${window.location.origin}/teacher/${teacher.id}` : `/teacher/${teacher.id}`}
+                  </div>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button type="button" onClick={copyProfileLink} style={{ flex: 1, padding: "9px", background: "var(--navy)", color: "white", border: "none", borderRadius: "10px", fontSize: "12px", fontWeight: 500, cursor: "pointer", fontFamily: "var(--font-body)" }}>Copy Link</button>
+                    <Link href={`/teacher/${teacher.id}`} style={{ flex: 1, padding: "9px", background: "#25D366", color: "white", border: "none", borderRadius: "10px", fontSize: "12px", fontWeight: 500, textDecoration: "none", textAlign: "center", fontFamily: "var(--font-body)" }}>Open Profile</Link>
+                  </div>
+                </div>
+
+                <div className="dcard" style={{ padding: 0, overflow: "hidden" }}>
+                  <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid var(--border)" }}>
+                    <div className="dcard-title" style={{ marginBottom: 0 }}>How Parents See You</div>
+                  </div>
+                  <div style={{ padding: "16px 20px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                      <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "var(--saffron-mid)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontSize: "17px", fontWeight: 700, color: "var(--navy)", border: "2px solid white", boxShadow: "0 0 0 2px var(--border)" }}>{teacher.name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase()}</div>
+                      <div>
+                        <div style={{ fontFamily: "var(--font-display)", fontSize: "15px", fontWeight: 500, color: "var(--navy)" }}>{teacher.name}</div>
+                        <div style={{ fontSize: "11px", color: "var(--muted)" }}>{teacher.locality} · {teacher.experience_years} yrs</div>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "5px", marginBottom: "8px" }}>
+                      <span className="badge badge-verified" style={{ fontSize: "10px", padding: "3px 8px" }}>Verified</span>
+                      {teacher.is_founding_member ? <span className="badge badge-founding" style={{ fontSize: "10px", padding: "3px 8px" }}>Founding</span> : null}
+                    </div>
+                    <div style={{ display: "flex", gap: "5px", marginBottom: "10px", flexWrap: "wrap" }}>
+                      {teacher.subjects.slice(0, 2).map((subject) => <span key={subject} className="subj-pill" style={{ fontSize: "11px", padding: "4px 10px" }}>{subject}</span>)}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ fontFamily: "var(--font-display)", fontSize: "20px", fontWeight: 400, color: "var(--navy)" }}>{teacher.price_per_month} <span style={{ fontSize: "11px", fontWeight: 300, color: "var(--muted)" }}>/mo</span></div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "12px", color: "var(--muted)" }}>RT {teacher.rating.toFixed(1)}</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-
-          <section id="analytics" className="dash-section" aria-labelledby="analytics-title">
-            <div className="dash-section-head">
-              <div>
-                <div className="dash-card-title">Analytics</div>
-                <h2 id="analytics-title" className="dash-section-title">Track profile activity</h2>
-              </div>
-              <Link href={`/teacher/${currentTeacher.id}`} className="dash-mini-link">Open public profile</Link>
-            </div>
-            <div className="analytics-grid">
-              <div className="analytics-card">
-                <div className="analytics-num">{analytics.viewsLast7Days}</div>
-                <div className="analytics-label">Profile views this week</div>
-              </div>
-              <div className="analytics-card">
-                <div className="analytics-num">{analytics.contactsLast7Days}</div>
-                <div className="analytics-label">WhatsApp contacts</div>
-              </div>
-              <div className="analytics-card">
-                <div className="analytics-num">{analytics.savedCount}</div>
-                <div className="analytics-label">Parents saved you</div>
-              </div>
-            </div>
-          </section>
-
-          <section id="reviews" className="dash-section" aria-labelledby="reviews-title">
-            <div className="dash-section-head">
-              <div>
-                <div className="dash-card-title">Reviews</div>
-                <h2 id="reviews-title" className="dash-section-title">Recent feedback</h2>
-              </div>
-              <Link href={`/teacher/${currentTeacher.id}`} className="dash-mini-link">See all reviews</Link>
-            </div>
-            <div className="dash-review-note">
-              Your current public rating is <strong>{currentTeacher.rating.toFixed(1)}</strong> from <strong>{currentTeacher.reviews_count}</strong> review{currentTeacher.reviews_count === 1 ? "" : "s"}.
-              <span className="block pt-2 text-[12px] text-[var(--muted)]">Analytics refresh in real time as parents view, contact, and save your profile.</span>
-            </div>
-          </section>
         </div>
       </div>
     </div>

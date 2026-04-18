@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docent — Login & Sign Up</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,700;1,9..144,300;1,9..144,400;1,9..144,700&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ivory:        #FDFAF4;
+  --ivory2:       #F5EFE0;
+  --ivory3:       #EDE4D0;
+  --navy:         #1A2744;
+  --navy2:        #243154;
+  --saffron:      #E8860A;
+  --saffron-light:#FEF3E2;
+  --saffron-mid:  #FDDFA0;
+  --green:        #2D6A4F;
+  --green-light:  #EDFAF3;
+  --muted:        #7A7060;
+  --border:       #E0D8C8;
+  --border2:      #C8BEA8;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height: 100%; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--ivory);
+  color: var(--navy);
+  overflow: hidden;
+}
+
+/* =====================
+   LAYOUT
+===================== */
+.auth-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 100vh;
+}
+
+/* =====================
+   LEFT PANEL
+===================== */
+.left-panel {
+  background: var(--navy);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem 3.5rem;
+}
+
+/* Geometric background elements */
+.left-panel::before {
+  content: '';
+  position: absolute;
+  top: -120px; right: -120px;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.04);
+  pointer-events: none;
+}
+.left-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -80px; left: -80px;
+  width: 360px; height: 360px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.04);
+  pointer-events: none;
+}
+
+.geo-ring-1 {
+  position: absolute;
+  top: 30%; right: -200px;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.03);
+  pointer-events: none;
+}
+.geo-ring-2 {
+  position: absolute;
+  bottom: 20%; left: -150px;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  border: 1px solid rgba(232,134,10,0.08);
+  pointer-events: none;
+}
+
+/* Saffron glow blob */
+.glow-blob {
+  position: absolute;
+  top: 40%; left: 30%;
+  transform: translate(-50%, -50%);
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232,134,10,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Logo */
+.left-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative; z-index: 2;
+}
+.left-logo-mark {
+  width: 36px; height: 36px;
+  background: var(--saffron);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+}
+.left-logo-mark svg { width: 20px; height: 20px; }
+.left-logo-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px; font-weight: 500;
+  letter-spacing: 0.08em; color: white;
+}
+
+/* Main left content */
+.left-content {
+  position: relative; z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.left-eyebrow {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 1.8rem;
+}
+.eyebrow-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--saffron);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { opacity:1; transform: scale(1); }
+  50% { opacity:0.4; transform: scale(0.8); }
+}
+.eyebrow-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+
+.left-headline {
+  font-family: 'Fraunces', serif;
+  font-size: clamp(36px, 3.5vw, 52px);
+  font-weight: 300;
+  line-height: 1.1;
+  color: white;
+  margin-bottom: 2rem;
+}
+.left-headline em {
+  font-style: italic;
+  color: var(--saffron-mid);
+}
+.left-headline .line-accent {
+  position: relative;
+  display: inline-block;
+}
+.left-headline .line-accent::after {
+  content: '';
+  position: absolute;
+  bottom: 2px; left: 0; right: 0;
+  height: 2px;
+  background: rgba(232,134,10,0.4);
+  border-radius: 2px;
+}
+
+/* Floating teacher cards */
+.floating-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 2.5rem;
+}
+
+.float-card {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.3s;
+  animation: float-in 0.6s ease both;
+}
+.float-card:nth-child(1) { animation-delay: 0.2s; }
+.float-card:nth-child(2) { animation-delay: 0.4s; }
+.float-card:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes float-in {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.float-card:hover {
+  background: rgba(255,255,255,0.1);
+  transform: translateX(6px);
+}
+
+.fcard-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fraunces', serif;
+  font-size: 16px; font-weight: 600; color: var(--navy);
+  flex-shrink: 0;
+}
+.fcard-avatar.a1 { background: var(--saffron-mid); }
+.fcard-avatar.a2 { background: #BBF7D0; }
+.fcard-avatar.a3 { background: #BAE6FD; }
+
+.fcard-info { flex: 1; }
+.fcard-name {
+  font-size: 13px; font-weight: 500; color: white;
+  margin-bottom: 2px;
+}
+.fcard-detail { font-size: 11px; color: rgba(255,255,255,0.45); }
+
+.fcard-right { text-align: right; }
+.fcard-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(45,106,79,0.25);
+  border: 1px solid rgba(45,106,79,0.4);
+  color: #6EE7B7;
+  padding: 3px 8px; border-radius: 100px;
+  font-size: 10px; font-weight: 500;
+  margin-bottom: 3px;
+}
+.fcard-price {
+  font-family: 'Fraunces', serif;
+  font-size: 14px; font-weight: 500; color: white;
+}
+
+/* Bottom stats */
+.left-stats {
+  display: flex; gap: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  position: relative; z-index: 2;
+}
+.lstat-num {
+  font-family: 'Fraunces', serif;
+  font-size: 26px; font-weight: 400; color: white;
+}
+.lstat-label { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+/* =====================
+   RIGHT PANEL
+===================== */
+.right-panel {
+  background: var(--ivory);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Subtle ivory texture */
+.right-panel::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(232,134,10,0.04) 0%, transparent 40%),
+    radial-gradient(circle at 10% 90%, rgba(26,39,68,0.03) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+/* Top bar */
+.right-top {
+  padding: 1.5rem 3rem;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  position: relative; z-index: 2;
+}
+.back-link {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--muted);
+  text-decoration: none; transition: color 0.2s;
+}
+.back-link:hover { color: var(--navy); }
+.right-top-text { font-size: 13px; color: var(--muted); }
+.right-top-text a { color: var(--saffron); text-decoration: none; font-weight: 500; }
+
+/* Form area */
+.form-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2.5rem 3.5rem;
+  position: relative; z-index: 2;
+}
+
+/* Tab switcher (Login / Sign Up) */
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 2.5rem;
+  border-bottom: 2px solid var(--border);
+}
+.auth-tab {
+  padding: 12px 0;
+  margin-right: 2.5rem;
+  font-size: 20px;
+  font-family: 'Fraunces', serif;
+  font-weight: 400;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+.auth-tab.active {
+  color: var(--navy);
+  border-bottom-color: var(--saffron);
+}
+.auth-tab:hover { color: var(--navy); }
+
+/* Page title */
+.form-title {
+  font-family: 'Fraunces', serif;
+  font-size: 34px; font-weight: 400;
+  color: var(--navy); margin-bottom: 6px;
+  line-height: 1.2;
+}
+.form-subtitle {
+  font-size: 14px; color: var(--muted);
+  margin-bottom: 2rem; line-height: 1.6;
+}
+
+/* Role selector */
+.role-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 2rem;
+}
+.role-card {
+  padding: 18px 16px;
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+.role-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--saffron-light);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.role-card:hover::before { opacity: 0.5; }
+.role-card.active {
+  border-color: var(--saffron);
+  background: var(--saffron-light);
+}
+.role-card.active::before { opacity: 0; }
+.role-check {
+  position: absolute; top: 12px; right: 12px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--saffron);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s;
+  font-size: 11px; color: white;
+}
+.role-card.active .role-check { opacity: 1; }
+.role-emoji {
+  font-size: 24px; margin-bottom: 8px;
+  display: block; position: relative; z-index: 1;
+}
+.role-title {
+  font-family: 'Fraunces', serif;
+  font-size: 16px; font-weight: 500; color: var(--navy);
+  margin-bottom: 3px; position: relative; z-index: 1;
+}
+.role-desc {
+  font-size: 11px; color: var(--muted);
+  line-height: 1.5; position: relative; z-index: 1;
+}
+
+/* Google button */
+.btn-google {
+  width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px;
+  padding: 13px 20px;
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px; font-weight: 500;
+  color: var(--navy);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Outfit', sans-serif;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.btn-google::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--ivory2);
+  opacity: 0; transition: opacity 0.2s;
+}
+.btn-google:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,39,68,0.08); }
+.btn-google:hover::before { opacity: 1; }
+.google-icon {
+  width: 20px; height: 20px; flex-shrink: 0;
+  position: relative; z-index: 1;
+}
+.btn-google span { position: relative; z-index: 1; }
+
+/* OR divider */
+.or-divider {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.or-line { flex: 1; height: 1px; background: var(--border); }
+.or-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--muted); text-transform: uppercase;
+}
+
+/* Form fields */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.form-group {
+  margin-bottom: 14px;
+  position: relative;
+}
+.form-label {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; font-weight: 500;
+  color: var(--navy); margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+.form-label-hint {
+  font-size: 11px; color: var(--muted);
+  font-weight: 400;
+}
+.form-input-wrap {
+  position: relative;
+}
+.form-input-icon {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 15px; pointer-events: none;
+}
+.form-input {
+  width: 100%;
+  padding: 12px 14px 12px 40px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px; font-family: 'Outfit', sans-serif;
+  color: var(--navy); outline: none;
+  background: white;
+  transition: all 0.2s;
+}
+.form-input:focus {
+  border-color: var(--saffron);
+  box-shadow: 0 0 0 3px rgba(232,134,10,0.08);
+}
+.form-input.no-icon { padding-left: 14px; }
+.form-input::placeholder { color: var(--border2); }
+
+/* Phone input special */
+.phone-prefix {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  font-size: 13px; color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  pointer-events: none; letter-spacing: 0.02em;
+}
+.form-input.phone { padding-left: 52px; }
+
+/* Password toggle */
+.password-toggle {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  font-size: 14px; color: var(--muted);
+  transition: color 0.2s;
+}
+.password-toggle:hover { color: var(--navy); }
+
+/* Terms checkbox */
+.terms-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  margin-bottom: 1.5rem; margin-top: 4px;
+}
+.custom-checkbox {
+  width: 18px; height: 18px; flex-shrink: 0;
+  border: 2px solid var(--border2);
+  border-radius: 5px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; margin-top: 1px;
+  background: white;
+}
+.custom-checkbox.checked {
+  background: var(--navy); border-color: var(--navy);
+}
+.custom-checkbox.checked::after {
+  content: '✓'; color: white; font-size: 11px; font-weight: 600;
+}
+.terms-text {
+  font-size: 12px; color: var(--muted); line-height: 1.6;
+}
+.terms-text a { color: var(--saffron); text-decoration: none; font-weight: 500; }
+.terms-text a:hover { text-decoration: underline; }
+
+/* Submit button */
+.btn-submit {
+  width: 100%;
+  padding: 14px;
+  background: var(--navy);
+  color: white; border: none;
+  border-radius: 12px;
+  font-size: 15px; font-weight: 500;
+  cursor: pointer; font-family: 'Outfit', sans-serif;
+  transition: all 0.25s;
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px;
+  position: relative; overflow: hidden;
+}
+.btn-submit::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--saffron);
+  transform: translateX(-100%);
+  transition: transform 0.4s ease;
+}
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(26,39,68,0.2); }
+.btn-submit:hover::before { transform: translateX(0); }
+.btn-submit span { position: relative; z-index: 1; }
+
+/* Bottom switch */
+.form-switch {
+  text-align: center;
+  font-size: 13px; color: var(--muted);
+  margin-top: 1.2rem;
+}
+.form-switch a {
+  color: var(--saffron); text-decoration: none;
+  font-weight: 500;
+}
+
+/* Trust badges row */
+.trust-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 1.5rem; margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.trust-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--muted);
+}
+.trust-dot { font-size: 13px; }
+
+/* =====================
+   PANEL SWITCH ANIMATION
+===================== */
+.signup-panel, .login-panel {
+  display: none;
+}
+.signup-panel.active, .login-panel.active {
+  display: contents;
+}
+
+/* =====================
+   STEP INDICATOR (signup only)
+===================== */
+.step-indicator {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 1.5rem;
+}
+.step-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border); transition: all 0.3s;
+}
+.step-dot.active { background: var(--saffron); width: 24px; border-radius: 4px; }
+.step-dot.done { background: var(--green); }
+.step-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.1em;
+  color: var(--muted); text-transform: uppercase;
+  margin-left: 4px;
+}
+
+/* =====================
+   FLOATING LABEL EFFECT
+===================== */
+.floating-group {
+  position: relative; margin-bottom: 14px;
+}
+.floating-input {
+  width: 100%; padding: 20px 14px 8px 14px;
+  border: 1.5px solid var(--border); border-radius: 12px;
+  font-size: 14px; font-family: 'Outfit', sans-serif;
+  color: var(--navy); outline: none; background: white;
+  transition: all 0.2s;
+}
+.floating-input:focus, .floating-input:not(:placeholder-shown) {
+  border-color: var(--saffron);
+  box-shadow: 0 0 0 3px rgba(232,134,10,0.08);
+}
+.floating-label {
+  position: absolute; left: 14px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px; color: var(--muted);
+  pointer-events: none;
+  transition: all 0.2s;
+}
+.floating-input:focus ~ .floating-label,
+.floating-input:not(:placeholder-shown) ~ .floating-label {
+  top: 10px; transform: none;
+  font-size: 10px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--saffron);
+  font-weight: 500;
+}
+
+/* =====================
+   RESPONSIVE SCROLL
+===================== */
+.right-panel {
+  max-height: 100vh;
+  overflow-y: auto;
+}
+.right-panel::-webkit-scrollbar { width: 4px; }
+.right-panel::-webkit-scrollbar-track { background: transparent; }
+.right-panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+
+  <!-- ========================
+       LEFT PANEL
+  ========================= -->
+  <div class="left-panel">
+    <div class="geo-ring-1"></div>
+    <div class="geo-ring-2"></div>
+    <div class="glow-blob"></div>
+
+    <!-- Logo -->
+    <div class="left-logo">
+      <div class="left-logo-mark">
+        <svg viewBox="0 0 24 24" fill="white">
+          <path d="M12 3C7 3 3 7 3 12s4 9 9 9 9-4 9-9-4-9-9-9zm-1.5 13V8l7 4-7 4z"/>
+        </svg>
+      </div>
+      <span class="left-logo-text">Docent</span>
+    </div>
+
+    <!-- Main content -->
+    <div class="left-content">
+      <div class="left-eyebrow">
+        <div class="eyebrow-dot"></div>
+        <span class="eyebrow-text">Mathura's Tuition Platform</span>
+      </div>
+
+      <h2 class="left-headline">
+        The best tutors<br>
+        in Mathura are<br>
+        <em>waiting for you.</em>
+      </h2>
+
+      <div class="floating-cards">
+        <div class="float-card">
+          <div class="fcard-avatar a1">PS</div>
+          <div class="fcard-info">
+            <div class="fcard-name">Priya Sharma</div>
+            <div class="fcard-detail">Maths · Physics · Civil Lines</div>
+          </div>
+          <div class="fcard-right">
+            <div class="fcard-badge">✓ Verified</div>
+            <div class="fcard-price">₹1,200/mo</div>
+          </div>
+        </div>
+        <div class="float-card">
+          <div class="fcard-avatar a2">RM</div>
+          <div class="fcard-info">
+            <div class="fcard-name">Rahul Mehta</div>
+            <div class="fcard-detail">Chemistry · Biology · Vrindavan</div>
+          </div>
+          <div class="fcard-right">
+            <div class="fcard-badge">✓ Verified</div>
+            <div class="fcard-price">₹1,500/mo</div>
+          </div>
+        </div>
+        <div class="float-card">
+          <div class="fcard-avatar a3">AV</div>
+          <div class="fcard-info">
+            <div class="fcard-name">Anjali Verma</div>
+            <div class="fcard-detail">English · Hindi · Krishna Nagar</div>
+          </div>
+          <div class="fcard-right">
+            <div class="fcard-badge">✓ Verified</div>
+            <div class="fcard-price">₹800/mo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="left-stats">
+      <div>
+        <div class="lstat-num">124+</div>
+        <div class="lstat-label">Verified Tutors</div>
+      </div>
+      <div>
+        <div class="lstat-num">340+</div>
+        <div class="lstat-label">Happy Families</div>
+      </div>
+      <div>
+        <div class="lstat-num">4.9★</div>
+        <div class="lstat-label">Avg Rating</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================
+       RIGHT PANEL
+  ========================= -->
+  <div class="right-panel">
+
+    <!-- Top bar -->
+    <div class="right-top">
+      <a href="/" class="back-link">
+        ← Back to Docent
+      </a>
+      <div class="right-top-text" id="switch-hint">
+        Already have an account? <a href="#" onclick="switchToLogin()">Login</a>
+      </div>
+    </div>
+
+    <!-- Form area -->
+    <div class="form-area">
+
+      <!-- Tab switcher -->
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-signup" onclick="showSignup()">Create Account</div>
+        <div class="auth-tab" id="tab-login" onclick="showLogin()">Login</div>
+      </div>
+
+      <!-- ===== SIGN UP FORM ===== -->
+      <div id="signup-form">
+
+        <!-- Step indicator -->
+        <div class="step-indicator">
+          <div class="step-dot active" id="step1-dot"></div>
+          <div class="step-dot" id="step2-dot"></div>
+          <span class="step-label" id="step-label-text">Step 1 of 2 — Your Details</span>
+        </div>
+
+        <!-- STEP 1 -->
+        <div id="step1">
+          <h1 class="form-title">Join Docent</h1>
+          <p class="form-subtitle">Free forever for parents. Free to list for teachers.</p>
+
+          <!-- Role selector -->
+          <div class="role-selector">
+            <div class="role-card active" id="role-parent" onclick="selectRole('parent')">
+              <div class="role-check">✓</div>
+              <span class="role-emoji">👨‍👩‍👧</span>
+              <div class="role-title">I'm a Parent</div>
+              <div class="role-desc">Find the perfect tutor for my child</div>
+            </div>
+            <div class="role-card" id="role-teacher" onclick="selectRole('teacher')">
+              <div class="role-check">✓</div>
+              <span class="role-emoji">👨‍🏫</span>
+              <div class="role-title">I'm a Teacher</div>
+              <div class="role-desc">Create a profile and get discovered</div>
+            </div>
+          </div>
+
+          <!-- Google auth -->
+          <button class="btn-google" onclick="handleGoogle()">
+            <svg class="google-icon" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <div class="or-divider">
+            <div class="or-line"></div>
+            <span class="or-text">or with email</span>
+            <div class="or-line"></div>
+          </div>
+
+          <div class="form-row">
+            <div class="floating-group">
+              <input class="floating-input" type="text" id="fname" placeholder=" ">
+              <label class="floating-label">First Name</label>
+            </div>
+            <div class="floating-group">
+              <input class="floating-input" type="text" id="lname" placeholder=" ">
+              <label class="floating-label">Last Name</label>
+            </div>
+          </div>
+
+          <div class="floating-group">
+            <input class="floating-input" type="email" id="email" placeholder=" ">
+            <label class="floating-label">Email Address</label>
+          </div>
+
+          <div class="floating-group" style="position:relative;">
+            <input class="floating-input" type="text" id="phone" placeholder=" " style="padding-left: 52px;">
+            <label class="floating-label" style="left:52px;">Phone Number</label>
+            <span class="phone-prefix">+91</span>
+          </div>
+
+          <button class="btn-submit" onclick="goToStep2()" style="margin-top:6px;">
+            <span>Continue →</span>
+          </button>
+        </div>
+
+        <!-- STEP 2 -->
+        <div id="step2" style="display:none;">
+          <h1 class="form-title">Almost done</h1>
+          <p class="form-subtitle">Set your password and agree to our terms.</p>
+
+          <div class="floating-group" style="position:relative;">
+            <input class="floating-input" type="password" id="password" placeholder=" " style="padding-right:44px;">
+            <label class="floating-label">Create Password</label>
+            <button class="password-toggle" onclick="togglePwd('password')">👁</button>
+          </div>
+
+          <div class="floating-group" style="position:relative;">
+            <input class="floating-input" type="password" id="confirm-password" placeholder=" " style="padding-right:44px;">
+            <label class="floating-label">Confirm Password</label>
+            <button class="password-toggle" onclick="togglePwd('confirm-password')">👁</button>
+          </div>
+
+          <!-- Password strength -->
+          <div style="margin-bottom:16px;">
+            <div style="display:flex;gap:4px;margin-bottom:6px;" id="pwd-strength-bars">
+              <div style="height:3px;flex:1;border-radius:2px;background:var(--border);transition:all 0.3s;" class="str-bar"></div>
+              <div style="height:3px;flex:1;border-radius:2px;background:var(--border);transition:all 0.3s;" class="str-bar"></div>
+              <div style="height:3px;flex:1;border-radius:2px;background:var(--border);transition:all 0.3s;" class="str-bar"></div>
+              <div style="height:3px;flex:1;border-radius:2px;background:var(--border);transition:all 0.3s;" class="str-bar"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);" id="pwd-strength-label">Enter a password</div>
+          </div>
+
+          <div class="terms-row">
+            <div class="custom-checkbox" id="terms-check" onclick="toggleTerms()"></div>
+            <div class="terms-text">
+              I agree to Docent's <a href="/terms">Terms of Service</a> and <a href="/privacy">Privacy Policy</a>. I understand my data will be used to match me with local tutors.
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;">
+            <button onclick="goToStep1()" style="flex:0 0 44px;height:48px;border:1.5px solid var(--border);border-radius:12px;background:white;cursor:pointer;font-size:16px;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--navy)'" onmouseout="this.style.borderColor='var(--border)'">←</button>
+            <button class="btn-submit" style="flex:1;" onclick="handleSignup()">
+              <span>Create my Account ✓</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== LOGIN FORM ===== -->
+      <div id="login-form" style="display:none;">
+        <h1 class="form-title">Welcome back</h1>
+        <p class="form-subtitle">Good to see you again. Let's get you in.</p>
+
+        <!-- Google auth -->
+        <button class="btn-google" onclick="handleGoogle()">
+          <svg class="google-icon" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+
+        <div class="or-divider">
+          <div class="or-line"></div>
+          <span class="or-text">or with email</span>
+          <div class="or-line"></div>
+        </div>
+
+        <div class="floating-group">
+          <input class="floating-input" type="email" placeholder=" ">
+          <label class="floating-label">Email Address</label>
+        </div>
+
+        <div class="floating-group" style="position:relative;">
+          <input class="floating-input" type="password" id="login-password" placeholder=" " style="padding-right:44px;">
+          <label class="floating-label">Password</label>
+          <button class="password-toggle" onclick="togglePwd('login-password')">👁</button>
+        </div>
+
+        <div style="text-align:right;margin-bottom:1.2rem;margin-top:-6px;">
+          <a href="/forgot-password" style="font-size:12px;color:var(--saffron);text-decoration:none;font-weight:500;">Forgot password?</a>
+        </div>
+
+        <button class="btn-submit" onclick="handleLogin()">
+          <span>Login to Docent →</span>
+        </button>
+
+        <div class="form-switch" style="margin-top:1rem;">
+          Don't have an account? <a href="#" onclick="showSignup()">Sign up free</a>
+        </div>
+      </div>
+
+      <!-- Trust badges -->
+      <div class="trust-row">
+        <div class="trust-item">
+          <span class="trust-dot">🔒</span>
+          <span>SSL Secured</span>
+        </div>
+        <div class="trust-item">
+          <span class="trust-dot">✓</span>
+          <span>No spam ever</span>
+        </div>
+        <div class="trust-item">
+          <span class="trust-dot">₹</span>
+          <span>Free to join</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let currentRole = 'parent';
+let termsChecked = false;
+
+function selectRole(role) {
+  currentRole = role;
+  document.getElementById('role-parent').classList.toggle('active', role === 'parent');
+  document.getElementById('role-teacher').classList.toggle('active', role === 'teacher');
+}
+
+function showSignup() {
+  document.getElementById('signup-form').style.display = 'block';
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('tab-signup').classList.add('active');
+  document.getElementById('tab-login').classList.remove('active');
+  document.getElementById('switch-hint').innerHTML = 'Already have an account? <a href="#" onclick="switchToLogin()">Login</a>';
+}
+
+function showLogin() {
+  document.getElementById('login-form').style.display = 'block';
+  document.getElementById('signup-form').style.display = 'none';
+  document.getElementById('tab-login').classList.add('active');
+  document.getElementById('tab-signup').classList.remove('active');
+  document.getElementById('switch-hint').innerHTML = "Don't have an account? <a href='#' onclick='showSignup()'>Sign up</a>";
+}
+
+function switchToLogin() { showLogin(); }
+
+function goToStep2() {
+  const fname = document.getElementById('fname').value.trim();
+  const email = document.getElementById('email').value.trim();
+  if (!fname || !email) {
+    alert('Please fill in your name and email first.');
+    return;
+  }
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'block';
+  document.getElementById('step1-dot').classList.remove('active');
+  document.getElementById('step1-dot').classList.add('done');
+  document.getElementById('step2-dot').classList.add('active');
+  document.getElementById('step-label-text').textContent = 'Step 2 of 2 — Secure your account';
+}
+
+function goToStep1() {
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step1').style.display = 'block';
+  document.getElementById('step2-dot').classList.remove('active');
+  document.getElementById('step1-dot').classList.remove('done');
+  document.getElementById('step1-dot').classList.add('active');
+  document.getElementById('step-label-text').textContent = 'Step 1 of 2 — Your Details';
+}
+
+function toggleTerms() {
+  termsChecked = !termsChecked;
+  const el = document.getElementById('terms-check');
+  el.classList.toggle('checked', termsChecked);
+}
+
+function togglePwd(id) {
+  const input = document.getElementById(id);
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function handleGoogle() {
+  alert('Google OAuth — connect to Supabase Google Provider');
+}
+
+function handleSignup() {
+  if (!termsChecked) {
+    alert('Please agree to the Terms and Privacy Policy.');
+    return;
+  }
+  alert('Sign up submitted!');
+}
+
+function handleLogin() {
+  alert('Login submitted!');
+}
+
+// Password strength checker
+document.addEventListener('DOMContentLoaded', () => {
+  const pwd = document.getElementById('password');
+  if (pwd) {
+    pwd.addEventListener('input', () => {
+      const val = pwd.value;
+      const bars = document.querySelectorAll('.str-bar');
+      const label = document.getElementById('pwd-strength-label');
+      let strength = 0;
+      if (val.length >= 8) strength++;
+      if (/[A-Z]/.test(val)) strength++;
+      if (/[0-9]/.test(val)) strength++;
+      if (/[^A-Za-z0-9]/.test(val)) strength++;
+      const colors = ['#EF4444','#F97316','#EAB308','#22C55E'];
+      const labels = ['Too short','Weak','Medium','Strong','Very strong'];
+      bars.forEach((bar, i) => {
+        bar.style.background = i < strength ? colors[strength-1] : 'var(--border)';
+      });
+      label.textContent = strength === 0 ? 'Enter a password' : labels[strength];
+      label.style.color = strength > 0 ? colors[strength-1] : 'var(--muted)';
+    });
+  }
+});
+</script>
+</body>
+</html>
