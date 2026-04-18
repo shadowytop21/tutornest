@@ -2734,6 +2734,7 @@ button,
   .how-step,
   .card-avatar,
   .card-header::after,
+  .teacher-card.tcard .tcard-header::after,
   .hero-eyebrow-dot,
   .browse-sub::before,
   .whatsapp-pulse {
@@ -4177,14 +4178,15 @@ button,
   border-radius: 24px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease;
   position: relative;
 }
 
-.teacher-card.tcard:hover {
+.teacher-card.tcard:hover,
+.teacher-card.tcard:focus-within {
   border-color: #C8BEA8;
   box-shadow: 0 12px 48px rgba(26, 39, 68, 0.14);
-  transform: translateY(-6px);
+  transform: translateY(-7px) scale(1.01);
 }
 
 .teacher-card.tcard .tcard-band,
@@ -4198,6 +4200,26 @@ button,
 .teacher-card.tcard .tcard-header {
   padding: 18px 18px 14px;
   position: relative;
+  overflow: hidden;
+}
+
+.teacher-card.tcard .tcard-header::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 58%;
+  height: 100%;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.5) 50%, transparent 60%);
+  opacity: 0;
+  transition: left 0.62s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.teacher-card.tcard:hover .tcard-header::after,
+.teacher-card.tcard:focus-within .tcard-header::after {
+  opacity: 1;
+  left: 145%;
 }
 
 .teacher-card.tcard .tcard-bookmark {
