@@ -19,9 +19,6 @@ const nextConfig = {
       },
     ];
   },
-  experimental: {
-    optimizeCss: true,
-  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
