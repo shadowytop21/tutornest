@@ -212,37 +212,25 @@ export default function AuthPage() {
           </h2>
           <div className="docent-floating-cards">
             <div className="docent-float-card">
-              <div className="docent-fcard-avatar a1">PS</div>
+              <div className="docent-fcard-icon">🏠</div>
               <div className="docent-fcard-info">
-                <div className="docent-fcard-name">Tutor profile</div>
-                <div className="docent-fcard-detail">Maths · Physics · Civil Lines</div>
+                <div className="docent-fcard-name">Home Tutors — find, contact, review</div>
               </div>
-              <div className="docent-fcard-right">
-                  <div className="docent-fcard-badge">Live profile</div>
-                  <div className="docent-fcard-price">Mathura</div>
-              </div>
+              <div className="docent-fcard-count">184 listed</div>
             </div>
             <div className="docent-float-card">
-              <div className="docent-fcard-avatar a2">CM</div>
+              <div className="docent-fcard-icon">📚</div>
               <div className="docent-fcard-info">
-                <div className="docent-fcard-name">Coaching mentor</div>
-                <div className="docent-fcard-detail">Chemistry · Biology · Mathura</div>
+                <div className="docent-fcard-name">Coaching Institutes — compare & enquire</div>
               </div>
-              <div className="docent-fcard-right">
-                  <div className="docent-fcard-badge">Live profile</div>
-                  <div className="docent-fcard-price">Mathura</div>
-              </div>
+              <div className="docent-fcard-count">18 listed</div>
             </div>
             <div className="docent-float-card">
-              <div className="docent-fcard-avatar a3">SC</div>
+              <div className="docent-fcard-icon">🏫</div>
               <div className="docent-fcard-info">
-                <div className="docent-fcard-name">School profile</div>
-                <div className="docent-fcard-detail">CBSE · Smart classrooms · Mathura</div>
+                <div className="docent-fcard-name">Schools — explore & apply for admission</div>
               </div>
-              <div className="docent-fcard-right">
-                  <div className="docent-fcard-badge">Live profile</div>
-                  <div className="docent-fcard-price">Mathura</div>
-              </div>
+              <div className="docent-fcard-count">42 listed</div>
             </div>
           </div>
         </div>
