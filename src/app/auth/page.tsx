@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/components/toast-provider";
 import { clearSession, loadAppState, saveSession, updateProfile } from "@/lib/mock-db";
+import { loadLiveVerticalCounts, type LiveVerticalCounts } from "@/lib/live-counts";
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import "./auth.css";
 
@@ -23,6 +24,7 @@ export default function AuthPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [termsChecked, setTermsChecked] = useState(false);
+  const [counts, setCounts] = useState<LiveVerticalCounts | null>(null);
   const roleParam = searchParams.get("role");
   const preferredRole: "teacher" | "parent" | null = roleParam === "teacher" || roleParam === "parent" ? roleParam : null;
   const [selectedRole, setSelectedRole] = useState<"teacher" | "parent">(preferredRole ?? "parent");
@@ -74,6 +76,20 @@ export default function AuthPage() {
     const snapshot = loadAppState();
     setHasSession(Boolean(snapshot.session));
     setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    loadLiveVerticalCounts().then((nextCounts) => {
+      if (active) {
+        setCounts(nextCounts);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   function continueSession() {
@@ -179,34 +195,34 @@ export default function AuthPage() {
             <div className="docent-float-card">
               <div className="docent-fcard-avatar a1">PS</div>
               <div className="docent-fcard-info">
-                <div className="docent-fcard-name">Priya Sharma</div>
+                <div className="docent-fcard-name">Verified tutor</div>
                 <div className="docent-fcard-detail">Maths · Physics · Civil Lines</div>
               </div>
               <div className="docent-fcard-right">
                 <div className="docent-fcard-badge">✓ Verified</div>
-                <div className="docent-fcard-price">₹1,200/mo</div>
+                <div className="docent-fcard-price">Live profile</div>
               </div>
             </div>
             <div className="docent-float-card">
-              <div className="docent-fcard-avatar a2">RM</div>
+              <div className="docent-fcard-avatar a2">CM</div>
               <div className="docent-fcard-info">
-                <div className="docent-fcard-name">Rahul Mehta</div>
-                <div className="docent-fcard-detail">Chemistry · Biology · Vrindavan</div>
+                <div className="docent-fcard-name">Coaching mentor</div>
+                <div className="docent-fcard-detail">Chemistry · Biology · Mathura</div>
               </div>
               <div className="docent-fcard-right">
-                <div className="docent-fcard-badge">✓ Verified</div>
-                <div className="docent-fcard-price">₹1,500/mo</div>
+                <div className="docent-fcard-badge">Verified</div>
+                <div className="docent-fcard-price">Live profile</div>
               </div>
             </div>
             <div className="docent-float-card">
-              <div className="docent-fcard-avatar a3">AV</div>
+              <div className="docent-fcard-avatar a3">SC</div>
               <div className="docent-fcard-info">
-                <div className="docent-fcard-name">Anjali Verma</div>
-                <div className="docent-fcard-detail">English · Hindi · Krishna Nagar</div>
+                <div className="docent-fcard-name">School profile</div>
+                <div className="docent-fcard-detail">CBSE · Smart classrooms · Mathura</div>
               </div>
               <div className="docent-fcard-right">
-                <div className="docent-fcard-badge">✓ Verified</div>
-                <div className="docent-fcard-price">₹800/mo</div>
+                <div className="docent-fcard-badge">Verified</div>
+                <div className="docent-fcard-price">Live profile</div>
               </div>
             </div>
           </div>
@@ -215,16 +231,16 @@ export default function AuthPage() {
         {/* Stats */}
         <div className="docent-left-stats">
           <div>
-            <div className="docent-lstat-num">124+</div>
+            <div className="docent-lstat-num">{counts?.tutors ?? "..."}</div>
             <div className="docent-lstat-label">Verified Tutors</div>
           </div>
           <div>
-            <div className="docent-lstat-num">340+</div>
-            <div className="docent-lstat-label">Happy Families</div>
+            <div className="docent-lstat-num">{counts?.coaching ?? "..."}</div>
+            <div className="docent-lstat-label">Coaching Institutes</div>
           </div>
           <div>
-            <div className="docent-lstat-num">4.9★</div>
-            <div className="docent-lstat-label">Avg Rating</div>
+            <div className="docent-lstat-num">{counts?.schools ?? "..."}</div>
+            <div className="docent-lstat-label">Schools</div>
           </div>
         </div>
       </div>

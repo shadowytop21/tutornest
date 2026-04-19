@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { JoinAsTeacherAction } from "@/components/join-as-teacher-action";
 import { VerticalSwitcher } from "@/components/vertical-switcher";
 import { defaultHomepageShowcaseConfig, loadHomepageShowcaseConfig, type HomepageShowcaseConfig } from "@/lib/mock-db";
+import { loadLiveVerticalCounts, type LiveVerticalCounts } from "@/lib/live-counts";
 
 const subjectCards = [
   { name: "Mathematics", count: "24 tutors available" },
@@ -61,9 +62,33 @@ const whyItems = [
 
 export default function HomePage() {
   const [showcase, setShowcase] = useState<HomepageShowcaseConfig>(defaultHomepageShowcaseConfig);
+  const [counts, setCounts] = useState<LiveVerticalCounts | null>(null);
 
   useEffect(() => {
     setShowcase(loadHomepageShowcaseConfig());
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const refreshCounts = async () => {
+      const nextCounts = await loadLiveVerticalCounts();
+      if (active) {
+        setCounts(nextCounts);
+      }
+    };
+
+    refreshCounts();
+    window.addEventListener("docent-session-change", refreshCounts);
+    window.addEventListener("docent-coaching-change", refreshCounts);
+    window.addEventListener("docent-schools-change", refreshCounts);
+
+    return () => {
+      active = false;
+      window.removeEventListener("docent-session-change", refreshCounts);
+      window.removeEventListener("docent-coaching-change", refreshCounts);
+      window.removeEventListener("docent-schools-change", refreshCounts);
+    };
   }, []);
 
   function subjectQuery(subjectName: string) {
@@ -96,7 +121,7 @@ export default function HomePage() {
               <p className="mt-2 text-sm leading-7 text-[var(--muted)]">Find verified tutors near your locality by subject, grade, board, and monthly budget.</p>
               <div className="mt-4 flex items-center gap-2">
                 <span className="rounded-full bg-[var(--green-light)] px-3 py-1 text-[11px] font-semibold text-[var(--green)]">Live</span>
-                <span className="text-xs text-[var(--muted)]">124 tutors in Mathura</span>
+                <span className="text-xs text-[var(--muted)]">{counts ? `${counts.tutors} tutors in Mathura` : "Loading tutors..."}</span>
               </div>
             </Link>
 
@@ -106,7 +131,7 @@ export default function HomePage() {
               <p className="mt-2 text-sm leading-7 text-[var(--muted)]">Compare JEE, NEET, and board coaching with fee ranges, courses, and result signals.</p>
               <div className="mt-4 flex items-center gap-2">
                 <span className="rounded-full bg-[var(--green-light)] px-3 py-1 text-[11px] font-semibold text-[var(--green)]">Live</span>
-                <span className="text-xs text-[var(--muted)]">18 institutes listed</span>
+                <span className="text-xs text-[var(--muted)]">{counts ? `${counts.coaching} institutes listed` : "Loading institutes..."}</span>
               </div>
             </Link>
 
@@ -116,7 +141,7 @@ export default function HomePage() {
               <p className="mt-2 text-sm leading-7 text-[var(--muted)]">Browse schools by board, location, and annual fees with side-by-side profile insights.</p>
               <div className="mt-4 flex items-center gap-2">
                 <span className="rounded-full bg-[var(--green-light)] px-3 py-1 text-[11px] font-semibold text-[var(--green)]">Live</span>
-                <span className="text-xs text-[var(--muted)]">42 schools listed</span>
+                <span className="text-xs text-[var(--muted)]">{counts ? `${counts.schools} schools listed` : "Loading schools..."}</span>
               </div>
             </Link>
           </div>

@@ -8,21 +8,6 @@ import { seedSchools, type SchoolRecord } from "@/lib/verticals-data";
 import { createSchoolEnquiry, listCustomSchools, trackSchoolMetric } from "@/lib/verticals-store";
 import { useToast } from "@/components/toast-provider";
 
-const sampleParentReviews = [
-  {
-    parent: "Sunita Kumar",
-    childClass: "Class 9",
-    rating: 5,
-    text: "Strong academics, disciplined environment, and very responsive teachers. My child has improved significantly in core subjects.",
-  },
-  {
-    parent: "Rakesh Sharma",
-    childClass: "Class 11",
-    rating: 5,
-    text: "Excellent science faculty and better infrastructure in the last few years. Smart classrooms and labs are very useful.",
-  },
-];
-
 function initials(name: string) {
   return name
     .split(" ")
@@ -186,20 +171,10 @@ export default function SchoolProfilePage() {
           ) : null}
 
           <section className="rounded-2xl border border-[var(--border)] bg-white p-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Parent Reviews ({school.reviewsCount || sampleParentReviews.length})</p>
-            <div className="mt-4 space-y-3">
-              {sampleParentReviews.map((review) => (
-                <article key={review.parent} className="rounded-xl border border-[var(--border)] p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-semibold text-[var(--navy)]">{review.parent}</h4>
-                      <p className="text-xs text-[var(--muted)]">Parent of {review.childClass}</p>
-                    </div>
-                    <span className="text-sm text-[var(--saffron)]">{stars(review.rating)}</span>
-                  </div>
-                  <p className="mt-2 text-sm leading-7 text-[var(--muted)]">{review.text}</p>
-                </article>
-              ))}
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Parent Reviews</p>
+            <div className="mt-4 rounded-xl border border-dashed border-[var(--border)] bg-[var(--ivory)] p-5">
+              <p className="font-display text-2xl text-[var(--navy)]">{school.rating.toFixed(1)} / 5</p>
+              <p className="mt-2 text-sm text-[var(--muted)]">{school.reviewsCount} review(s) are recorded for this school, but written testimonials are not prefilled.</p>
             </div>
           </section>
         </div>

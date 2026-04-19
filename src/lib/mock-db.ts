@@ -38,18 +38,18 @@ export type HomepageShowcaseConfig = {
 export const defaultHomepageShowcaseConfig: HomepageShowcaseConfig = {
   cards: [
     {
-      initials: "PS",
-      name: "Priya Sharma",
-      locality: "Civil Lines, Mathura",
+      initials: "VT",
+      name: "Featured tutor",
+      locality: "Mathura",
       tags: ["Maths", "Physics", "Class 9-12"],
       price: 1200,
       rating: 4.9,
       tone: "default",
     },
     {
-      initials: "RM",
-      name: "Rahul Mehta",
-      locality: "Vrindavan, Mathura",
+      initials: "VM",
+      name: "Verified mentor",
+      locality: "Mathura",
       tags: ["Chemistry", "Biology", "NEET"],
       price: 1500,
       rating: 4.8,
@@ -57,9 +57,9 @@ export const defaultHomepageShowcaseConfig: HomepageShowcaseConfig = {
     },
   ],
   stats: [
-    { label: "Tutors", value: "50+" },
-    { label: "Subjects", value: "12" },
-    { label: "Areas", value: "15" },
+    { label: "Live tutors", value: "Loading" },
+    { label: "Coaching institutes", value: "Loading" },
+    { label: "Schools", value: "Loading" },
   ],
 };
 

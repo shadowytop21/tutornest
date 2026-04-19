@@ -8,27 +8,6 @@ import { seedCoachingInstitutes, type CoachingInstitute } from "@/lib/verticals-
 import { createCoachingEnquiry, listCustomCoachingInstitutes, trackCoachingMetric } from "@/lib/verticals-store";
 import { useToast } from "@/components/toast-provider";
 
-const sampleReviews = [
-  {
-    name: "Rajesh Kumar",
-    meta: "JEE 2025 · AIR 847",
-    rating: 5,
-    text: "Structured tests and targeted mentoring helped me improve consistently. Faculty support was excellent before each exam.",
-  },
-  {
-    name: "Priya Mehta",
-    meta: "NEET 2025 · 640/720",
-    rating: 5,
-    text: "Strong Biology and Chemistry faculty with practical doubt sessions. Mock tests matched the real exam pressure well.",
-  },
-  {
-    name: "Arjun Singh",
-    meta: "Class 12 Boards 2025",
-    rating: 4,
-    text: "Very disciplined classes, weekly test analysis, and helpful mentors. Strong board preparation support.",
-  },
-];
-
 function initials(name: string) {
   return name
     .split(" ")
@@ -76,15 +55,6 @@ export default function CoachingInstituteProfilePage() {
 
     trackCoachingMetric(institute.id, "profileViews");
   }, [institute]);
-
-  const reviewBreakdown = useMemo(() => {
-    const allRatings = sampleReviews.map((item) => item.rating);
-    const total = allRatings.length || 1;
-    return [5, 4, 3, 2, 1].map((bucket) => {
-      const count = allRatings.filter((item) => item === bucket).length;
-      return { bucket, count, pct: Math.round((count / total) * 100) };
-    });
-  }, []);
 
   if (!institute) {
     return (
@@ -211,38 +181,10 @@ export default function CoachingInstituteProfilePage() {
           ) : null}
 
           <section className="rounded-2xl border border-[var(--border)] bg-white p-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Reviews</p>
-            <div className="mt-4 grid gap-4 lg:grid-cols-[260px_1fr]">
-              <div className="rounded-xl border border-[var(--border)] bg-[var(--ivory)] p-4">
-                <p className="font-display text-4xl text-[var(--navy)]">{institute.rating.toFixed(1)}</p>
-                <p className="text-sm text-[var(--muted)]">Based on {institute.reviewsCount} reviews</p>
-                <div className="mt-3 space-y-2">
-                  {reviewBreakdown.map((item) => (
-                    <div key={item.bucket} className="flex items-center gap-2 text-xs text-[var(--muted)]">
-                      <span className="w-6">{item.bucket}★</span>
-                      <div className="h-2 flex-1 rounded-full bg-white">
-                        <div className="h-2 rounded-full bg-[#1E40AF]" style={{ width: `${item.pct}%` }} />
-                      </div>
-                      <span>{item.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {sampleReviews.map((review) => (
-                  <article key={review.name} className="rounded-xl border border-[var(--border)] p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-semibold text-[var(--navy)]">{review.name}</h4>
-                        <p className="text-xs text-[var(--muted)]">{review.meta}</p>
-                      </div>
-                      <span className="text-sm text-[var(--saffron)]">{stars(review.rating)}</span>
-                    </div>
-                    <p className="mt-2 text-sm leading-7 text-[var(--muted)]">{review.text}</p>
-                  </article>
-                ))}
-              </div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Public Reviews</p>
+            <div className="mt-4 rounded-xl border border-dashed border-[var(--border)] bg-[var(--ivory)] p-5">
+              <p className="font-display text-2xl text-[var(--navy)]">{institute.rating.toFixed(1)} / 5</p>
+              <p className="mt-2 text-sm text-[var(--muted)]">{institute.reviewsCount} review(s) are recorded for this institute, but written testimonials are not prefilled.</p>
             </div>
           </section>
         </div>
