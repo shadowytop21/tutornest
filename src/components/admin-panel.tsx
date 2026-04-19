@@ -12,6 +12,24 @@ import {
   setTeacherStatus,
   type HomepageShowcaseConfig,
 } from "@/lib/mock-db";
+import {
+  listCoachingEnquiries,
+  listCustomCoachingInstitutes,
+  listCustomSchools,
+  listSchoolEnquiries,
+  setCoachingInstituteStatus,
+  setSchoolStatus,
+} from "@/lib/verticals-store";
+import { seedCoachingInstitutes, seedSchools } from "@/lib/verticals-data";
+
+function formatStableDate(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "-";
+  }
+
+  return parsed.toISOString().slice(0, 10);
+}
 
 export function AdminPanel() {
   const router = useRouter();
@@ -27,6 +45,24 @@ export function AdminPanel() {
   const [teacherSearch, setTeacherSearch] = useState("");
   const [teacherStatusFilter, setTeacherStatusFilter] = useState<"all" | "pending" | "verified" | "rejected">("all");
   const [accountRoleFilter, setAccountRoleFilter] = useState<"all" | "teacher" | "parent">("all");
+  const [verticalTab, setVerticalTab] = useState<"coaching" | "schools">("coaching");
+  const [coachingEntities, setCoachingEntities] = useState<ReturnType<typeof listCustomCoachingInstitutes>>([]);
+  const [schoolEntities, setSchoolEntities] = useState<ReturnType<typeof listCustomSchools>>([]);
+
+  useEffect(() => {
+    const refreshVerticalData = () => {
+      setCoachingEntities(listCustomCoachingInstitutes());
+      setSchoolEntities(listCustomSchools());
+    };
+
+    refreshVerticalData();
+    window.addEventListener("docent-coaching-change", refreshVerticalData);
+    window.addEventListener("docent-schools-change", refreshVerticalData);
+    return () => {
+      window.removeEventListener("docent-coaching-change", refreshVerticalData);
+      window.removeEventListener("docent-schools-change", refreshVerticalData);
+    };
+  }, []);
 
   function updateTeacherLocally(teacherId: string, updater: (teacher: AppSnapshot["teachers"][number]) => AppSnapshot["teachers"][number] | null) {
     setSnapshot((current) => {
@@ -244,6 +280,18 @@ export function AdminPanel() {
       .slice(0, 10);
   }, [snapshot.reviews]);
 
+  const allCoachingEntities = useMemo(() => [...coachingEntities, ...seedCoachingInstitutes], [coachingEntities]);
+  const allSchoolEntities = useMemo(() => [...schoolEntities, ...seedSchools], [schoolEntities]);
+  const pendingCoaching = useMemo(() => allCoachingEntities.filter((item) => item.status === "pending"), [allCoachingEntities]);
+  const pendingSchools = useMemo(() => allSchoolEntities.filter((item) => item.status === "pending"), [allSchoolEntities]);
+  const allEnquiries = useMemo(
+    () => [
+      ...listCoachingEnquiries().map((item) => ({ id: item.id, type: "Coaching", target: item.instituteName, person: item.name, phone: item.phone, email: item.email, createdAt: item.createdAt })),
+      ...listSchoolEnquiries().map((item) => ({ id: item.id, type: "School", target: item.schoolName, person: item.name, phone: item.phone, email: item.email, createdAt: item.createdAt })),
+    ].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
+    [coachingEntities, schoolEntities],
+  );
+
   function updateShowcaseCard(index: number, key: "initials" | "name" | "locality" | "price" | "rating" | "tags", value: string) {
     setShowcaseConfig((prev) => {
       const cards = [...prev.cards];
@@ -372,7 +420,7 @@ export function AdminPanel() {
                   </div>
                   <div className="text-[13px] text-[var(--navy)] capitalize">{profile.role}</div>
                   <div className="text-[13px] text-[var(--navy)]">{profile.phone || "-"}</div>
-                  <div className="text-[13px] text-[var(--navy)]">{new Date(profile.created_at).toLocaleDateString()}</div>
+                  <div className="text-[13px] text-[var(--navy)]">{formatStableDate(profile.created_at)}</div>
                   <div className="admin-actions">
                     <button type="button" onClick={() => deleteAccount(profile.id, profile.name)} className="btn-reject">Delete Account</button>
                   </div>
@@ -435,6 +483,93 @@ export function AdminPanel() {
             </div>
 
             <button type="button" onClick={saveShowcase} className="btn-fill mt-5">Save Homepage Panel</button>
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-[var(--border)] bg-white p-5">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <button type="button" onClick={() => setVerticalTab("coaching")} className={`rounded-full px-4 py-2 text-sm ${verticalTab === "coaching" ? "bg-[var(--navy)] text-white" : "bg-[var(--ivory)] text-[var(--navy)]"}`}>Coaching Institutes</button>
+              <button type="button" onClick={() => setVerticalTab("schools")} className={`rounded-full px-4 py-2 text-sm ${verticalTab === "schools" ? "bg-[var(--navy)] text-white" : "bg-[var(--ivory)] text-[var(--navy)]"}`}>Schools</button>
+            </div>
+
+            {verticalTab === "coaching" ? (
+              <>
+                <p className="admin-table-title mb-4">Coaching Institutes - Pending Verifications</p>
+                <div className="admin-table">
+                  <div className="admin-table-row admin-table-head"><span>Institute</span><span>Locality</span><span>Status</span><span>Actions</span></div>
+                  {pendingCoaching.map((item) => (
+                    <div key={item.id} className="admin-table-row">
+                      <div className="admin-teacher-name">{item.name}</div>
+                      <div className="text-[13px] text-[var(--navy)]">{item.locality}</div>
+                      <div className="text-[13px] text-[var(--navy)]">{item.status}</div>
+                      <div className="admin-actions">
+                        <button type="button" onClick={() => setCoachingInstituteStatus(item.id, "verified")} className="btn-approve">Approve</button>
+                        <button type="button" onClick={() => setCoachingInstituteStatus(item.id, "rejected")} className="btn-reject">Reject</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="admin-table-title mt-6 mb-4">All Institutes</p>
+                <div className="admin-table">
+                  <div className="admin-table-row admin-table-head"><span>Name</span><span>Exams</span><span>Status</span><span>Profile</span></div>
+                  {allCoachingEntities.map((item) => (
+                    <div key={item.id} className="admin-table-row">
+                      <div className="admin-teacher-name">{item.name}</div>
+                      <div className="text-[13px] text-[var(--navy)]">{item.examTypes.slice(0, 2).join(", ")}</div>
+                      <div className="text-[13px] text-[var(--navy)]">{item.status}</div>
+                      <a href={`/coaching/${item.id}`} className="btn-secondary px-3 py-1 text-xs">Open</a>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="admin-table-title mb-4">Schools - Pending Verifications</p>
+                <div className="admin-table">
+                  <div className="admin-table-row admin-table-head"><span>School</span><span>Board</span><span>Status</span><span>Actions</span></div>
+                  {pendingSchools.map((item) => (
+                    <div key={item.id} className="admin-table-row">
+                      <div className="admin-teacher-name">{item.name}</div>
+                      <div className="text-[13px] text-[var(--navy)]">{item.boards.join(" / ")}</div>
+                      <div className="text-[13px] text-[var(--navy)]">{item.status}</div>
+                      <div className="admin-actions">
+                        <button type="button" onClick={() => setSchoolStatus(item.id, "verified")} className="btn-approve">Approve</button>
+                        <button type="button" onClick={() => setSchoolStatus(item.id, "rejected")} className="btn-reject">Reject</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="admin-table-title mt-6 mb-4">All Schools</p>
+                <div className="admin-table">
+                  <div className="admin-table-row admin-table-head"><span>Name</span><span>Location</span><span>Status</span><span>Profile</span></div>
+                  {allSchoolEntities.map((item) => (
+                    <div key={item.id} className="admin-table-row">
+                      <div className="admin-teacher-name">{item.name}</div>
+                      <div className="text-[13px] text-[var(--navy)]">{item.locality}</div>
+                      <div className="text-[13px] text-[var(--navy)]">{item.status}</div>
+                      <a href={`/schools/${item.id}`} className="btn-secondary px-3 py-1 text-xs">Open</a>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-[var(--border)] bg-white p-5">
+            <p className="admin-table-title mb-4">Enquiries</p>
+            <div className="admin-table">
+              <div className="admin-table-row admin-table-head"><span>Type</span><span>Target</span><span>Person</span><span>Contact</span><span>Date</span></div>
+              {allEnquiries.map((item) => (
+                <div key={item.id} className="admin-table-row">
+                  <div className="text-[13px] text-[var(--navy)]">{item.type}</div>
+                  <div className="admin-teacher-name">{item.target}</div>
+                  <div className="text-[13px] text-[var(--navy)]">{item.person}</div>
+                  <div className="text-[13px] text-[var(--navy)]">{item.phone} · {item.email}</div>
+                  <div className="text-[13px] text-[var(--navy)]">{formatStableDate(item.createdAt)}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

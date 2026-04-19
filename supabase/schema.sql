@@ -186,3 +186,56 @@ drop trigger if exists teacher_profiles_founder_trigger on public.teacher_profil
 create trigger teacher_profiles_founder_trigger
 before insert on public.teacher_profiles
 for each row execute function public.assign_founding_member();
+
+do $$
+begin
+  create type public.vertical_status as enum ('pending', 'verified', 'rejected');
+exception
+  when duplicate_object then null;
+end $$;
+
+create table if not exists public.coaching_institutes (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  locality text not null,
+  exam_types text[] not null default '{}'::text[],
+  status public.vertical_status not null default 'pending',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.schools (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  locality text not null,
+  boards text[] not null default '{}'::text[],
+  admission_open boolean not null default false,
+  admission_deadline date,
+  status public.vertical_status not null default 'pending',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.coaching_enquiries (
+  id uuid primary key default gen_random_uuid(),
+  coaching_id uuid not null references public.coaching_institutes(id) on delete cascade,
+  name text not null,
+  phone text not null,
+  email text not null,
+  course_interest text,
+  message text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.school_enquiries (
+  id uuid primary key default gen_random_uuid(),
+  school_id uuid not null references public.schools(id) on delete cascade,
+  name text not null,
+  phone text not null,
+  email text not null,
+  message text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists coaching_institutes_status_idx on public.coaching_institutes(status);
+create index if not exists schools_status_idx on public.schools(status);
+create index if not exists coaching_enquiries_coaching_idx on public.coaching_enquiries(coaching_id);
+create index if not exists school_enquiries_school_idx on public.school_enquiries(school_id);

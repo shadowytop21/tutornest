@@ -10,7 +10,7 @@ export default function PrivacyPolicyPage() {
 
         <h2>1. Who we are</h2>
         <p>
-          {companyProfile.legalName} ("Docent", "we", "our") provides a platform for families and tutors to discover and connect.
+          {companyProfile.legalName} (&quot;Docent&quot;, &quot;we&quot;, &quot;our&quot;) provides a platform for families and tutors to discover and connect.
         </p>
 
         <h2>2. Data we collect</h2>

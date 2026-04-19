@@ -11,6 +11,14 @@
   --saffron: #e8860a;
   --saffron-light: #fef3e2;
   --saffron-mid: #fddfa0;
+  --cobalt: #1E40AF;
+  --cobalt2: #1D4ED8;
+  --cobalt-light: #EFF6FF;
+  --cobalt-mid: #BFDBFE;
+  --teal: #0D7377;
+  --teal2: #0F766E;
+  --teal-light: #F0FDFA;
+  --teal-mid: #99F6E4;
   --green: #2d6a4f;
   --green-light: #edfaf3;
   --muted: #7a7060;
@@ -2247,7 +2255,7 @@ button,
 .admin-table {
   background: #fff;
   border-radius: 16px;
-  overflow: hidden;
+  overflow-x: auto;
   border: 1.5px solid var(--border);
 }
 
@@ -2258,6 +2266,7 @@ button,
   padding: 16px 24px;
   border-bottom: 1px solid var(--border);
   align-items: center;
+  min-width: 760px;
 }
 
 .admin-table-row:last-child {
@@ -2516,8 +2525,7 @@ button,
   .dashboard-layout,
   .dash-grid,
   .profile-details-grid,
-  .admin-stats,
-  .admin-table-row {
+  .admin-stats {
     grid-template-columns: 1fr;
   }
 
@@ -2688,6 +2696,7 @@ button,
   .admin-table-row {
     padding: 12px;
     gap: 0.75rem;
+    min-width: 680px;
   }
 }
 

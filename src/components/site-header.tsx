@@ -71,6 +71,12 @@ export function SiteHeader() {
           <Link href="/browse" className="rounded-full px-3 py-2 text-sm text-[var(--muted)] transition hover:bg-[var(--ivory2)] hover:text-[var(--navy)]">
             Browse Teachers
           </Link>
+          <Link href="/coaching" className="rounded-full px-3 py-2 text-sm text-[var(--muted)] transition hover:bg-[var(--ivory2)] hover:text-[var(--navy)]">
+            Coaching
+          </Link>
+          <Link href="/schools" className="rounded-full px-3 py-2 text-sm text-[var(--muted)] transition hover:bg-[var(--ivory2)] hover:text-[var(--navy)]">
+            Schools
+          </Link>
           <Link href="/#subjects" className="rounded-full px-3 py-2 text-sm text-[var(--muted)] transition hover:bg-[var(--ivory2)] hover:text-[var(--navy)]">
             Subjects
           </Link>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { JoinAsTeacherAction } from "@/components/join-as-teacher-action";
+import { VerticalSwitcher } from "@/components/vertical-switcher";
 import { defaultHomepageShowcaseConfig, loadHomepageShowcaseConfig, type HomepageShowcaseConfig } from "@/lib/mock-db";
 
 const subjectCards = [
@@ -73,6 +74,55 @@ export default function HomePage() {
 
   return (
     <div>
+      <VerticalSwitcher />
+
+      <section className="mx-auto mt-6 w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="rounded-[1.5rem] border border-[var(--border)] bg-[var(--ivory)] p-6 shadow-[0_8px_28px_rgba(26,39,68,0.08)] lg:p-10">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted)]">What are you looking for?</p>
+            <h1 className="mt-4 font-display text-4xl font-light leading-tight text-[var(--navy)] lg:text-6xl">
+              Find the right <em className="text-[var(--saffron)]">education</em>
+              <br />for your child.
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-[var(--muted)]">
+              Docent covers every stage of the journey from local tutors to coaching institutes and schools.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <Link href="/browse" className="group rounded-3xl border-2 border-[var(--border)] bg-white p-6 transition hover:-translate-y-1 hover:border-[var(--saffron)] hover:shadow-[0_12px_32px_rgba(26,39,68,0.12)]">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--saffron-light)] text-xl">📚</div>
+              <h2 className="font-display text-2xl text-[var(--navy)]">Home Tutors</h2>
+              <p className="mt-2 text-sm leading-7 text-[var(--muted)]">Find verified tutors near your locality by subject, grade, board, and monthly budget.</p>
+              <div className="mt-4 flex items-center gap-2">
+                <span className="rounded-full bg-[var(--green-light)] px-3 py-1 text-[11px] font-semibold text-[var(--green)]">Live</span>
+                <span className="text-xs text-[var(--muted)]">124 tutors in Mathura</span>
+              </div>
+            </Link>
+
+            <Link href="/coaching" className="group rounded-3xl border-2 border-[var(--border)] bg-white p-6 transition hover:-translate-y-1 hover:border-[#1E40AF] hover:shadow-[0_12px_32px_rgba(30,64,175,0.16)]">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-xl">🎯</div>
+              <h2 className="font-display text-2xl text-[var(--navy)]">Coaching Institutes</h2>
+              <p className="mt-2 text-sm leading-7 text-[var(--muted)]">Compare JEE, NEET, and board coaching with fee ranges, courses, and result signals.</p>
+              <div className="mt-4 flex items-center gap-2">
+                <span className="rounded-full bg-[var(--green-light)] px-3 py-1 text-[11px] font-semibold text-[var(--green)]">Live</span>
+                <span className="text-xs text-[var(--muted)]">18 institutes listed</span>
+              </div>
+            </Link>
+
+            <Link href="/schools" className="group rounded-3xl border-2 border-[var(--border)] bg-white p-6 transition hover:-translate-y-1 hover:border-[#0D7377] hover:shadow-[0_12px_32px_rgba(13,115,119,0.16)]">
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-xl">🏫</div>
+              <h2 className="font-display text-2xl text-[var(--navy)]">Schools</h2>
+              <p className="mt-2 text-sm leading-7 text-[var(--muted)]">Browse schools by board, location, and annual fees with side-by-side profile insights.</p>
+              <div className="mt-4 flex items-center gap-2">
+                <span className="rounded-full bg-[var(--green-light)] px-3 py-1 text-[11px] font-semibold text-[var(--green)]">Live</span>
+                <span className="text-xs text-[var(--muted)]">42 schools listed</span>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <div className="page-section">
         <section className="hero">
           <div className="hero-accent" />
