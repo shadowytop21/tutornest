@@ -53,7 +53,6 @@ export default function SchoolsComparePage() {
     { label: "Students", value: (school) => String(school.studentCount || school.students || "-") },
     { label: "Teachers", value: (school) => String(school.teacherCount || school.teachers || "-") },
     { label: "School Hours", value: (school) => school.schoolHours || "-" },
-    { label: "Rating", value: (school) => `${school.rating.toFixed(1)}★` },
     { label: "Facilities", value: (school) => school.facilities.join(", ") },
     { label: "Admission", value: (school) => (school.admissionOpen ? `Open (Deadline: ${school.admissionDeadline || "N/A"})` : "Closed") },
     { label: "Transport", value: (school) => (school.transportAvailable ? `Available (${formatCurrency(school.transportFee)}/yr)` : "Not Available") },

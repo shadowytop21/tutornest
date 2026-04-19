@@ -25,6 +25,7 @@ export type CoachingCourse = {
 
 export type CoachingInstitute = {
   id: string;
+  handle?: string;
   name: string;
   tagline: string;
   about: string;
@@ -85,6 +86,7 @@ export type SchoolClassFee = {
 
 export type SchoolRecord = {
   id: string;
+  handle?: string;
   name: string;
   tagline: string;
   about: string;
@@ -158,6 +160,7 @@ export const classLevelOptions: ClassLevel[] = [
 export const seedCoachingInstitutes: CoachingInstitute[] = [
   {
     id: "coaching-aakash-mathura",
+    handle: "aakash_institute",
     name: "Aakash Institute",
     tagline: "Mathura's top JEE & NEET coaching centre",
     about:
@@ -183,8 +186,8 @@ export const seedCoachingInstitutes: CoachingInstitute[] = [
     feeRangeMax: 90000,
     verificationDocumentName: "Aakash Registration Certificate.pdf",
     status: "verified",
-    rating: 4.8,
-    reviewsCount: 124,
+    rating: 0,
+    reviewsCount: 0,
     students: 2400,
     iitSelections: 340,
     neetSelections: 520,
@@ -201,6 +204,7 @@ export const seedCoachingInstitutes: CoachingInstitute[] = [
   },
   {
     id: "coaching-resonance-mathura",
+    handle: "resonance_mathura",
     name: "Resonance Eduventures",
     tagline: "Strong JEE preparation with disciplined batches",
     about:
@@ -225,8 +229,8 @@ export const seedCoachingInstitutes: CoachingInstitute[] = [
     feeRangeMax: 70000,
     verificationDocumentName: "Resonance Affiliation.pdf",
     status: "verified",
-    rating: 4.5,
-    reviewsCount: 87,
+    rating: 0,
+    reviewsCount: 0,
     students: 1200,
     iitSelections: 180,
     neetSelections: 140,
@@ -258,6 +262,7 @@ export const schoolFacilities: SchoolFacility[] = [
 export const seedSchools: SchoolRecord[] = [
   {
     id: "school-st-dominics-mathura",
+    handle: "st_dominics_mathura",
     name: "St. Dominic's Senior Secondary School",
     tagline: "One of Mathura's most trusted CBSE schools",
     about:
@@ -293,8 +298,8 @@ export const seedSchools: SchoolRecord[] = [
     contactPhone: "9012345678",
     website: "https://example.com/st-dominics",
     status: "verified",
-    rating: 4.7,
-    reviewsCount: 86,
+    rating: 0,
+    reviewsCount: 0,
     students: 2800,
     teachers: 120,
     featured: true,
@@ -302,6 +307,7 @@ export const seedSchools: SchoolRecord[] = [
   },
   {
     id: "school-dps-mathura",
+    handle: "dps_mathura",
     name: "Delhi Public School Mathura",
     tagline: "Premium CBSE learning with modern infrastructure",
     about:
@@ -336,8 +342,8 @@ export const seedSchools: SchoolRecord[] = [
     contactPhone: "9098765432",
     website: "https://example.com/dps-mathura",
     status: "verified",
-    rating: 4.9,
-    reviewsCount: 142,
+    rating: 0,
+    reviewsCount: 0,
     students: 3200,
     teachers: 160,
     featured: false,
@@ -345,6 +351,7 @@ export const seedSchools: SchoolRecord[] = [
   },
   {
     id: "school-kv-mathura",
+    handle: "kendriya_vidyalaya_mathura",
     name: "Kendriya Vidyalaya Mathura",
     tagline: "Affordable and trusted CBSE education",
     about:
@@ -379,8 +386,8 @@ export const seedSchools: SchoolRecord[] = [
     contactPhone: "9345678901",
     website: "https://example.com/kv-mathura",
     status: "verified",
-    rating: 4.3,
-    reviewsCount: 58,
+    rating: 0,
+    reviewsCount: 0,
     students: 1900,
     teachers: 78,
     featured: false,

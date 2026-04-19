@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
+import { formatHandle } from "@/lib/handles";
 import { seedCoachingInstitutes, type CoachingInstitute } from "@/lib/verticals-data";
 import { createCoachingEnquiry, listCustomCoachingInstitutes, trackCoachingMetric } from "@/lib/verticals-store";
 import { useToast } from "@/components/toast-provider";
@@ -15,12 +16,6 @@ function initials(name: string) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-}
-
-function stars(rating: number) {
-  const filled = "★".repeat(rating);
-  const empty = "☆".repeat(5 - rating);
-  return `${filled}${empty}`;
 }
 
 export default function CoachingInstituteProfilePage() {
@@ -47,6 +42,7 @@ export default function CoachingInstituteProfilePage() {
     const merged = [...customInstitutes, ...seedCoachingInstitutes];
     return merged.find((item) => item.id === params.id) ?? null;
   }, [customInstitutes, params.id]);
+  const displayHandle = formatHandle(institute?.handle ?? institute?.name);
 
   useEffect(() => {
     if (!institute) {
@@ -110,6 +106,7 @@ export default function CoachingInstituteProfilePage() {
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-blue-200">Coaching Institute · {institute.locality}, Mathura</p>
               <h1 className="mt-2 font-display text-4xl leading-tight">{institute.name}</h1>
+              <p className="mt-1 text-sm text-blue-100">{displayHandle}</p>
               <p className="mt-2 max-w-2xl text-sm text-blue-100">{institute.tagline}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {institute.highlights.map((item) => (
@@ -119,11 +116,10 @@ export default function CoachingInstituteProfilePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-center"><div className="font-display text-2xl">{institute.rating.toFixed(1)}★</div><div className="text-xs text-blue-100">Rating</div></div>
-            <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-center"><div className="font-display text-2xl">{institute.reviewsCount}</div><div className="text-xs text-blue-100">Reviews</div></div>
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
             <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-center"><div className="font-display text-2xl">{institute.students || "-"}</div><div className="text-xs text-blue-100">Students</div></div>
             <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-center"><div className="font-display text-2xl">{institute.iitSelections + institute.neetSelections}</div><div className="text-xs text-blue-100">Selections</div></div>
+            <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-center"><div className="font-display text-2xl">{institute.facultyCount}</div><div className="text-xs text-blue-100">Faculty</div></div>
           </div>
         </div>
       </section>
@@ -180,13 +176,6 @@ export default function CoachingInstituteProfilePage() {
             </section>
           ) : null}
 
-          <section className="rounded-2xl border border-[var(--border)] bg-white p-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Public Reviews</p>
-            <div className="mt-4 rounded-xl border border-dashed border-[var(--border)] bg-[var(--ivory)] p-5">
-              <p className="font-display text-2xl text-[var(--navy)]">{institute.rating.toFixed(1)} / 5</p>
-              <p className="mt-2 text-sm text-[var(--muted)]">{institute.reviewsCount} review(s) are recorded for this institute, but written testimonials are not prefilled.</p>
-            </div>
-          </section>
         </div>
 
         <aside className="sticky top-20 h-fit space-y-4" id="enquire">

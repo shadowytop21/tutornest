@@ -8,6 +8,8 @@ export type TeacherProfile = {
   created_at?: string;
   public_status?: TeacherStatus;
   is_resubmission?: boolean;
+  handle?: string;
+  contactsThisMonth?: number;
   name: string;
   photo_url: string;
   bio: string;
@@ -210,7 +212,16 @@ export function buildWhatsAppLink(number: string, message: string) {
 }
 
 export function featuredTeachers(catalog: TeacherProfile[] = seedTeachers) {
-  return [...catalog].sort((left, right) => right.rating - left.rating);
+  return [...catalog].sort((left, right) => {
+    const leftCapped = (left.contactsThisMonth ?? 0) >= 15;
+    const rightCapped = (right.contactsThisMonth ?? 0) >= 15;
+
+    if (leftCapped !== rightCapped) {
+      return leftCapped ? 1 : -1;
+    }
+
+    return right.rating - left.rating;
+  });
 }
 
 export function teacherById(id: string, catalog: TeacherProfile[] = seedTeachers) {
@@ -292,10 +303,10 @@ export const subjectSearchSuggestions = [
 
 export function buildTeacherView(teacher: TeacherProfile, reviews: Review[] = seedReviews) {
   const teacherReviews = reviews.filter((review) => review.teacher_id === teacher.id);
-  const reviewCount = teacherReviews.length || teacher.reviews_count;
+  const reviewCount = teacherReviews.length;
   const rating = teacherReviews.length
     ? Math.round((teacherReviews.reduce((total, review) => total + review.rating, 0) / teacherReviews.length) * 10) / 10
-    : teacher.rating;
+    : 0;
 
   return {
     ...teacher,
@@ -339,10 +350,10 @@ export function computeFilteredTeachers(
   return filtered
     .map((teacher) => {
       const teacherReviews = reviews.filter((review) => review.teacher_id === teacher.id);
-      const reviewCount = teacherReviews.length || teacher.reviews_count;
+      const reviewCount = teacherReviews.length;
       const rating = teacherReviews.length
         ? Math.round((teacherReviews.reduce((total, review) => total + review.rating, 0) / teacherReviews.length) * 10) / 10
-        : teacher.rating;
+        : 0;
 
       return {
         ...teacher,
@@ -351,6 +362,13 @@ export function computeFilteredTeachers(
       };
     })
     .sort((left, right) => {
+      const leftCapped = (left.contactsThisMonth ?? 0) >= 15;
+      const rightCapped = (right.contactsThisMonth ?? 0) >= 15;
+
+      if (leftCapped !== rightCapped) {
+        return leftCapped ? 1 : -1;
+      }
+
       const leftVerified = left.status === "verified" || (left.public_status ?? "pending") === "verified";
       const rightVerified = right.status === "verified" || (right.public_status ?? "pending") === "verified";
 

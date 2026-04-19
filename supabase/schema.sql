@@ -32,6 +32,7 @@ create table if not exists public.profiles (
 create table if not exists public.teacher_profiles (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null unique references auth.users(id) on delete cascade,
+  handle text unique,
   photo_url text,
   bio text check (char_length(bio) <= 200),
   subjects text[] not null default '{}'::text[] check (coalesce(array_length(subjects, 1), 0) <= 6),
@@ -57,6 +58,17 @@ create table if not exists public.reviews (
   created_at timestamptz not null default now(),
   unique (teacher_id, parent_id)
 );
+
+create table if not exists public.teacher_contact_requests (
+  id uuid primary key default gen_random_uuid(),
+  teacher_id uuid not null references public.teacher_profiles(id) on delete cascade,
+  parent_id uuid not null references auth.users(id) on delete cascade,
+  ip_address text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists teacher_contact_requests_teacher_month_idx on public.teacher_contact_requests (teacher_id, created_at desc);
+create index if not exists teacher_contact_requests_parent_idx on public.teacher_contact_requests (parent_id);
 
 create table if not exists public.admin_audit_logs (
   id uuid primary key default gen_random_uuid(),
@@ -197,6 +209,7 @@ end $$;
 create table if not exists public.coaching_institutes (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  handle text unique,
   locality text not null,
   exam_types text[] not null default '{}'::text[],
   status public.vertical_status not null default 'pending',
@@ -206,6 +219,7 @@ create table if not exists public.coaching_institutes (
 create table if not exists public.schools (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  handle text unique,
   locality text not null,
   boards text[] not null default '{}'::text[],
   admission_open boolean not null default false,

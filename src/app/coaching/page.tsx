@@ -6,7 +6,7 @@ import { formatCurrency } from "@/lib/utils";
 import { seedCoachingInstitutes, type CoachingInstitute } from "@/lib/verticals-data";
 import { listCustomCoachingInstitutes } from "@/lib/verticals-store";
 
-type SortOption = "best" | "fee-asc" | "fee-desc" | "rating" | "newest";
+type SortOption = "best" | "fee-asc" | "fee-desc" | "newest";
 
 type BatchFilter = "all" | "small" | "medium" | "large";
 
@@ -55,7 +55,6 @@ export default function CoachingBrowsePage() {
   const [sortBy, setSortBy] = useState<SortOption>("best");
   const [minFee, setMinFee] = useState(20000);
   const [maxFee, setMaxFee] = useState(150000);
-  const [ratingFloor, setRatingFloor] = useState(0);
   const [batchFilter, setBatchFilter] = useState<BatchFilter>("all");
 
   useEffect(() => {
@@ -74,16 +73,14 @@ export default function CoachingBrowsePage() {
       const matchesTopChip = chipFilter === "All" || matchesExamChip(item, chipFilter);
       const matchesSidebarExam = sidebarExam === "All" || item.examTypes.includes(sidebarExam as (typeof item.examTypes)[number]);
       const matchesFee = item.feeRangeMin >= minFee && item.feeRangeMax <= maxFee;
-      const matchesRating = item.rating >= ratingFloor;
       const matchesBatchSize = matchesBatch(item, batchFilter);
 
-      return matchesQuery && matchesTopChip && matchesSidebarExam && matchesFee && matchesRating && matchesBatchSize;
+      return matchesQuery && matchesTopChip && matchesSidebarExam && matchesFee && matchesBatchSize;
     });
 
     const sorted = [...filtered].sort((a, b) => {
       if (sortBy === "fee-asc") return a.feeRangeMin - b.feeRangeMin;
       if (sortBy === "fee-desc") return b.feeRangeMin - a.feeRangeMin;
-      if (sortBy === "rating") return b.rating - a.rating;
       if (sortBy === "newest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 
       const featuredDelta = Number(b.featured) - Number(a.featured);
@@ -92,13 +89,12 @@ export default function CoachingBrowsePage() {
     });
 
     return sorted;
-  }, [batchFilter, chipFilter, customInstitutes, maxFee, minFee, query, ratingFloor, sidebarExam, sortBy]);
+  }, [batchFilter, chipFilter, customInstitutes, maxFee, minFee, query, sidebarExam, sortBy]);
 
   const stats = useMemo(() => {
     const institutes = visibleInstitutes.length;
     const examTypes = new Set(visibleInstitutes.flatMap((item) => item.examTypes)).size;
-    const avgRating = institutes ? (visibleInstitutes.reduce((acc, item) => acc + item.rating, 0) / institutes).toFixed(1) : "0.0";
-    return { institutes, examTypes, avgRating };
+    return { institutes, examTypes };
   }, [visibleInstitutes]);
 
   return (
@@ -122,7 +118,6 @@ export default function CoachingBrowsePage() {
           <div className="grid grid-cols-3 gap-2 rounded-2xl border border-white/15 bg-white/10 p-2 text-center lg:min-w-[320px]">
             <div className="rounded-xl border border-white/10 bg-white/10 p-3"><div className="font-display text-2xl">{stats.institutes}</div><div className="text-xs text-blue-100">Institutes</div></div>
             <div className="rounded-xl border border-white/10 bg-white/10 p-3"><div className="font-display text-2xl">{stats.examTypes}</div><div className="text-xs text-blue-100">Exam Types</div></div>
-            <div className="rounded-xl border border-white/10 bg-white/10 p-3"><div className="font-display text-2xl">{stats.avgRating}★</div><div className="text-xs text-blue-100">Avg Rating</div></div>
           </div>
         </div>
       </section>
@@ -141,7 +136,6 @@ export default function CoachingBrowsePage() {
               <option value="best">Best Match</option>
               <option value="fee-asc">Fees Low to High</option>
               <option value="fee-desc">Fees High to Low</option>
-              <option value="rating">Highest Rated</option>
               <option value="newest">Newest</option>
             </select>
           </div>
@@ -168,17 +162,6 @@ export default function CoachingBrowsePage() {
               <input type="range" min={20000} max={150000} step={5000} value={minFee} onChange={(event) => setMinFee(Number(event.target.value))} className="w-full" />
               <input type="range" min={20000} max={150000} step={5000} value={maxFee} onChange={(event) => setMaxFee(Number(event.target.value))} className="w-full" />
               <p>{formatCurrency(minFee)} - {formatCurrency(maxFee)}</p>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Rating</p>
-            <div className="mt-2 grid gap-1 text-sm">
-              {[0, 3.5, 4, 4.5].map((threshold) => (
-                <button key={threshold} type="button" onClick={() => setRatingFloor(threshold)} className={`rounded-lg px-3 py-2 text-left ${ratingFloor === threshold ? "bg-blue-50 text-[#1E40AF]" : "text-[var(--navy)] hover:bg-[var(--ivory)]"}`}>
-                  {threshold === 0 ? "All Ratings" : `${threshold}+ stars`}
-                </button>
-              ))}
             </div>
           </div>
 
@@ -231,7 +214,7 @@ export default function CoachingBrowsePage() {
                   <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">Annual Fee</p>
                   <p className="mt-1 font-display text-3xl text-[var(--navy)]">{formatCurrency(institute.feeRangeMin)}</p>
                   <p className="text-xs text-[var(--muted)]">to {formatCurrency(institute.feeRangeMax)}</p>
-                  <p className="mt-3 text-sm font-semibold text-[var(--navy)]">{institute.rating.toFixed(1)}★ <span className="font-normal text-[var(--muted)]">({institute.reviewsCount})</span></p>
+                  <p className="mt-3 text-sm font-semibold text-[var(--navy)]">{institute.facultyCount} faculty members</p>
                 </div>
 
                 <div className="mt-4 space-y-2">

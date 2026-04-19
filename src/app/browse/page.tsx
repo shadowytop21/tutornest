@@ -16,6 +16,7 @@ import {
   type TeacherRecord,
 } from "@/lib/data";
 import { loadAppState } from "@/lib/mock-db";
+import { getTeacherContactMonthlyCount } from "@/lib/teacher-analytics";
 import { upsertTeachersToCache } from "@/lib/teacher-cache";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -242,9 +243,29 @@ export default function BrowsePage() {
     [availability, board, debouncedQuery, fallbackSnapshot.reviews, fallbackSnapshot.teachers, grade, locality, priceMax, subject],
   );
 
-  const localVisible = localTeachers.slice(0, currentPage * PAGE_SIZE);
+  const prioritizedLocalTeachers = useMemo(() => {
+    return [...localTeachers].sort((left, right) => {
+      const leftCapped = getTeacherContactMonthlyCount(left.id) >= 15;
+      const rightCapped = getTeacherContactMonthlyCount(right.id) >= 15;
+
+      if (leftCapped !== rightCapped) {
+        return leftCapped ? 1 : -1;
+      }
+
+      const leftVerified = left.status === "verified" || (left.public_status ?? "pending") === "verified";
+      const rightVerified = right.status === "verified" || (right.public_status ?? "pending") === "verified";
+
+      if (leftVerified !== rightVerified) {
+        return leftVerified ? -1 : 1;
+      }
+
+      return right.rating - left.rating || left.price_per_month - right.price_per_month;
+    });
+  }, [localTeachers]);
+
+  const localVisible = prioritizedLocalTeachers.slice(0, currentPage * PAGE_SIZE);
   const teachers = remoteTeachers ?? localVisible;
-  const totalCount = remoteTeachers !== null ? remoteTotal : localTeachers.length;
+  const totalCount = remoteTeachers !== null ? remoteTotal : prioritizedLocalTeachers.length;
   const hasMore = teachers.length < totalCount;
   const catalogPool = fallbackSnapshot.teachers ?? [];
 
@@ -296,7 +317,7 @@ export default function BrowsePage() {
       <section className="card-surface overflow-hidden rounded-[1rem]">
         <div className="browse-hero">
           <h1 className="browse-title">Find tutors in <em>Mathura</em></h1>
-          <p className="browse-sub">{totalCount} verified teachers · Filter by subject, grade, locality and more</p>
+          <p className="browse-sub">{totalCount} teachers · Filter by subject, grade, locality and more</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 border-b border-[var(--border)] bg-white px-6 py-5 lg:px-8">

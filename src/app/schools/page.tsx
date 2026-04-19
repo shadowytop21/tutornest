@@ -237,7 +237,7 @@ export default function SchoolsBrowsePage() {
                     ))}
                   </div>
 
-                  <p className="mt-3 text-sm font-semibold text-[var(--navy)]">{school.rating.toFixed(1)}★ <span className="font-normal text-[var(--muted)]">({school.reviewsCount} reviews)</span></p>
+                  <p className="mt-3 text-sm font-semibold text-[var(--navy)]">{school.studentCount || school.students || "-"} students</p>
                 </div>
               </div>
 

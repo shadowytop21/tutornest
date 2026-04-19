@@ -6,6 +6,7 @@ import {
   type TeacherRecord,
   type TeacherStatus,
 } from "@/lib/data";
+import { createUniqueHandle } from "@/lib/handles";
 import { createId } from "@/lib/utils";
 
 export interface AppSnapshot {
@@ -18,6 +19,7 @@ export interface AppSnapshot {
 const STORAGE_KEY = "docent.app-state.v1";
 const ADMIN_STORAGE_KEY = "docent.admin-auth.v1";
 const HOMEPAGE_SHOWCASE_KEY = "docent.homepage-showcase.v1";
+const REVIEWS_CLEARED_KEY = "docent.reviews-cleared.v1";
 const REVIEW_RATE_LIMIT_MS = 24 * 60 * 60 * 1000;
 
 export type HomepageFeaturedCard = {
@@ -43,7 +45,7 @@ export const defaultHomepageShowcaseConfig: HomepageShowcaseConfig = {
       locality: "Mathura",
       tags: ["Maths", "Physics", "Class 9-12"],
       price: 1200,
-      rating: 4.9,
+      rating: 0,
       tone: "default",
     },
     {
@@ -52,7 +54,7 @@ export const defaultHomepageShowcaseConfig: HomepageShowcaseConfig = {
       locality: "Mathura",
       tags: ["Chemistry", "Biology", "NEET"],
       price: 1500,
-      rating: 4.8,
+      rating: 0,
       tone: "green",
     },
   ],
@@ -122,11 +124,30 @@ function refreshTeacherAggregates(teachers: TeacherRecord[], reviews: ReviewReco
 function sanitizeSnapshot(parsed: Partial<AppSnapshot>): AppSnapshot {
   const teachers = (parsed.teachers ?? []).filter((teacher) => Boolean(teacher.user_id));
   const teacherIds = new Set(teachers.map((teacher) => teacher.id));
+  const legacyReviewsCleared = typeof window === "undefined" || window.localStorage.getItem(REVIEWS_CLEARED_KEY) === "1";
+  const reviews = (parsed.reviews ?? []).filter((review) => teacherIds.has(review.teacher_id));
+  const seenHandles = new Set<string>();
+  const sanitizedTeachers = teachers.map((teacher) => {
+    const handle = teacher.handle ?? createUniqueHandle(teacher.name, seenHandles, "teacher");
+    seenHandles.add(handle.trim().toLowerCase());
+
+    return {
+      ...teacher,
+      handle,
+      rating: legacyReviewsCleared ? teacher.rating : 0,
+      reviews_count: legacyReviewsCleared ? teacher.reviews_count : 0,
+      reviewCount: legacyReviewsCleared ? teacher.reviewCount ?? teacher.reviews_count : 0,
+    };
+  });
+
+  if (typeof window !== "undefined" && !legacyReviewsCleared) {
+    window.localStorage.setItem(REVIEWS_CLEARED_KEY, "1");
+  }
 
   return {
     profiles: parsed.profiles ?? [],
-    teachers,
-    reviews: (parsed.reviews ?? []).filter((review) => teacherIds.has(review.teacher_id)),
+    teachers: sanitizedTeachers,
+    reviews: legacyReviewsCleared ? reviews : [],
     session: parsed.session ?? null,
   };
 }
@@ -282,7 +303,7 @@ export function loadHomepageShowcaseConfig(): HomepageShowcaseConfig {
         locality: card.locality || defaultHomepageShowcaseConfig.cards[index]?.locality || "Mathura",
         tags: (card.tags ?? defaultHomepageShowcaseConfig.cards[index]?.tags ?? []).slice(0, 3),
         price: Number(card.price ?? defaultHomepageShowcaseConfig.cards[index]?.price ?? 1000),
-        rating: Number(card.rating ?? defaultHomepageShowcaseConfig.cards[index]?.rating ?? 4.5),
+        rating: Number(card.rating ?? defaultHomepageShowcaseConfig.cards[index]?.rating ?? 0),
         tone: card.tone === "green" ? "green" : "default",
       })),
       stats: parsed.stats.slice(0, 3).map((stat, index) => ({
@@ -348,11 +369,23 @@ export function upsertTeacherProfile(teacher: TeacherRecord) {
   return mutateAppState((snapshot) => {
     const existingIndex = snapshot.teachers.findIndex((entry) => entry.id === teacher.id);
     const teachers = [...snapshot.teachers];
+    const existingHandles = snapshot.teachers
+      .filter((entry) => entry.id !== teacher.id)
+      .map((entry) => entry.handle)
+      .filter((handle): handle is string => Boolean(handle));
 
     if (existingIndex >= 0) {
-      teachers[existingIndex] = teacher;
+      const existingTeacher = teachers[existingIndex];
+      teachers[existingIndex] = {
+        ...existingTeacher,
+        ...teacher,
+        handle: teacher.handle ?? existingTeacher.handle ?? createUniqueHandle(teacher.name, existingHandles, "teacher"),
+      };
     } else {
-      teachers.unshift(teacher);
+      teachers.unshift({
+        ...teacher,
+        handle: teacher.handle ?? createUniqueHandle(teacher.name, existingHandles, "teacher"),
+      });
     }
 
     return {
@@ -383,6 +416,12 @@ export function createTeacherProfile(payload: {
       throw new AppSecurityError("PROFILE_ALREADY_EXISTS", 409, "Teacher profile already exists");
     }
 
+    const handle = createUniqueHandle(
+      payload.name,
+      snapshot.teachers.map((entry) => entry.handle).filter((entry): entry is string => Boolean(entry)),
+      "teacher",
+    );
+
     const teacherId = createId("teacher");
     const teacherRole: ProfileRecord["role"] = "teacher";
     const createdAt = new Date().toISOString();
@@ -401,6 +440,7 @@ export function createTeacherProfile(payload: {
       availability: payload.availability,
       experience_years: payload.experienceYears,
       whatsapp_number: payload.whatsappNumber,
+      handle,
       status: "pending",
       public_status: "pending",
       is_resubmission: false,
@@ -486,6 +526,7 @@ export function updateTeacherProfile(payload: {
         status: "pending" as const,
         public_status: wasVerified ? "verified" : "pending",
         is_resubmission: wasVerified,
+        handle: entry.handle ?? existingTeacher.handle ?? createUniqueHandle(payload.name, snapshot.teachers.map((item) => item.handle).filter((value): value is string => Boolean(value)), "teacher"),
       };
     });
 

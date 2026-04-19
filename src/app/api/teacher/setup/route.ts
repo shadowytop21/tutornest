@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createUniqueHandle } from "@/lib/handles";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 import { checkRateLimit, getRequestIp } from "@/lib/rate-limit";
 import { normalizeTeacherName, parseExperienceYears, validateTeacherBio, validateTeacherName, validateWhatsappNumber } from "@/lib/teacher-validation";
@@ -52,9 +53,11 @@ async function getOrCreateUserId(email: string, name: string, phone: string) {
 export async function POST(request: Request) {
   try {
     const ip = getRequestIp(request);
-    const rateLimit = checkRateLimit(`teacher-setup:${ip}`, 12, 10 * 60 * 1000);
-    if (!rateLimit.allowed) {
-      return NextResponse.json({ message: "Too many submissions. Please try again shortly." }, { status: 429 });
+    if (ip && ip !== "unknown") {
+      const rateLimit = checkRateLimit(`teacher-setup:${ip}`, 12, 10 * 60 * 1000);
+      if (!rateLimit.allowed) {
+        return NextResponse.json({ message: "Too many submissions. Please try again shortly." }, { status: 429 });
+      }
     }
 
     const payload = (await request.json().catch(() => null)) as TeacherSetupRequest | null;
@@ -106,10 +109,56 @@ export async function POST(request: Request) {
     }
 
     const adminSupabase = supabase as any;
+    const canEnforceIpLimit = Boolean(ip && ip !== "unknown");
+    const handleRows = await adminSupabase.from("teacher_profiles").select("handle");
+
+    if (handleRows.error) {
+      return NextResponse.json({ message: handleRows.error.message }, { status: 500 });
+    }
+
+    const existingHandles = (handleRows.data ?? [])
+      .map((row: { handle?: string | null }) => row.handle)
+      .filter((handle: string | null | undefined): handle is string => Boolean(handle));
+
+    let existingUser: { id: string } | null = null;
+    if (canEnforceIpLimit) {
+      const existingUsers = await adminSupabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (existingUsers.error) {
+        return NextResponse.json({ message: existingUsers.error.message }, { status: 500 });
+      }
+
+      const users = existingUsers.data.users;
+      existingUser = users.find((user: any) => user.email?.toLowerCase() === payload.email?.toLowerCase()) ?? null;
+
+      if (!existingUser) {
+        const ipClaimedByAnotherUser = users.find((user: any) => user.user_metadata?.teacher_setup_ip === ip);
+
+        if (ipClaimedByAnotherUser) {
+          return NextResponse.json(
+            { message: "A teacher account has already been created from this IP address." },
+            { status: 409 },
+          );
+        }
+      }
+    }
 
     const userResult = await getOrCreateUserId(payload.email, sanitizedName, payload.phone);
     if (userResult.error || !userResult.userId) {
       return NextResponse.json({ message: userResult.error ?? "Unable to create auth user." }, { status: 500 });
+    }
+
+    if (!existingUser && canEnforceIpLimit) {
+      const metadataResult = await adminSupabase.auth.admin.updateUserById(userResult.userId, {
+        user_metadata: {
+          name: sanitizedName,
+          phone: payload.phone,
+          teacher_setup_ip: ip,
+        },
+      });
+
+      if (metadataResult.error) {
+        return NextResponse.json({ message: metadataResult.error.message }, { status: 500 });
+      }
     }
 
     const now = new Date().toISOString();
@@ -146,7 +195,7 @@ export async function POST(request: Request) {
 
     const existingTeacherResult = await adminSupabase
       .from("teacher_profiles")
-      .select("id,created_at")
+      .select("id,created_at,handle")
       .eq("user_id", userResult.userId)
       .order("created_at", { ascending: false })
       .limit(1);
@@ -156,11 +205,16 @@ export async function POST(request: Request) {
     }
 
     const existingTeacherId = existingTeacherResult.data?.[0]?.id;
+    const existingTeacherHandle = existingTeacherResult.data?.[0]?.handle ?? null;
+    const handle = existingTeacherHandle ?? createUniqueHandle(sanitizedName, existingHandles, "teacher");
 
     if (existingTeacherId) {
       const updateResult = await adminSupabase
         .from("teacher_profiles")
-        .update(teacherPayload)
+        .update({
+          ...teacherPayload,
+          handle,
+        })
         .eq("id", existingTeacherId)
         .select()
         .maybeSingle();
@@ -172,7 +226,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, userId: userResult.userId, teacher: updateResult.data ?? null });
     }
 
-    const insertResult = await adminSupabase.from("teacher_profiles").insert(teacherPayload).select().single();
+    const insertResult = await adminSupabase
+      .from("teacher_profiles")
+      .insert({
+        ...teacherPayload,
+        handle,
+      })
+      .select()
+      .single();
     if (insertResult.error) {
       return NextResponse.json({ message: insertResult.error.message }, { status: 500 });
     }

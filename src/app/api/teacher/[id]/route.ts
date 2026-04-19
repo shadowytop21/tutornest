@@ -17,7 +17,7 @@ export async function GET(_request: Request, context: { params: { id: string } }
 
     const { data: teacherRow, error: teacherError } = await adminSupabase
       .from("teacher_profiles")
-      .select("id,user_id,photo_url,bio,subjects,grades,boards,locality,price_per_month,teaches_at,availability,experience_years,whatsapp_number,status,is_founding_member,created_at")
+      .select("id,user_id,handle,photo_url,bio,subjects,grades,boards,locality,price_per_month,teaches_at,availability,experience_years,whatsapp_number,status,is_founding_member,created_at")
       .eq("id", teacherId)
       .neq("status", "rejected")
       .maybeSingle();
@@ -36,24 +36,22 @@ export async function GET(_request: Request, context: { params: { id: string } }
         .eq("teacher_id", teacherRow.id),
     ]);
 
-    const normalizedReviews = ((reviewRows ?? []) as any[]).map((row) => ({
-      id: row.id,
-      teacher_id: row.teacher_id,
-      parent_id: row.parent_id,
-      parent_name: "Parent",
-      rating: row.rating,
-      comment: row.comment,
-      created_at: row.created_at,
-    }));
-
-    const reviewsCount = normalizedReviews.length;
-    const rating = reviewsCount
-      ? Math.round((normalizedReviews.reduce((total, row) => total + Number(row.rating ?? 0), 0) / reviewsCount) * 10) / 10
-      : 0;
+    const normalizedReviews: Array<{
+      id: string;
+      teacher_id: string;
+      parent_id: string;
+      parent_name: string;
+      rating: number;
+      comment: string;
+      created_at: string;
+    }> = [];
+    const reviewsCount = 0;
+    const rating = 0;
 
     const teacher = {
       id: teacherRow.id,
       user_id: teacherRow.user_id,
+      handle: teacherRow.handle ?? null,
       created_at: teacherRow.created_at,
       name: profileRow?.name ?? "Tutor",
       photo_url: teacherRow.photo_url ?? "",

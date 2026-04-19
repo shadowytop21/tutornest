@@ -133,7 +133,6 @@ export default function SchoolsDashboardPage() {
               <div className="dstat-card"><div className="dstat-num">{enquiries.length}</div><div className="dstat-label">Admission enquiries</div></div>
               <div className="dstat-card"><div className="dstat-num">{metrics.profileViews}</div><div className="dstat-label">Profile views</div></div>
               <div className="dstat-card"><div className="dstat-num">{metrics.saves}</div><div className="dstat-label">Saves</div></div>
-              <div className="dstat-card"><div className="dstat-num">{school.reviewsCount}</div><div className="dstat-label">Reviews</div></div>
             </div>
 
             <div className="dash-grid">

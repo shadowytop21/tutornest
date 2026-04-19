@@ -614,7 +614,7 @@ export default function TeacherSetupPage() {
                 {priceError ? <p className="mt-2 text-sm text-red-600">{priceError}</p> : null}
               </div>
               <div className="lg:col-span-2 rounded-2xl border border-[var(--border)] bg-white p-5 text-sm leading-6 text-[var(--muted)]">
-                Profiles are submitted with a pending status. First 50 teachers are automatically marked as founding members.
+                Profiles are submitted with a pending status and can be reviewed after submission.
               </div>
             </div>
           ) : null}

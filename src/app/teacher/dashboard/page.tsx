@@ -27,6 +27,7 @@ export default function TeacherDashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [analyticsTick, setAnalyticsTick] = useState(0);
   const [isAccepting, setIsAccepting] = useState(true);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
 
   const snapshot = loadAppState();
   const session = snapshot.session;
@@ -34,9 +35,12 @@ export default function TeacherDashboardPage() {
   const teacherId = teacher?.id ?? "";
 
   const analytics = useMemo(
-    () => (teacherId ? getTeacherAnalyticsSummary(teacherId) : { viewsLast7Days: 0, contactsLast7Days: 0, savedCount: 0, lastViewedAt: null, lastContactedAt: null, lastSavedAt: null }),
+    () => (teacherId ? getTeacherAnalyticsSummary(teacherId) : { viewsLast7Days: 0, contactsLast7Days: 0, contactsThisMonth: 0, savedCount: 0, lastViewedAt: null, lastContactedAt: null, lastSavedAt: null }),
     [teacherId, analyticsTick],
   );
+  const monthlyLimit = 15;
+  const monthlyContactsUsed = analytics.contactsThisMonth;
+  const monthlyContactsRemaining = Math.max(0, monthlyLimit - monthlyContactsUsed);
 
   useEffect(() => {
     const freshSnapshot = loadAppState();
@@ -58,7 +62,10 @@ export default function TeacherDashboardPage() {
       return;
     }
 
-    const refreshAnalytics = () => setAnalyticsTick((value) => value + 1);
+    const refreshAnalytics = () => {
+      setAnalyticsTick((value) => value + 1);
+      setLastSyncedAt(new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+    };
 
     refreshAnalytics();
     window.addEventListener("docent-teacher-analytics-change", refreshAnalytics);
@@ -145,7 +152,6 @@ export default function TeacherDashboardPage() {
 
             <div className="dsb-nav-section">Insights</div>
             <a href="#analytics" className="dsb-nav-item"><span className="dsb-nav-icon">AN</span> Analytics</a>
-            <a href="#reviews" className="dsb-nav-item"><span className="dsb-nav-icon">RV</span> Reviews <span className="dsb-nav-badge">{teacher.reviews_count}</span></a>
           </div>
 
           <div className="dsb-bottom">
@@ -173,7 +179,12 @@ export default function TeacherDashboardPage() {
                 <div className="wb-greeting">Good evening, {session.name.split(" ")[0]} </div>
                 <div className="wb-sub">Your profile has {analytics.viewsLast7Days} views this week and {analytics.contactsLast7Days} direct contacts.</div>
               </div>
-              <div className="wb-badge">Profile {teacher.status === "verified" ? "Verified & Live" : "Pending Review"}</div>
+              <div className="flex flex-col items-end gap-2 text-right">
+                <div className="wb-badge">Profile {teacher.status === "verified" ? "Verified & Live" : "Pending Review"}</div>
+                <div className="rounded-full border border-[var(--border)] bg-white/80 px-3 py-1 text-xs text-[var(--muted)]">
+                  Live sync {lastSyncedAt ?? "just now"}
+                </div>
+              </div>
             </div>
 
             <div className="dash-stats-row">
@@ -188,14 +199,14 @@ export default function TeacherDashboardPage() {
                 <div className="dstat-label">WhatsApp contacts</div>
               </div>
               <div className="dstat-card">
+                <div className="dstat-top"><div className="dstat-icon dsi-blue">EN</div><span className="dstat-trend trend-neutral">live</span></div>
+                <div className="dstat-num">{monthlyContactsUsed}</div>
+                <div className="dstat-label">Enquiries used this month</div>
+              </div>
+              <div className="dstat-card">
                 <div className="dstat-top"><div className="dstat-icon dsi-blue">SV</div><span className="dstat-trend trend-up">up</span></div>
                 <div className="dstat-num">{analytics.savedCount}</div>
                 <div className="dstat-label">Parents saved profile</div>
-              </div>
-              <div className="dstat-card">
-                <div className="dstat-top"><div className="dstat-icon dsi-purple">RT</div><span className="dstat-trend trend-neutral">stable</span></div>
-                <div className="dstat-num">{teacher.rating.toFixed(1)}</div>
-                <div className="dstat-label">Average rating</div>
               </div>
             </div>
 
@@ -240,11 +251,11 @@ export default function TeacherDashboardPage() {
                   </div>
                 </div>
 
-                <div className="dcard" id="reviews">
+                <div className="dcard" id="activity">
                   <div className="dcard-title">Recent Activity</div>
                   <div className="activity-list">
+                    <div className="activity-item"><div className="activity-icon ai-view">EN</div><div className="activity-text"><div className="activity-main">Monthly enquiry quota</div><div className="activity-sub">{monthlyContactsUsed} used, {monthlyContactsRemaining} remaining</div></div><div className="activity-time">Live</div></div>
                     <div className="activity-item"><div className="activity-icon ai-whatsapp">CT</div><div className="activity-text"><div className="activity-main">Parent contacted via WhatsApp</div><div className="activity-sub">Weekly contacts: {analytics.contactsLast7Days}</div></div><div className="activity-time">Recent</div></div>
-                    <div className="activity-item"><div className="activity-icon ai-review">RV</div><div className="activity-text"><div className="activity-main">Your current rating is {teacher.rating.toFixed(1)}</div><div className="activity-sub">From {teacher.reviews_count} review(s)</div></div><div className="activity-time">Live</div></div>
                     <div className="activity-item"><div className="activity-icon ai-save">SV</div><div className="activity-text"><div className="activity-main">Parents saved your profile</div><div className="activity-sub">Saved count: {analytics.savedCount}</div></div><div className="activity-time">Live</div></div>
                     <div className="activity-item"><div className="activity-icon ai-view">VW</div><div className="activity-text"><div className="activity-main">Profile viewed this week</div><div className="activity-sub">Views: {analytics.viewsLast7Days}</div></div><div className="activity-time">7d</div></div>
                   </div>
@@ -256,13 +267,13 @@ export default function TeacherDashboardPage() {
                   <div className="vb-icon">VK</div>
                   <div>
                     <div className="vb-title">Get Verified</div>
-                    <div className="vb-desc">Verified teachers appear higher in search and build faster trust with parents.</div>
+                    <div className="vb-desc">Complete your profile so parents can review your details quickly.</div>
                   </div>
                   <div className="vb-perks">
-                    <div className="vb-perk"><div className="vb-perk-dot" />Top of search results</div>
-                    <div className="vb-perk"><div className="vb-perk-dot" />Verified badge on profile</div>
-                    <div className="vb-perk"><div className="vb-perk-dot" />Higher parent trust</div>
-                    <div className="vb-perk"><div className="vb-perk-dot" />More profile views</div>
+                    <div className="vb-perk"><div className="vb-perk-dot" />Complete all profile fields</div>
+                    <div className="vb-perk"><div className="vb-perk-dot" />Keep availability current</div>
+                    <div className="vb-perk"><div className="vb-perk-dot" />Share your profile link</div>
+                    <div className="vb-perk"><div className="vb-perk-dot" />Track live enquiries</div>
                   </div>
                   <Link href="/teacher/setup?edit=1" className="btn-verify">Upload and Request Verification</Link>
                 </div>
@@ -291,15 +302,14 @@ export default function TeacherDashboardPage() {
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: "5px", marginBottom: "8px" }}>
-                      <span className="badge badge-verified" style={{ fontSize: "10px", padding: "3px 8px" }}>Verified</span>
-                      {teacher.is_founding_member ? <span className="badge badge-founding" style={{ fontSize: "10px", padding: "3px 8px" }}>Founding</span> : null}
+                      <span className="badge badge-verified" style={{ fontSize: "10px", padding: "3px 8px" }}>Live profile</span>
                     </div>
                     <div style={{ display: "flex", gap: "5px", marginBottom: "10px", flexWrap: "wrap" }}>
                       {teacher.subjects.slice(0, 2).map((subject) => <span key={subject} className="subj-pill" style={{ fontSize: "11px", padding: "4px 10px" }}>{subject}</span>)}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                       <div style={{ fontFamily: "var(--font-display)", fontSize: "20px", fontWeight: 400, color: "var(--navy)" }}>{teacher.price_per_month} <span style={{ fontSize: "11px", fontWeight: 300, color: "var(--muted)" }}>/mo</span></div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "12px", color: "var(--muted)" }}>RT {teacher.rating.toFixed(1)}</div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "12px", color: "var(--muted)" }}>Contacts {teacher.contactsThisMonth ?? 0}</div>
                     </div>
                   </div>
                 </div>

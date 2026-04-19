@@ -182,7 +182,7 @@ export function AdminPanel() {
 
   async function toggleFoundingMember(teacherId: string, nextValue: boolean) {
     if (!isRemoteData) {
-      pushToast({ tone: "warning", title: "Founding member toggle needs server mode." });
+      pushToast({ tone: "warning", title: "Profile highlight toggle needs server mode." });
       return;
     }
 
@@ -194,13 +194,13 @@ export function AdminPanel() {
 
     if (!response.ok) {
       const payload = (await response.json().catch(() => ({}))) as { message?: string };
-      pushToast({ tone: "error", title: payload.message ?? "Unable to update founding member status." });
+      pushToast({ tone: "error", title: payload.message ?? "Unable to update profile highlight status." });
       return;
     }
 
     updateTeacherLocally(teacherId, (teacher) => ({ ...teacher, is_founding_member: nextValue }));
     refreshInBackground();
-    pushToast({ tone: "success", title: nextValue ? "Marked as founding member" : "Removed founding member badge" });
+    pushToast({ tone: "success", title: nextValue ? "Marked as profile highlight" : "Removed profile highlight" });
   }
 
   async function deleteReview(reviewId: string) {
@@ -340,7 +340,7 @@ export function AdminPanel() {
         <div className="admin-stats">
           <div className="admin-stat"><div className="admin-stat-num">{stats.totalTeachers}</div><div className="admin-stat-label">Total Teachers</div></div>
           <div className="admin-stat"><div className="admin-stat-num text-[var(--saffron)]">{stats.pendingTeachers}</div><div className="admin-stat-label">Pending Verification</div></div>
-          <div className="admin-stat"><div className="admin-stat-num text-[var(--green)]">{stats.verifiedTeachers}</div><div className="admin-stat-label">Verified Teachers</div></div>
+          <div className="admin-stat"><div className="admin-stat-num text-[var(--green)]">{stats.verifiedTeachers}</div><div className="admin-stat-label">Teacher Profiles</div></div>
           <div className="admin-stat"><div className="admin-stat-num">{stats.totalParents}</div><div className="admin-stat-label">Total Parents</div></div>
         </div>
 

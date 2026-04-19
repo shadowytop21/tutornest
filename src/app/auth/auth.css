@@ -136,6 +136,10 @@
   margin-bottom: 1rem;
 }
 
+.docent-role-selector.five {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .docent-role-card {
   position: relative;
   border: 1px solid var(--border2);
@@ -148,6 +152,16 @@
 .docent-role-card.active {
   border-color: var(--saffron);
   background: var(--saffron-light);
+}
+
+.docent-role-card.tone-cobalt.active {
+  border-color: var(--cobalt);
+  background: var(--cobalt-light);
+}
+
+.docent-role-card.tone-teal.active {
+  border-color: var(--teal);
+  background: var(--teal-light);
 }
 
 .docent-role-check {
@@ -163,6 +177,14 @@
   align-items: center;
   justify-content: center;
   font-size: 0.7rem;
+}
+
+.docent-role-card.tone-cobalt .docent-role-check {
+  background: var(--cobalt);
+}
+
+.docent-role-card.tone-teal .docent-role-check {
+  background: var(--teal);
 }
 
 .docent-role-card.active .docent-role-check {
@@ -607,6 +629,10 @@
     grid-template-columns: 1fr 1fr;
   }
 
+  .docent-role-selector.five {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .docent-trust-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -628,5 +654,9 @@
 
   .docent-form-area {
     padding: 1.4rem;
+  }
+
+  .docent-role-selector.five {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }

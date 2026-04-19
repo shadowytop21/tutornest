@@ -77,9 +77,7 @@ function TeacherCardImpl({ teacher }: { teacher: TeacherProfile }) {
   }, [teacher.created_at]);
 
   const isUnavailable = teacher.availability.length === 0;
-  const hasDemo = teacher.teaches_at === "both";
   const availabilityLabel = teacher.availability.length ? teacher.availability.join(" + ") : "Unavailable";
-  const syntheticViews = teacher.reviews_count * 4 + teacher.experience_years * 9;
   const boardLabel = teacher.boards.length ? teacher.boards.join(" / ") : "Not specified";
   const experienceLabel = displayExperienceYears(teacher.experience_years);
 
@@ -119,7 +117,6 @@ function TeacherCardImpl({ teacher }: { teacher: TeacherProfile }) {
           {teacher.status === "verified" ? <Badge tone="green">Verified</Badge> : null}
           {teacher.is_founding_member ? <Badge tone="saffron">Founding</Badge> : null}
           {isNew ? <Badge tone="blue">New</Badge> : null}
-          {hasDemo ? <Badge tone="green">Free Demo</Badge> : null}
           {isUnavailable ? <Badge>Unavailable</Badge> : null}
         </div>
 
@@ -151,10 +148,8 @@ function TeacherCardImpl({ teacher }: { teacher: TeacherProfile }) {
         </div>
 
         <div className="tcard-rating-row">
-          <span className="stars">★★★★★</span>
-          <span className="rating-num">{teacher.rating.toFixed(1)}</span>
-          <span className="rating-count">({teacher.reviews_count} reviews)</span>
-          <span className="views-pill">{syntheticViews} views</span>
+          <span className="rating-count">{teacher.subjects.slice(0, 2).join(" · ") || "Teacher profile"}</span>
+          <span className="views-pill">{teacher.experience_years} yrs experience</span>
         </div>
       </div>
 

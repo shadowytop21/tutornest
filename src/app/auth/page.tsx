@@ -9,6 +9,21 @@ import { loadLiveVerticalCounts, type LiveVerticalCounts } from "@/lib/live-coun
 import { getSupabaseBrowserClient } from "@/lib/supabase";
 import "./auth.css";
 
+type UiRole = "parent" | "tutor" | "coaching" | "school" | "student";
+
+const roleOptions: Array<{ value: UiRole; label: string; emoji: string; description: string; tone: "saffron" | "cobalt" | "teal" }> = [
+  { value: "parent", label: "Parent", emoji: "👨‍👩‍👧", description: "Find the right options for your child", tone: "saffron" },
+  { value: "tutor", label: "Tutor", emoji: "👨‍🏫", description: "Create your profile and get discovered", tone: "saffron" },
+  { value: "coaching", label: "Coaching Institute", emoji: "🎯", description: "List your institute and courses", tone: "cobalt" },
+  { value: "school", label: "School", emoji: "🏫", description: "Publish school profile and admissions", tone: "teal" },
+  { value: "student", label: "Student", emoji: "🎓", description: "Explore tutors, coaching and schools", tone: "saffron" },
+];
+
+function mapUiRoleToAccountRole(role: UiRole): "teacher" | "parent" {
+  if (role === "tutor") return "teacher";
+  return "parent";
+}
+
 export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -26,8 +41,8 @@ export default function AuthPage() {
   const [termsChecked, setTermsChecked] = useState(false);
   const [counts, setCounts] = useState<LiveVerticalCounts | null>(null);
   const roleParam = searchParams.get("role");
-  const preferredRole: "teacher" | "parent" | null = roleParam === "teacher" || roleParam === "parent" ? roleParam : null;
-  const [selectedRole, setSelectedRole] = useState<"teacher" | "parent">(preferredRole ?? "parent");
+  const preferredRole: UiRole | null = roleParam === "teacher" ? "tutor" : roleParam === "parent" ? "parent" : null;
+  const [selectedRole, setSelectedRole] = useState<UiRole>(preferredRole ?? "parent");
   const returnTo = searchParams.get("next");
 
   useEffect(() => {
@@ -39,7 +54,8 @@ export default function AuthPage() {
     if (oauthEmail) setEmail(oauthEmail);
     if (oauthName) setName(oauthName);
     if (oauthEmail) { setAcceptedTerms(true); setTermsChecked(true); }
-    if (redirectRole === "teacher" || redirectRole === "parent") setSelectedRole(redirectRole);
+    if (redirectRole === "teacher") setSelectedRole("tutor");
+    if (redirectRole === "parent") setSelectedRole("parent");
     if (oauthError) pushToast({ tone: "error", title: "Google login failed. Please try again." });
   }, [searchParams, pushToast]);
 
@@ -54,7 +70,8 @@ export default function AuthPage() {
       const user = userResult.data.user;
       if (!active || userResult.error || !user?.email) return;
       const roleParam = searchParams.get("role");
-      if (roleParam === "teacher" || roleParam === "parent") setSelectedRole(roleParam);
+      if (roleParam === "teacher") setSelectedRole("tutor");
+      if (roleParam === "parent") setSelectedRole("parent");
       const inferredName = (user.user_metadata?.full_name as string | undefined) || (user.user_metadata?.name as string | undefined) || "";
       setEmail(user.email);
       setName(inferredName);
@@ -105,7 +122,7 @@ export default function AuthPage() {
     pushToast({ tone: "success", title: "Signed out" });
   }
 
-  function selectRole(role: "teacher" | "parent") {
+  function selectRole(role: UiRole) {
     setSelectedRole(role);
   }
 
@@ -122,8 +139,9 @@ export default function AuthPage() {
       return;
     }
     setIsGoogleLoading(true);
+    const mappedRole = mapUiRoleToAccountRole(selectedRole);
     const callbackParams = new URLSearchParams();
-    if (selectedRole) callbackParams.set("role", selectedRole);
+    if (mappedRole) callbackParams.set("role", mappedRole);
     if (returnTo && returnTo.startsWith("/")) callbackParams.set("next", returnTo);
     const redirectTo = `${window.location.origin}/auth/callback?${callbackParams.toString()}`;
     const { error } = await client.auth.signInWithOAuth({
@@ -142,20 +160,21 @@ export default function AuthPage() {
       pushToast({ tone: "error", title: "Please accept Terms and Privacy to continue." });
       return;
     }
+    const mappedRole = mapUiRoleToAccountRole(selectedRole);
     const response = await fetch("/api/account/profile", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim(), name: name.trim(), phone: phone.trim(), role: selectedRole, acceptedTerms }),
+      body: JSON.stringify({ email: email.trim(), name: name.trim(), phone: phone.trim(), role: mappedRole, acceptedTerms }),
     });
     const payload = (await response.json().catch(() => ({}))) as { message?: string; userId?: string };
     if (!response.ok || !payload.userId) {
       pushToast({ tone: "error", title: payload.message ?? "Account creation failed." });
       return;
     }
-    saveSession({ id: payload.userId, phone: phone.trim(), name: name.trim(), email: email.trim(), role: selectedRole });
-    updateProfile({ id: payload.userId, role: selectedRole, name: name.trim(), phone: phone.trim(), email: email.trim(), created_at: new Date().toISOString() });
-    pushToast({ tone: "success", title: "Signed in", description: selectedRole === "teacher" ? "Continue to teacher profile setup." : "You can now contact and review teachers." });
-    router.push(selectedRole === "teacher" ? (returnTo && returnTo.startsWith("/") ? returnTo : "/teacher/setup") : resolvePostLoginRoute("parent"));
+    saveSession({ id: payload.userId, phone: phone.trim(), name: name.trim(), email: email.trim(), role: mappedRole });
+    updateProfile({ id: payload.userId, role: mappedRole, name: name.trim(), phone: phone.trim(), email: email.trim(), created_at: new Date().toISOString() });
+    pushToast({ tone: "success", title: "Signed in", description: mappedRole === "teacher" ? "Continue to teacher profile setup." : "You can now browse and connect." });
+    router.push(mappedRole === "teacher" ? (returnTo && returnTo.startsWith("/") ? returnTo : "/teacher/setup") : resolvePostLoginRoute("parent"));
   }
 
   if (!loaded) {
@@ -187,20 +206,20 @@ export default function AuthPage() {
             <span className="docent-eyebrow-text">Mathura&apos;s Tuition Platform</span>
           </div>
           <h2 className="docent-left-headline">
-            The best tutors<br />
-            in Mathura are<br />
-            <em>waiting for you.</em>
+            Everything your<br />
+            child needs,<br />
+            <em>one account.</em>
           </h2>
           <div className="docent-floating-cards">
             <div className="docent-float-card">
               <div className="docent-fcard-avatar a1">PS</div>
               <div className="docent-fcard-info">
-                <div className="docent-fcard-name">Verified tutor</div>
+                <div className="docent-fcard-name">Tutor profile</div>
                 <div className="docent-fcard-detail">Maths · Physics · Civil Lines</div>
               </div>
               <div className="docent-fcard-right">
-                <div className="docent-fcard-badge">✓ Verified</div>
-                <div className="docent-fcard-price">Live profile</div>
+                  <div className="docent-fcard-badge">Live profile</div>
+                  <div className="docent-fcard-price">Mathura</div>
               </div>
             </div>
             <div className="docent-float-card">
@@ -210,8 +229,8 @@ export default function AuthPage() {
                 <div className="docent-fcard-detail">Chemistry · Biology · Mathura</div>
               </div>
               <div className="docent-fcard-right">
-                <div className="docent-fcard-badge">Verified</div>
-                <div className="docent-fcard-price">Live profile</div>
+                  <div className="docent-fcard-badge">Live profile</div>
+                  <div className="docent-fcard-price">Mathura</div>
               </div>
             </div>
             <div className="docent-float-card">
@@ -221,8 +240,8 @@ export default function AuthPage() {
                 <div className="docent-fcard-detail">CBSE · Smart classrooms · Mathura</div>
               </div>
               <div className="docent-fcard-right">
-                <div className="docent-fcard-badge">Verified</div>
-                <div className="docent-fcard-price">Live profile</div>
+                  <div className="docent-fcard-badge">Live profile</div>
+                  <div className="docent-fcard-price">Mathura</div>
               </div>
             </div>
           </div>
@@ -232,11 +251,11 @@ export default function AuthPage() {
         <div className="docent-left-stats">
           <div>
             <div className="docent-lstat-num">{counts?.tutors ?? "..."}</div>
-            <div className="docent-lstat-label">Verified Tutors</div>
+            <div className="docent-lstat-label">Tutors</div>
           </div>
           <div>
             <div className="docent-lstat-num">{counts?.coaching ?? "..."}</div>
-            <div className="docent-lstat-label">Coaching Institutes</div>
+            <div className="docent-lstat-label">Coaching</div>
           </div>
           <div>
             <div className="docent-lstat-num">{counts?.schools ?? "..."}</div>
@@ -304,36 +323,26 @@ export default function AuthPage() {
               </div>
 
               <h1 className="docent-form-title">Join Docent</h1>
-              <p className="docent-form-subtitle">Free forever for parents. Free to list for teachers.</p>
+              <p className="docent-form-subtitle">Free for parents. Free to list for teachers, institutes and schools.</p>
 
               {/* Role selector */}
-              <div className="docent-role-selector">
-                <div
-                  className={`docent-role-card ${selectedRole === "parent" ? "active" : ""}`}
-                  onClick={() => selectRole("parent")}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && selectRole("parent")}
-                  aria-pressed={selectedRole === "parent"}
-                >
-                  <div className="docent-role-check">✓</div>
-                  <span className="docent-role-emoji">👨‍👩‍👧</span>
-                  <div className="docent-role-title">I&apos;m a Parent</div>
-                  <div className="docent-role-desc">Find the perfect tutor for my child</div>
-                </div>
-                <div
-                  className={`docent-role-card ${selectedRole === "teacher" ? "active" : ""}`}
-                  onClick={() => selectRole("teacher")}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && selectRole("teacher")}
-                  aria-pressed={selectedRole === "teacher"}
-                >
-                  <div className="docent-role-check">✓</div>
-                  <span className="docent-role-emoji">👨‍🏫</span>
-                  <div className="docent-role-title">I&apos;m a Teacher</div>
-                  <div className="docent-role-desc">Create a profile and get discovered</div>
-                </div>
+              <div className="docent-role-selector five">
+                {roleOptions.map((role) => (
+                  <div
+                    key={role.value}
+                    className={`docent-role-card tone-${role.tone} ${selectedRole === role.value ? "active" : ""}`}
+                    onClick={() => selectRole(role.value)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === "Enter" && selectRole(role.value)}
+                    aria-pressed={selectedRole === role.value}
+                  >
+                    <div className="docent-role-check">✓</div>
+                    <span className="docent-role-emoji">{role.emoji}</span>
+                    <div className="docent-role-title">{role.label}</div>
+                    <div className="docent-role-desc">{role.description}</div>
+                  </div>
+                ))}
               </div>
 
               {/* Google auth */}
@@ -449,7 +458,7 @@ export default function AuthPage() {
               {/* Trust badges */}
               <div className="docent-trust-row">
                 <div className="docent-trust-item"><span className="docent-trust-dot">🔒</span> SSL Secure</div>
-                <div className="docent-trust-item"><span className="docent-trust-dot">✓</span> Verified tutors</div>
+                <div className="docent-trust-item"><span className="docent-trust-dot">•</span> Local tutor profiles</div>
                 <div className="docent-trust-item"><span className="docent-trust-dot">🇮🇳</span> Mathura-local</div>
               </div>
             </>
@@ -514,29 +523,21 @@ export default function AuthPage() {
                   </div>
                 </div>
 
-                <div className="docent-role-selector" style={{ marginBottom: "1.5rem" }}>
-                  <div
-                    className={`docent-role-card ${selectedRole === "parent" ? "active" : ""}`}
-                    onClick={() => selectRole("parent")}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === "Enter" && selectRole("parent")}
-                  >
-                    <div className="docent-role-check">✓</div>
-                    <span className="docent-role-emoji">👨‍👩‍👧</span>
-                    <div className="docent-role-title">Parent</div>
-                  </div>
-                  <div
-                    className={`docent-role-card ${selectedRole === "teacher" ? "active" : ""}`}
-                    onClick={() => selectRole("teacher")}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === "Enter" && selectRole("teacher")}
-                  >
-                    <div className="docent-role-check">✓</div>
-                    <span className="docent-role-emoji">👨‍🏫</span>
-                    <div className="docent-role-title">Teacher</div>
-                  </div>
+                <div className="docent-role-selector five" style={{ marginBottom: "1.5rem" }}>
+                  {roleOptions.map((role) => (
+                    <div
+                      key={`login-${role.value}`}
+                      className={`docent-role-card tone-${role.tone} ${selectedRole === role.value ? "active" : ""}`}
+                      onClick={() => selectRole(role.value)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && selectRole(role.value)}
+                    >
+                      <div className="docent-role-check">✓</div>
+                      <span className="docent-role-emoji">{role.emoji}</span>
+                      <div className="docent-role-title">{role.label}</div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="docent-terms-row">

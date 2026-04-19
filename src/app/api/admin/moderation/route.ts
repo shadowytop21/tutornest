@@ -18,7 +18,7 @@ export async function GET() {
     const [teacherResponse, profileResponse, reviewResponse] = await Promise.all([
       supabase
         .from("teacher_profiles")
-        .select("id,user_id,photo_url,bio,subjects,grades,boards,locality,price_per_month,teaches_at,availability,experience_years,whatsapp_number,status,is_founding_member,created_at"),
+        .select("id,user_id,handle,photo_url,bio,subjects,grades,boards,locality,price_per_month,teaches_at,availability,experience_years,whatsapp_number,status,is_founding_member,created_at"),
       supabase.from("profiles").select("id,role,name,phone,created_at"),
       supabase.from("reviews").select("id,teacher_id,parent_id,rating,comment,created_at"),
     ]);
@@ -43,23 +43,15 @@ export async function GET() {
     ]),
   );
 
-  const reviewByTeacherId = new Map<string, { total: number; count: number }>();
-  for (const review of reviewRows) {
-    const aggregate = reviewByTeacherId.get(review.teacher_id) ?? { total: 0, count: 0 };
-    aggregate.total += review.rating;
-    aggregate.count += 1;
-    reviewByTeacherId.set(review.teacher_id, aggregate);
-  }
-
   const teachers = teacherRows.map((row) => {
     const profile = profileById.get(row.user_id);
-    const aggregate = reviewByTeacherId.get(row.id);
-    const reviewsCount = aggregate?.count ?? 0;
-    const rating = reviewsCount ? Math.round((aggregate!.total / reviewsCount) * 10) / 10 : 0;
+    const reviewsCount = 0;
+    const rating = 0;
 
     return {
       id: row.id,
       user_id: row.user_id,
+      handle: row.handle ?? null,
       name: profile?.name ?? "Tutor",
       photo_url: row.photo_url ?? "",
       bio: row.bio ?? "",
@@ -91,15 +83,15 @@ export async function GET() {
     created_at: row.created_at ?? new Date().toISOString(),
   }));
 
-  const reviews = reviewRows.map((row) => ({
-    id: row.id,
-    teacher_id: row.teacher_id,
-    parent_id: row.parent_id,
-    parent_name: profileById.get(row.parent_id)?.name ?? "Parent",
-    rating: row.rating,
-    comment: row.comment,
-    created_at: row.created_at,
-  }));
+  const reviews: Array<{
+    id: string;
+    teacher_id: string;
+    parent_id: string;
+    parent_name: string;
+    rating: number;
+    comment: string;
+    created_at: string;
+  }> = [];
 
     return NextResponse.json({
       teachers,

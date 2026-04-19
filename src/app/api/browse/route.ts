@@ -13,6 +13,14 @@ const FACET_CACHE_TTL_MS = 60_000;
 let cachedFacetCounts: FacetCounts | null = null;
 let cachedFacetCountsAt = 0;
 
+function getMonthWindow() {
+  const now = new Date();
+  return {
+    monthStart: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString(),
+    monthEnd: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString(),
+  };
+}
+
 async function getFacetCounts(adminSupabase: any) {
   if (cachedFacetCounts && Date.now() - cachedFacetCountsAt < FACET_CACHE_TTL_MS) {
     return cachedFacetCounts;
@@ -84,7 +92,7 @@ export async function GET(request: Request) {
     const adminSupabase = supabase as any;
     let teacherQuery = adminSupabase
       .from("teacher_profiles")
-      .select("id,user_id,photo_url,bio,subjects,grades,boards,locality,price_per_month,teaches_at,availability,experience_years,whatsapp_number,status,is_founding_member,created_at", { count: "exact" })
+      .select("id,user_id,handle,photo_url,bio,subjects,grades,boards,locality,price_per_month,teaches_at,availability,experience_years,whatsapp_number,status,is_founding_member,created_at", { count: "exact" })
       .eq("status", "verified")
       .order("status", { ascending: false })
       .range(start, end);
@@ -116,51 +124,57 @@ export async function GET(request: Request) {
 
     const userIds = teacherRows.map((row: any) => row.user_id).filter(Boolean);
     const teacherIds = teacherRows.map((row: any) => row.id).filter(Boolean);
+    const { monthStart, monthEnd } = getMonthWindow();
 
-    const [{ data: profileRows }, { data: reviewRows }] = await Promise.all([
+    const [{ data: profileRows }, { data: reviewRows }, { data: contactRows }] = await Promise.all([
       userIds.length ? adminSupabase.from("profiles").select("id,name").in("id", userIds) : Promise.resolve({ data: [] }),
       teacherIds.length
         ? includeReviews
           ? adminSupabase.from("reviews").select("id,teacher_id,parent_id,rating,comment,created_at").in("teacher_id", teacherIds)
           : adminSupabase.from("reviews").select("teacher_id,rating").in("teacher_id", teacherIds)
         : Promise.resolve({ data: [] }),
+      teacherIds.length
+        ? adminSupabase
+            .from("teacher_contact_requests")
+            .select("teacher_id,created_at")
+            .in("teacher_id", teacherIds)
+            .gte("created_at", monthStart)
+            .lt("created_at", monthEnd)
+        : Promise.resolve({ data: [] }),
     ]);
+
+    const monthlyContactCounts = new Map<string, number>();
+    for (const row of (contactRows ?? []) as Array<{ teacher_id?: string }>) {
+      if (!row.teacher_id) {
+        continue;
+      }
+
+      monthlyContactCounts.set(row.teacher_id, (monthlyContactCounts.get(row.teacher_id) ?? 0) + 1);
+    }
 
     const namesByUserId = new Map<string, string>(
       ((profileRows ?? []) as Array<{ id: string; name: string }>).map((row) => [row.id, row.name]),
     );
 
-    const normalizedReviews = includeReviews
-      ? ((reviewRows ?? []) as any[]).map((row) => ({
-        id: row.id,
-        teacher_id: row.teacher_id,
-        parent_id: row.parent_id,
-        parent_name: "Parent",
-        rating: row.rating,
-        comment: row.comment,
-        created_at: row.created_at,
-      }))
-      : [];
-
-    const ratingRows = (reviewRows ?? []) as Array<{ teacher_id: string; rating: number }>;
-
-    const ratingsByTeacherId = new Map<string, { total: number; count: number }>();
-    for (const review of ratingRows) {
-      const aggregate = ratingsByTeacherId.get(review.teacher_id) ?? { total: 0, count: 0 };
-      aggregate.total += Number(review.rating ?? 0);
-      aggregate.count += 1;
-      ratingsByTeacherId.set(review.teacher_id, aggregate);
-    }
+    const normalizedReviews: Array<{
+      id: string;
+      teacher_id: string;
+      parent_id: string;
+      parent_name: string;
+      rating: number;
+      comment: string;
+      created_at: string;
+    }> = [];
 
     const teachers = (teacherRows as any[])
       .map((row) => {
-      const aggregate = ratingsByTeacherId.get(row.id);
-      const reviewsCount = aggregate?.count ?? 0;
-      const rating = reviewsCount ? Math.round((aggregate!.total / reviewsCount) * 10) / 10 : 0;
+      const reviewsCount = 0;
+      const rating = 0;
 
       return {
         id: row.id,
         user_id: row.user_id,
+        handle: row.handle ?? null,
         created_at: row.created_at,
         name: namesByUserId.get(row.user_id) ?? "Tutor",
         photo_url: row.photo_url ?? "",
@@ -178,6 +192,7 @@ export async function GET(request: Request) {
         public_status: row.status,
         is_founding_member: Boolean(row.is_founding_member),
         is_resubmission: false,
+        contactsThisMonth: monthlyContactCounts.get(row.id) ?? 0,
         rating,
         reviews_count: reviewsCount,
         reviewCount: reviewsCount,
@@ -194,6 +209,24 @@ export async function GET(request: Request) {
 
         return searchable.includes(query);
       });
+
+    teachers.sort((left, right) => {
+      const leftCapped = (left.contactsThisMonth ?? 0) >= 15;
+      const rightCapped = (right.contactsThisMonth ?? 0) >= 15;
+
+      if (leftCapped !== rightCapped) {
+        return leftCapped ? 1 : -1;
+      }
+
+      const leftVerified = left.status === "verified" || (left.public_status ?? "pending") === "verified";
+      const rightVerified = right.status === "verified" || (right.public_status ?? "pending") === "verified";
+
+      if (leftVerified !== rightVerified) {
+        return leftVerified ? -1 : 1;
+      }
+
+      return right.rating - left.rating || left.price_per_month - right.price_per_month;
+    });
 
     const facets = includeFacets ? await getFacetCounts(adminSupabase) : undefined;
 

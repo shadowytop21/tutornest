@@ -12,6 +12,7 @@ type TeacherAnalyticsStore = {
 export type TeacherAnalyticsSummary = {
   viewsLast7Days: number;
   contactsLast7Days: number;
+  contactsThisMonth: number;
   savedCount: number;
   lastViewedAt: string | null;
   lastContactedAt: string | null;
@@ -21,6 +22,7 @@ export type TeacherAnalyticsSummary = {
 const STORAGE_KEY = "docent.teacher-analytics.v1";
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_EVENTS = 500;
+const MONTHLY_CONTACT_LIMIT = 15;
 
 function canUseStorage() {
   return typeof window !== "undefined";
@@ -76,6 +78,12 @@ function recordEvent(kind: "views" | "contacts", teacherId: string) {
   writeStore(store);
 }
 
+function getMonthWindow(now = new Date()) {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+  return { start, end };
+}
+
 export function recordTeacherProfileView(teacherId: string) {
   if (!teacherId || !canUseStorage()) {
     return;
@@ -90,6 +98,28 @@ export function recordTeacherContact(teacherId: string) {
   }
 
   recordEvent("contacts", teacherId);
+}
+
+export function getTeacherContactMonthlyCount(teacherId: string) {
+  if (!teacherId || !canUseStorage()) {
+    return 0;
+  }
+
+  const store = readStore();
+  const { start, end } = getMonthWindow();
+
+  return store.contacts.filter((entry) => {
+    if (entry.teacherId !== teacherId) {
+      return false;
+    }
+
+    const contactedAt = new Date(entry.at);
+    return contactedAt >= start && contactedAt < end;
+  }).length;
+}
+
+export function canTeacherReceiveContact(teacherId: string) {
+  return getTeacherContactMonthlyCount(teacherId) < MONTHLY_CONTACT_LIMIT;
 }
 
 export function isTeacherSaved(teacherId: string, parentId: string) {
@@ -125,14 +155,24 @@ export function getTeacherAnalyticsSummary(teacherId: string): TeacherAnalyticsS
   const store = readStore();
   const now = Date.now();
   const inWindow = (timestamp: string) => now - new Date(timestamp).getTime() <= SEVEN_DAYS_MS;
+  const { start, end } = getMonthWindow();
 
   const views = store.views.filter((entry) => entry.teacherId === teacherId && inWindow(entry.at));
   const contacts = store.contacts.filter((entry) => entry.teacherId === teacherId && inWindow(entry.at));
+  const contactsThisMonth = store.contacts.filter((entry) => {
+    if (entry.teacherId !== teacherId) {
+      return false;
+    }
+
+    const contactedAt = new Date(entry.at);
+    return contactedAt >= start && contactedAt < end;
+  }).length;
   const savedCount = store.savedByTeacher[teacherId]?.length ?? 0;
 
   return {
     viewsLast7Days: views.length,
     contactsLast7Days: contacts.length,
+    contactsThisMonth,
     savedCount,
     lastViewedAt: views.at(-1)?.at ?? null,
     lastContactedAt: contacts.at(-1)?.at ?? null,

@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/components/toast-provider";
+import { formatHandle } from "@/lib/handles";
 import { isTeacherVisiblePublicly, loadAppState, submitReview } from "@/lib/mock-db";
 import { getTeacherFromCache, upsertTeachersToCache } from "@/lib/teacher-cache";
 import {
   getTeacherAnalyticsSummary,
+  canTeacherReceiveContact,
   isTeacherSaved,
   recordTeacherContact,
   recordTeacherProfileView,
@@ -337,17 +339,13 @@ export default function TeacherProfilePage() {
   const similarTeachers = snapshot.teachers
     .filter((item) => item.id !== teacher.id && item.status === "verified")
     .slice(0, 6);
-  const estimatedStudents = Math.max(24, teacher.reviews_count * 2 + teacher.experience_years * 5);
   const displayName = getTeacherName(teacher);
   const displayBio = getTeacherBio(teacher);
   const isMutedBio = isFallbackBio(teacher);
   const displayExperience = formatExperience(teacher.experience_years);
   const displayExperienceYears = formatExperienceYears(teacher.experience_years);
-  const displayRating = formatStatValue(teacher.rating, { decimals: 1 });
-  const displayReviews = formatStatValue(teacherReviews.length);
-  const displayStudents = formatStatValue(estimatedStudents, { suffix: "+" });
-  const displayViews = formatStatValue(analyticsSummary.viewsLast7Days);
   const displayContacts = formatStatValue(analyticsSummary.contactsLast7Days);
+  const displayHandle = formatHandle(teacher.handle ?? teacher.name);
   const initials = initialsFromName(displayName);
   const subjectPills = teacher.subjects.length ? teacher.subjects : ["Not specified"];
   const gradesLabel = teacher.grades.length ? teacher.grades.join(", ") : "—";
@@ -421,12 +419,53 @@ export default function TeacherProfilePage() {
     }
 
     setIsContactLoading(true);
-    recordTeacherContact(teacherForAction.id);
-    window.open(
-      whatsappLink(teacherForAction.whatsapp_number, "Hi, I found your profile on Docent and I'm interested in home tuition for my child."),
-      "_blank",
-      "noopener,noreferrer",
-    );
+    try {
+      const response = await fetch("/api/teacher/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teacherId: teacherForAction.id, parentId: session.id }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as { ok?: boolean; whatsappNumber?: string; message?: string } | null;
+
+      if (!response.ok) {
+        const rateLimited = response.status === 429 || (payload?.message ?? "").toLowerCase().includes("monthly");
+        if (rateLimited || !canTeacherReceiveContact(teacherForAction.id)) {
+          pushToast({ tone: "error", title: "This teacher has reached the 15 enquiries per month limit." });
+          return;
+        }
+
+        recordTeacherContact(teacherForAction.id);
+        window.open(
+          whatsappLink(teacherForAction.whatsapp_number, "Hi, I found your profile on Docent and I'm interested in home tuition for my child."),
+          "_blank",
+          "noopener,noreferrer",
+        );
+        return;
+      }
+
+      if (!payload?.whatsappNumber) {
+        throw new Error("WhatsApp number is not available");
+      }
+
+      recordTeacherContact(teacherForAction.id);
+      window.open(
+        whatsappLink(payload.whatsappNumber, "Hi, I found your profile on Docent and I'm interested in home tuition for my child."),
+        "_blank",
+        "noopener,noreferrer",
+      );
+    } catch (error) {
+      if (!canTeacherReceiveContact(teacherForAction.id)) {
+        pushToast({ tone: "error", title: "This teacher has reached the 15 enquiries per month limit." });
+      } else {
+        recordTeacherContact(teacherForAction.id);
+        window.open(
+          whatsappLink(teacherForAction.whatsapp_number, "Hi, I found your profile on Docent and I'm interested in home tuition for my child."),
+          "_blank",
+          "noopener,noreferrer",
+        );
+      }
+    }
     setIsContactLoading(false);
   }
 
@@ -516,10 +555,10 @@ export default function TeacherProfilePage() {
               </div>
               <div className="profile-name-block">
                 <h1 className="profile-name">{displayName}</h1>
+                <p className="profile-handle text-sm text-[var(--muted)]">{displayHandle}</p>
                 <p className="profile-tagline">{subjectPills.join(" · ")} · {localityLabel} · {displayExperience}</p>
                 <div className="profile-badges-row">
-                  <span className="badge badge-verified">Verified Teacher</span>
-                  {teacher.is_founding_member ? <span className="badge badge-founding">Founding Member</span> : null}
+                  <span className="badge badge-verified">Live profile</span>
                   <span className="badge badge-demo">WhatsApp replies</span>
                   {!isPublicProfileVisible ? <span className="badge badge-pending">Not Public Yet</span> : null}
                 </div>
@@ -527,11 +566,11 @@ export default function TeacherProfilePage() {
             </div>
 
             <div className="profile-stats-strip">
-              <div className="pstat-box"><span className="pstat-num">{displayRating}</span><span className="pstat-lbl">Rating</span></div>
-              <div className="pstat-box"><span className="pstat-num">{displayReviews}</span><span className="pstat-lbl">Reviews</span></div>
               <div className="pstat-box"><span className="pstat-num">{displayExperienceYears}</span><span className="pstat-lbl">Years experience</span></div>
-              <div className="pstat-box"><span className="pstat-num">{displayStudents}</span><span className="pstat-lbl">Students</span></div>
-              <div className="pstat-box"><span className="pstat-num">{displayViews}</span><span className="pstat-lbl">Views/week</span></div>
+              <div className="pstat-box"><span className="pstat-num">{teacher.subjects.length}</span><span className="pstat-lbl">Subjects</span></div>
+              <div className="pstat-box"><span className="pstat-num">{teacher.grades.length}</span><span className="pstat-lbl">Grades</span></div>
+              <div className="pstat-box"><span className="pstat-num">{teacher.availability.length}</span><span className="pstat-lbl">Availability slots</span></div>
+              <div className="pstat-box"><span className="pstat-num">{displayContacts === "—" ? "0" : displayContacts}</span><span className="pstat-lbl">Contacts this week</span></div>
             </div>
 
             <div className="profile-section">
@@ -587,33 +626,6 @@ export default function TeacherProfilePage() {
                   <p className="text-sm text-[var(--muted)]">Login as a parent to leave a review for this teacher.</p>
                   <button type="button" onClick={() => router.push(`/auth?role=parent&next=/teacher/${teacher.id}`)} className="btn-primary mt-4 px-5 py-3 text-sm">Login to review</button>
                 </div>
-              )}
-            </div>
-
-            <div className="profile-section">
-              <div className="profile-sec-title">Parent Reviews ({teacherReviews.length})</div>
-              {teacherReviews.length ? (
-                teacherReviews.map((review) => (
-                  <div key={review.id} className="review-card">
-                    <div className="rev-top">
-                      <div className="rev-reviewer">
-                        <div className="rev-avatar">{initialsFromName(review.parent_name)}</div>
-                        <div>
-                          <div className="rev-name">{review.parent_name}</div>
-                          <div className="rev-date">{formatDate(review.created_at)} · Verified Parent</div>
-                        </div>
-                      </div>
-                      <div className="rev-stars">{Array.from({ length: review.rating }).map(() => "★").join("")}</div>
-                    </div>
-                    <p className="rev-text">{review.comment}</p>
-                    <div className="rev-helpful">
-                      <span>Was this helpful?</span>
-                      <button type="button" className="rev-helpful-btn">Yes</button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="review-card">No reviews yet.</div>
               )}
             </div>
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { formatCurrency } from "@/lib/utils";
+import { formatHandle } from "@/lib/handles";
 import { seedSchools, type SchoolRecord } from "@/lib/verticals-data";
 import { createSchoolEnquiry, listCustomSchools, trackSchoolMetric } from "@/lib/verticals-store";
 import { useToast } from "@/components/toast-provider";
@@ -15,12 +16,6 @@ function initials(name: string) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-}
-
-function stars(rating: number) {
-  const filled = "★".repeat(rating);
-  const empty = "☆".repeat(5 - rating);
-  return `${filled}${empty}`;
 }
 
 export default function SchoolProfilePage() {
@@ -41,6 +36,7 @@ export default function SchoolProfilePage() {
     const merged = [...customSchools, ...seedSchools];
     return merged.find((item) => item.id === params.id) ?? null;
   }, [customSchools, params.id]);
+  const displayHandle = formatHandle(school?.handle ?? school?.name);
 
   useEffect(() => {
     if (!school) {
@@ -103,6 +99,7 @@ export default function SchoolProfilePage() {
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-teal-200">{school.boards.join(" / ")} School · {school.locality}, Mathura · Est. {school.establishedYear}</p>
               <h1 className="mt-2 font-display text-4xl leading-tight">{school.name}</h1>
+              <p className="mt-1 text-sm text-teal-100">{displayHandle}</p>
               <p className="mt-2 max-w-2xl text-sm text-teal-100">{school.tagline}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs">{school.boards.join(" / ")} Affiliated</span>
@@ -112,11 +109,10 @@ export default function SchoolProfilePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-            <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-center"><div className="font-display text-2xl">{school.rating.toFixed(1)}★</div><div className="text-xs text-teal-100">Rating</div></div>
-            <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-center"><div className="font-display text-2xl">{school.reviewsCount}</div><div className="text-xs text-teal-100">Reviews</div></div>
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
             <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-center"><div className="font-display text-2xl">{school.studentCount || school.students || "-"}</div><div className="text-xs text-teal-100">Students</div></div>
             <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-center"><div className="font-display text-2xl">{school.teacherCount || school.teachers || "-"}</div><div className="text-xs text-teal-100">Teachers</div></div>
+            <div className="rounded-xl border border-white/15 bg-white/10 p-3 text-center"><div className="font-display text-2xl">{school.facilities.length}</div><div className="text-xs text-teal-100">Facilities</div></div>
           </div>
         </div>
       </section>
@@ -170,13 +166,6 @@ export default function SchoolProfilePage() {
             </section>
           ) : null}
 
-          <section className="rounded-2xl border border-[var(--border)] bg-white p-6">
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">Parent Reviews</p>
-            <div className="mt-4 rounded-xl border border-dashed border-[var(--border)] bg-[var(--ivory)] p-5">
-              <p className="font-display text-2xl text-[var(--navy)]">{school.rating.toFixed(1)} / 5</p>
-              <p className="mt-2 text-sm text-[var(--muted)]">{school.reviewsCount} review(s) are recorded for this school, but written testimonials are not prefilled.</p>
-            </div>
-          </section>
         </div>
 
         <aside className="sticky top-20 h-fit space-y-4">

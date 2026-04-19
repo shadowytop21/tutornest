@@ -1,5 +1,6 @@
 import { createId } from "@/lib/utils";
-import type { CoachingInstitute, SchoolRecord } from "@/lib/verticals-data";
+import { createUniqueHandle } from "@/lib/handles";
+import { seedCoachingInstitutes, seedSchools, type CoachingInstitute, type SchoolRecord } from "@/lib/verticals-data";
 
 export type CoachingEnquiry = {
   id: string;
@@ -130,12 +131,20 @@ export function listCustomSchools() {
 export function createCoachingInstituteRegistration(
   institute: Omit<
     CoachingInstitute,
-    "id" | "createdAt" | "status" | "rating" | "reviewsCount" | "students" | "featured" | "iitSelections" | "neetSelections" | "passRate" | "bestRank" | "faculty"
+    "id" | "handle" | "createdAt" | "status" | "rating" | "reviewsCount" | "students" | "featured" | "iitSelections" | "neetSelections" | "passRate" | "bestRank" | "faculty"
   >,
 ) {
+  const snapshot = readState();
+  const existingHandles = [
+    ...snapshot.coaching.map((item) => item.handle),
+    ...snapshot.schools.map((item) => item.handle),
+    ...seedCoachingInstitutes.map((item) => item.handle),
+  ].filter((handle): handle is string => Boolean(handle));
+
   const nextInstitute: CoachingInstitute = {
     ...institute,
     id: createId("coaching"),
+    handle: createUniqueHandle(institute.name, existingHandles, "coaching"),
     status: "pending",
     rating: 0,
     reviewsCount: 0,
@@ -149,7 +158,6 @@ export function createCoachingInstituteRegistration(
     createdAt: new Date().toISOString(),
   };
 
-  const snapshot = readState();
   const next: VerticalStorageState = {
     ...snapshot,
     coaching: [nextInstitute, ...snapshot.coaching],
@@ -173,11 +181,19 @@ export function createCoachingInstituteRegistration(
 }
 
 export function createSchoolRegistration(
-  school: Omit<SchoolRecord, "id" | "createdAt" | "status" | "rating" | "reviewsCount" | "students" | "teachers" | "featured">,
+  school: Omit<SchoolRecord, "id" | "handle" | "createdAt" | "status" | "rating" | "reviewsCount" | "students" | "teachers" | "featured">,
 ) {
+  const snapshot = readState();
+  const existingHandles = [
+    ...snapshot.schools.map((item) => item.handle),
+    ...snapshot.coaching.map((item) => item.handle),
+    ...seedSchools.map((item) => item.handle),
+  ].filter((handle): handle is string => Boolean(handle));
+
   const nextSchool: SchoolRecord = {
     ...school,
     id: createId("school"),
+    handle: createUniqueHandle(school.name, existingHandles, "school"),
     status: "pending",
     rating: 0,
     reviewsCount: 0,
@@ -187,7 +203,6 @@ export function createSchoolRegistration(
     createdAt: new Date().toISOString(),
   };
 
-  const snapshot = readState();
   const next: VerticalStorageState = {
     ...snapshot,
     schools: [nextSchool, ...snapshot.schools],
