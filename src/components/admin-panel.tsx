@@ -48,11 +48,16 @@ export function AdminPanel() {
   const [verticalTab, setVerticalTab] = useState<"coaching" | "schools">("coaching");
   const [coachingEntities, setCoachingEntities] = useState<ReturnType<typeof listCustomCoachingInstitutes>>([]);
   const [schoolEntities, setSchoolEntities] = useState<ReturnType<typeof listCustomSchools>>([]);
+  const [allEnquiries, setAllEnquiries] = useState<Array<{ id: string; type: string; target: string; person: string; phone: string; email: string; createdAt: string }>>([]);
 
   useEffect(() => {
     const refreshVerticalData = () => {
       setCoachingEntities(listCustomCoachingInstitutes());
       setSchoolEntities(listCustomSchools());
+      setAllEnquiries([
+        ...listCoachingEnquiries().map((item) => ({ id: item.id, type: "Coaching", target: item.instituteName, person: item.name, phone: item.phone, email: item.email, createdAt: item.createdAt })),
+        ...listSchoolEnquiries().map((item) => ({ id: item.id, type: "School", target: item.schoolName, person: item.name, phone: item.phone, email: item.email, createdAt: item.createdAt })),
+      ].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)));
     };
 
     refreshVerticalData();
@@ -284,13 +289,6 @@ export function AdminPanel() {
   const allSchoolEntities = useMemo(() => [...schoolEntities, ...seedSchools], [schoolEntities]);
   const pendingCoaching = useMemo(() => allCoachingEntities.filter((item) => item.status === "pending"), [allCoachingEntities]);
   const pendingSchools = useMemo(() => allSchoolEntities.filter((item) => item.status === "pending"), [allSchoolEntities]);
-  const allEnquiries = useMemo(
-    () => [
-      ...listCoachingEnquiries().map((item) => ({ id: item.id, type: "Coaching", target: item.instituteName, person: item.name, phone: item.phone, email: item.email, createdAt: item.createdAt })),
-      ...listSchoolEnquiries().map((item) => ({ id: item.id, type: "School", target: item.schoolName, person: item.name, phone: item.phone, email: item.email, createdAt: item.createdAt })),
-    ].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)),
-    [coachingEntities, schoolEntities],
-  );
 
   function updateShowcaseCard(index: number, key: "initials" | "name" | "locality" | "price" | "rating" | "tags", value: string) {
     setShowcaseConfig((prev) => {

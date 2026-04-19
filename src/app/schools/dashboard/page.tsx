@@ -23,6 +23,8 @@ function completionItems(school: SchoolRecord) {
 export default function SchoolsDashboardPage() {
   const [customSchools, setCustomSchools] = useState<SchoolRecord[]>([]);
   const [activeSchoolId, setActiveSchoolId] = useState("");
+  const [metrics, setMetrics] = useState({ profileViews: 0, saves: 0 });
+  const [enquiries, setEnquiries] = useState<ReturnType<typeof listSchoolEnquiries>>([]);
 
   useEffect(() => {
     const load = () => {
@@ -42,6 +44,25 @@ export default function SchoolsDashboardPage() {
     [activeSchoolId, allSchools],
   );
 
+  useEffect(() => {
+    if (!school) {
+      return;
+    }
+
+    const refresh = () => {
+      setMetrics(getSchoolMetrics(school.id));
+      setEnquiries(listSchoolEnquiries(school.id));
+    };
+
+    refresh();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("docent-schools-change", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("docent-schools-change", refresh);
+    };
+  }, [school]);
+
   if (!school) {
     return (
       <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center px-4 py-16 sm:px-6 lg:px-8">
@@ -57,8 +78,6 @@ export default function SchoolsDashboardPage() {
     );
   }
 
-  const metrics = getSchoolMetrics(school.id);
-  const enquiries = listSchoolEnquiries(school.id);
   const items = completionItems(school);
   const completion = Math.round((items.filter((item) => item.done).length / items.length) * 100);
 

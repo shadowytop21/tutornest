@@ -23,6 +23,8 @@ function completionItems(institute: CoachingInstitute) {
 export default function CoachingDashboardPage() {
   const [customInstitutes, setCustomInstitutes] = useState<CoachingInstitute[]>([]);
   const [activeInstituteId, setActiveInstituteId] = useState("");
+  const [metrics, setMetrics] = useState({ profileViews: 0, whatsappClicks: 0, saves: 0 });
+  const [enquiries, setEnquiries] = useState<ReturnType<typeof listCoachingEnquiries>>([]);
 
   useEffect(() => {
     const load = () => {
@@ -42,6 +44,25 @@ export default function CoachingDashboardPage() {
     [activeInstituteId, allInstitutes],
   );
 
+  useEffect(() => {
+    if (!institute) {
+      return;
+    }
+
+    const refresh = () => {
+      setMetrics(getCoachingMetrics(institute.id));
+      setEnquiries(listCoachingEnquiries(institute.id));
+    };
+
+    refresh();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("docent-coaching-change", refresh);
+    return () => {
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("docent-coaching-change", refresh);
+    };
+  }, [institute]);
+
   if (!institute) {
     return (
       <div className="mx-auto flex min-h-[70vh] w-full max-w-3xl items-center px-4 py-16 sm:px-6 lg:px-8">
@@ -57,8 +78,6 @@ export default function CoachingDashboardPage() {
     );
   }
 
-  const metrics = getCoachingMetrics(institute.id);
-  const enquiries = listCoachingEnquiries(institute.id);
   const items = completionItems(institute);
   const completion = Math.round((items.filter((item) => item.done).length / items.length) * 100);
 

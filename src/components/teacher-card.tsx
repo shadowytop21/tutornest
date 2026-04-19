@@ -51,6 +51,7 @@ function TeacherCardImpl({ teacher }: { teacher: TeacherProfile }) {
   }
 
   const [photoFailed, setPhotoFailed] = useState(false);
+  const [isNew, setIsNew] = useState(false);
 
   const initials = initialsFromName(teacher.name);
   const profilePhotoUrl = useMemo(() => normalizePhotoUrl(teacher.photo_url), [teacher.photo_url]);
@@ -59,8 +60,23 @@ function TeacherCardImpl({ teacher }: { teacher: TeacherProfile }) {
     setPhotoFailed(false);
   }, [teacher.id, profilePhotoUrl]);
 
+  useEffect(() => {
+    if (!teacher.created_at) {
+      setIsNew(false);
+      return;
+    }
+
+    const createdAtMs = new Date(teacher.created_at).getTime();
+    if (Number.isNaN(createdAtMs)) {
+      setIsNew(false);
+      return;
+    }
+
+    const ageInDays = (Date.now() - createdAtMs) / (1000 * 60 * 60 * 24);
+    setIsNew(ageInDays <= 45);
+  }, [teacher.created_at]);
+
   const isUnavailable = teacher.availability.length === 0;
-  const isNew = Boolean(teacher.created_at) && (Date.now() - new Date(teacher.created_at ?? "").getTime()) / (1000 * 60 * 60 * 24) <= 45;
   const hasDemo = teacher.teaches_at === "both";
   const availabilityLabel = teacher.availability.length ? teacher.availability.join(" + ") : "Unavailable";
   const syntheticViews = teacher.reviews_count * 4 + teacher.experience_years * 9;
