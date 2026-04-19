@@ -5,11 +5,16 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/toast-provider";
 import type { AppSnapshot } from "@/lib/mock-db";
 import {
+  defaultHomepageTopPicksConfig,
   defaultHomepageShowcaseConfig,
   loadAppState,
+  loadHomepageTopPicksConfig,
   loadHomepageShowcaseConfig,
+  saveHomepageTopPicksConfig,
   saveHomepageShowcaseConfig,
   setTeacherStatus,
+  type HomepageTopPickItem,
+  type HomepageTopPicksConfig,
   type HomepageShowcaseConfig,
 } from "@/lib/mock-db";
 import {
@@ -17,7 +22,9 @@ import {
   listCustomCoachingInstitutes,
   listCustomSchools,
   listSchoolEnquiries,
+  setCoachingInstituteFeatured,
   setCoachingInstituteStatus,
+  setSchoolFeatured,
   setSchoolStatus,
 } from "@/lib/verticals-store";
 import { seedCoachingInstitutes, seedSchools } from "@/lib/verticals-data";
@@ -42,6 +49,7 @@ export function AdminPanel() {
   });
   const [isRemoteData, setIsRemoteData] = useState(false);
   const [showcaseConfig, setShowcaseConfig] = useState<HomepageShowcaseConfig>(defaultHomepageShowcaseConfig);
+  const [topPicksConfig, setTopPicksConfig] = useState<HomepageTopPicksConfig>(defaultHomepageTopPicksConfig);
   const [teacherSearch, setTeacherSearch] = useState("");
   const [teacherStatusFilter, setTeacherStatusFilter] = useState<"all" | "pending" | "verified" | "rejected">("all");
   const [accountRoleFilter, setAccountRoleFilter] = useState<"all" | "teacher" | "parent">("all");
@@ -121,6 +129,7 @@ export function AdminPanel() {
   useEffect(() => {
     loadModerationSnapshot();
     setShowcaseConfig(loadHomepageShowcaseConfig());
+    setTopPicksConfig(loadHomepageTopPicksConfig());
   }, [loadModerationSnapshot]);
 
   async function logoutAdmin() {
@@ -200,7 +209,7 @@ export function AdminPanel() {
 
     updateTeacherLocally(teacherId, (teacher) => ({ ...teacher, is_founding_member: nextValue }));
     refreshInBackground();
-    pushToast({ tone: "success", title: nextValue ? "Marked as profile highlight" : "Removed profile highlight" });
+    pushToast({ tone: "success", title: nextValue ? "Pinned for homepage top picks" : "Removed from homepage top picks" });
   }
 
   async function deleteReview(reviewId: string) {
@@ -325,6 +334,44 @@ export function AdminPanel() {
     pushToast({ tone: "success", title: "Homepage featured panel updated" });
   }
 
+  function updateTopPickCard(
+    vertical: "tutors" | "coaching" | "schools",
+    index: number,
+    key: "title" | "subtitle" | "badges" | "pills" | "meta" | "price" | "stat" | "href",
+    value: string,
+  ) {
+    setTopPicksConfig((prev) => {
+      const items = [...prev.items];
+      const verticalItems = items.filter((item) => item.vertical === vertical).slice(0, 3);
+      const target = verticalItems[index];
+
+      if (!target) {
+        return prev;
+      }
+
+      const updated: HomepageTopPickItem = { ...target };
+
+      if (key === "badges") {
+        updated.badges = value.split(",").map((item) => item.trim()).filter(Boolean).slice(0, 3);
+      } else if (key === "pills") {
+        updated.pills = value.split(",").map((item) => item.trim()).filter(Boolean).slice(0, 4);
+      } else if (key === "meta") {
+        const parts = value.split(",").map((item) => item.trim()).filter(Boolean);
+        updated.meta = [parts[0] || "", parts[1] || "", parts[2] || ""];
+      } else {
+        updated[key] = value;
+      }
+
+      const nextItems = items.map((item) => (item.id === target.id ? updated : item));
+      return { ...prev, items: nextItems };
+    });
+  }
+
+  function saveTopPicks() {
+    saveHomepageTopPicksConfig(topPicksConfig);
+    pushToast({ tone: "success", title: "Homepage top picks updated" });
+  }
+
   return (
     <div className="page-section">
       <span className="page-label">Admin Panel</span>
@@ -384,7 +431,7 @@ export function AdminPanel() {
                   <button type="button" onClick={() => approveTeacher(teacher.id)} className="btn-approve">Verify</button>
                   <button type="button" onClick={() => rejectTeacher(teacher.id)} className="btn-reject">Reject</button>
                   <button type="button" onClick={() => toggleFoundingMember(teacher.id, !teacher.is_founding_member)} className="btn-secondary px-3 py-1 text-xs">
-                    {teacher.is_founding_member ? "Remove Founder" : "Set Founder"}
+                    {teacher.is_founding_member ? "Unpin" : "Pin"}
                   </button>
                 </div>
               </div>
@@ -484,6 +531,38 @@ export function AdminPanel() {
           </div>
 
           <div className="mt-8 rounded-2xl border border-[var(--border)] bg-white p-5">
+            <p className="admin-table-title mb-4">Homepage Top Picks Editor</p>
+            {(["tutors", "coaching", "schools"] as const).map((vertical) => {
+              const cards = topPicksConfig.items.filter((item) => item.vertical === vertical).slice(0, 3);
+
+              return (
+                <div key={vertical} className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--ivory)] p-4 last:mb-0">
+                  <p className="mb-3 text-sm font-semibold capitalize text-[var(--navy)]">{vertical} cards</p>
+                  <div className="grid gap-4 lg:grid-cols-3">
+                    {cards.map((card, index) => (
+                      <div key={card.id} className="rounded-xl border border-[var(--border)] bg-white p-3">
+                        <p className="mb-2 text-xs font-semibold text-[var(--muted2)]">Card {index + 1}</p>
+                        <div className="grid gap-2">
+                          <input className="form-input" value={card.title} onChange={(e) => updateTopPickCard(vertical, index, "title", e.target.value)} placeholder="Title" />
+                          <input className="form-input" value={card.subtitle} onChange={(e) => updateTopPickCard(vertical, index, "subtitle", e.target.value)} placeholder="Subtitle" />
+                          <input className="form-input" value={card.badges.join(", ")} onChange={(e) => updateTopPickCard(vertical, index, "badges", e.target.value)} placeholder="Badges (comma separated)" />
+                          <input className="form-input" value={card.pills.join(", ")} onChange={(e) => updateTopPickCard(vertical, index, "pills", e.target.value)} placeholder="Pills (comma separated)" />
+                          <input className="form-input" value={card.meta.join(", ")} onChange={(e) => updateTopPickCard(vertical, index, "meta", e.target.value)} placeholder="Meta (3 items, comma separated)" />
+                          <input className="form-input" value={card.price} onChange={(e) => updateTopPickCard(vertical, index, "price", e.target.value)} placeholder="Price" />
+                          <input className="form-input" value={card.stat} onChange={(e) => updateTopPickCard(vertical, index, "stat", e.target.value)} placeholder="Stat" />
+                          <input className="form-input" value={card.href} onChange={(e) => updateTopPickCard(vertical, index, "href", e.target.value)} placeholder="Link (for example /browse)" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            <button type="button" onClick={saveTopPicks} className="btn-fill mt-5">Save Top Picks</button>
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-[var(--border)] bg-white p-5">
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <button type="button" onClick={() => setVerticalTab("coaching")} className={`rounded-full px-4 py-2 text-sm ${verticalTab === "coaching" ? "bg-[var(--navy)] text-white" : "bg-[var(--ivory)] text-[var(--navy)]"}`}>Coaching Institutes</button>
               <button type="button" onClick={() => setVerticalTab("schools")} className={`rounded-full px-4 py-2 text-sm ${verticalTab === "schools" ? "bg-[var(--navy)] text-white" : "bg-[var(--ivory)] text-[var(--navy)]"}`}>Schools</button>
@@ -502,6 +581,16 @@ export function AdminPanel() {
                       <div className="admin-actions">
                         <button type="button" onClick={() => setCoachingInstituteStatus(item.id, "verified")} className="btn-approve">Approve</button>
                         <button type="button" onClick={() => setCoachingInstituteStatus(item.id, "rejected")} className="btn-reject">Reject</button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCoachingInstituteFeatured(item.id, !item.featured);
+                            pushToast({ tone: "success", title: !item.featured ? "Pinned coaching for top picks" : "Unpinned coaching from top picks" });
+                          }}
+                          className="btn-secondary px-3 py-1 text-xs"
+                        >
+                          {item.featured ? "Unpin" : "Pin"}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -515,7 +604,19 @@ export function AdminPanel() {
                       <div className="admin-teacher-name">{item.name}</div>
                       <div className="text-[13px] text-[var(--navy)]">{item.examTypes.slice(0, 2).join(", ")}</div>
                       <div className="text-[13px] text-[var(--navy)]">{item.status}</div>
-                      <a href={`/coaching/${item.id}`} className="btn-secondary px-3 py-1 text-xs">Open</a>
+                      <div className="admin-actions">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCoachingInstituteFeatured(item.id, !item.featured);
+                            pushToast({ tone: "success", title: !item.featured ? "Pinned coaching for top picks" : "Unpinned coaching from top picks" });
+                          }}
+                          className="btn-secondary px-3 py-1 text-xs"
+                        >
+                          {item.featured ? "Unpin" : "Pin"}
+                        </button>
+                        <a href={`/coaching/${item.id}`} className="btn-secondary px-3 py-1 text-xs">Open</a>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -533,6 +634,16 @@ export function AdminPanel() {
                       <div className="admin-actions">
                         <button type="button" onClick={() => setSchoolStatus(item.id, "verified")} className="btn-approve">Approve</button>
                         <button type="button" onClick={() => setSchoolStatus(item.id, "rejected")} className="btn-reject">Reject</button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSchoolFeatured(item.id, !item.featured);
+                            pushToast({ tone: "success", title: !item.featured ? "Pinned school for top picks" : "Unpinned school from top picks" });
+                          }}
+                          className="btn-secondary px-3 py-1 text-xs"
+                        >
+                          {item.featured ? "Unpin" : "Pin"}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -546,7 +657,19 @@ export function AdminPanel() {
                       <div className="admin-teacher-name">{item.name}</div>
                       <div className="text-[13px] text-[var(--navy)]">{item.locality}</div>
                       <div className="text-[13px] text-[var(--navy)]">{item.status}</div>
-                      <a href={`/schools/${item.id}`} className="btn-secondary px-3 py-1 text-xs">Open</a>
+                      <div className="admin-actions">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSchoolFeatured(item.id, !item.featured);
+                            pushToast({ tone: "success", title: !item.featured ? "Pinned school for top picks" : "Unpinned school from top picks" });
+                          }}
+                          className="btn-secondary px-3 py-1 text-xs"
+                        >
+                          {item.featured ? "Unpin" : "Pin"}
+                        </button>
+                        <a href={`/schools/${item.id}`} className="btn-secondary px-3 py-1 text-xs">Open</a>
+                      </div>
                     </div>
                   ))}
                 </div>

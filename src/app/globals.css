@@ -289,8 +289,31 @@ button,
   }
 }
 
+@keyframes bounce-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-8px);
+  }
+}
+
 .fade-in {
   animation: fade-slide-in 0.45s ease both;
+}
+
+.animate-bounce {
+  animation: bounce-pulse 0.6s ease-in-out infinite;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
 }
 
 .slide-step {

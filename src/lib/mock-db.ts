@@ -19,8 +19,141 @@ export interface AppSnapshot {
 const STORAGE_KEY = "docent.app-state.v1";
 const ADMIN_STORAGE_KEY = "docent.admin-auth.v1";
 const HOMEPAGE_SHOWCASE_KEY = "docent.homepage-showcase.v1";
+const HOMEPAGE_TOP_PICKS_KEY = "docent.homepage-top-picks.v1";
 const REVIEWS_CLEARED_KEY = "docent.reviews-cleared.v1";
 const REVIEW_RATE_LIMIT_MS = 24 * 60 * 60 * 1000;
+
+export type TopPickVertical = "tutors" | "coaching" | "schools";
+
+export type HomepageTopPickItem = {
+  id: string;
+  vertical: TopPickVertical;
+  title: string;
+  subtitle: string;
+  badges: string[];
+  pills: string[];
+  meta: [string, string, string];
+  price: string;
+  stat: string;
+  href: string;
+};
+
+export type HomepageTopPicksConfig = {
+  items: HomepageTopPickItem[];
+};
+
+export const defaultHomepageTopPicksConfig: HomepageTopPicksConfig = {
+  items: [
+    {
+      id: "t1",
+      vertical: "tutors",
+      title: "Priya Sharma",
+      subtitle: "Civil Lines · 7 yrs",
+      badges: ["Verified", "Tutor"],
+      pills: ["Maths", "Physics"],
+      meta: ["Class 9-12", "CBSE", "Both homes"],
+      price: "₹1,200 /mo",
+      stat: "4.9 (48)",
+      href: "/browse",
+    },
+    {
+      id: "t2",
+      vertical: "tutors",
+      title: "Rahul Mehta",
+      subtitle: "Vrindavan · 9 yrs",
+      badges: ["Verified", "Tutor"],
+      pills: ["Chemistry", "Biology"],
+      meta: ["Class 11-12", "CBSE/UP", "My home"],
+      price: "₹1,500 /mo",
+      stat: "4.8 (61)",
+      href: "/browse",
+    },
+    {
+      id: "t3",
+      vertical: "tutors",
+      title: "Anjali Verma",
+      subtitle: "Dampier Nagar · 6 yrs",
+      badges: ["Verified", "Tutor"],
+      pills: ["English", "SST"],
+      meta: ["Class 6-10", "CBSE", "Student home"],
+      price: "₹1,100 /mo",
+      stat: "4.7 (39)",
+      href: "/browse",
+    },
+    {
+      id: "c1",
+      vertical: "coaching",
+      title: "Aakash Institute",
+      subtitle: "Civil Lines · Est. 2004",
+      badges: ["Verified", "Featured"],
+      pills: ["JEE", "NEET", "Foundation"],
+      meta: ["2,400+ students", "340 IIT", "98%"],
+      price: "₹85,000 /yr",
+      stat: "4.8 (124)",
+      href: "/coaching",
+    },
+    {
+      id: "c2",
+      vertical: "coaching",
+      title: "Pioneer Academy",
+      subtitle: "Govind Nagar · Est. 2012",
+      badges: ["Verified", "Institute"],
+      pills: ["NEET", "CUET"],
+      meta: ["1,100+ students", "Expert faculty", "Demo classes"],
+      price: "₹62,000 /yr",
+      stat: "4.6 (83)",
+      href: "/coaching",
+    },
+    {
+      id: "c3",
+      vertical: "coaching",
+      title: "Orbit Classes",
+      subtitle: "Krishna Nagar · Est. 2018",
+      badges: ["Profile", "Institute"],
+      pills: ["JEE", "Boards"],
+      meta: ["Small batches", "Test series", "Hybrid mode"],
+      price: "₹48,000 /yr",
+      stat: "4.5 (57)",
+      href: "/coaching",
+    },
+    {
+      id: "s1",
+      vertical: "schools",
+      title: "Springfield School",
+      subtitle: "Dampier Nagar · CBSE",
+      badges: ["Profile", "School"],
+      pills: ["CBSE", "K-12", "STEM"],
+      meta: ["1800 students", "Smart labs", "Admissions open"],
+      price: "₹42,000 /yr",
+      stat: "Campus profile",
+      href: "/schools",
+    },
+    {
+      id: "s2",
+      vertical: "schools",
+      title: "Riverdale Public School",
+      subtitle: "Raya Road · CBSE",
+      badges: ["Verified", "School"],
+      pills: ["CBSE", "Sports", "Arts"],
+      meta: ["1500 students", "Transport", "Admissions open"],
+      price: "₹38,000 /yr",
+      stat: "Campus profile",
+      href: "/schools",
+    },
+    {
+      id: "s3",
+      vertical: "schools",
+      title: "Scholars Academy",
+      subtitle: "Vrindavan Road · ICSE",
+      badges: ["Profile", "School"],
+      pills: ["ICSE", "K-10", "Language Lab"],
+      meta: ["900 students", "Modern campus", "Admissions open"],
+      price: "₹46,000 /yr",
+      stat: "Campus profile",
+      href: "/schools",
+    },
+  ],
+};
 
 export type HomepageFeaturedCard = {
   initials: string;
@@ -322,6 +455,65 @@ export function saveHomepageShowcaseConfig(config: HomepageShowcaseConfig) {
   }
 
   window.localStorage.setItem(HOMEPAGE_SHOWCASE_KEY, JSON.stringify(config));
+  return config;
+}
+
+function sanitizeTopPickItem(item: Partial<HomepageTopPickItem>, fallback: HomepageTopPickItem): HomepageTopPickItem {
+  const vertical: TopPickVertical = item.vertical === "tutors" || item.vertical === "coaching" || item.vertical === "schools"
+    ? item.vertical
+    : fallback.vertical;
+
+  return {
+    id: item.id || fallback.id,
+    vertical,
+    title: item.title || fallback.title,
+    subtitle: item.subtitle || fallback.subtitle,
+    badges: (item.badges ?? fallback.badges).slice(0, 3),
+    pills: (item.pills ?? fallback.pills).slice(0, 4),
+    meta: [
+      item.meta?.[0] || fallback.meta[0],
+      item.meta?.[1] || fallback.meta[1],
+      item.meta?.[2] || fallback.meta[2],
+    ],
+    price: item.price || fallback.price,
+    stat: item.stat || fallback.stat,
+    href: item.href || fallback.href,
+  };
+}
+
+export function loadHomepageTopPicksConfig(): HomepageTopPicksConfig {
+  if (typeof window === "undefined") {
+    return defaultHomepageTopPicksConfig;
+  }
+
+  const raw = window.localStorage.getItem(HOMEPAGE_TOP_PICKS_KEY);
+  if (!raw) {
+    return defaultHomepageTopPicksConfig;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<HomepageTopPicksConfig>;
+    if (!parsed.items?.length) {
+      return defaultHomepageTopPicksConfig;
+    }
+
+    const sanitizedItems = defaultHomepageTopPicksConfig.items.map((fallback, index) =>
+      sanitizeTopPickItem(parsed.items?.[index] ?? {}, fallback),
+    );
+
+    return { items: sanitizedItems };
+  } catch {
+    return defaultHomepageTopPicksConfig;
+  }
+}
+
+export function saveHomepageTopPicksConfig(config: HomepageTopPicksConfig) {
+  if (typeof window === "undefined") {
+    return defaultHomepageTopPicksConfig;
+  }
+
+  window.localStorage.setItem(HOMEPAGE_TOP_PICKS_KEY, JSON.stringify(config));
+  window.dispatchEvent(new Event("docent-homepage-top-picks-change"));
   return config;
 }
 

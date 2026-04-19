@@ -4,21 +4,16 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { VerticalSwitcher } from "@/components/vertical-switcher";
 import { loadLiveVerticalCounts, type LiveVerticalCounts } from "@/lib/live-counts";
+import {
+  defaultHomepageTopPicksConfig,
+  loadAppState,
+  loadHomepageTopPicksConfig,
+  type HomepageTopPickItem,
+} from "@/lib/mock-db";
+import { seedCoachingInstitutes, seedSchools } from "@/lib/verticals-data";
+import { listCustomCoachingInstitutes, listCustomSchools } from "@/lib/verticals-store";
 
 type VerticalKey = "tutors" | "coaching" | "schools";
-
-type ListingItem = {
-  id: string;
-  vertical: VerticalKey;
-  title: string;
-  subtitle: string;
-  badges: string[];
-  pills: string[];
-  meta: [string, string, string];
-  price: string;
-  stat: string;
-  href: string;
-};
 
 const heroCopy: Record<VerticalKey, { title: string; subtitle: string; cta: string; href: string }> = {
   tutors: {
@@ -41,80 +36,26 @@ const heroCopy: Record<VerticalKey, { title: string; subtitle: string; cta: stri
   },
 };
 
-const howStepsByVertical: Record<VerticalKey, Array<{ title: string; description: string; icon: string }>> = {
-  tutors: [
-    { title: "Search your locality", description: "Filter by subject, grade, board and price. Every tutor listed is local to Mathura.", icon: "🔍" },
-    { title: "Review profiles", description: "Check experience, subjects and availability before deciding.", icon: "👤" },
-    { title: "Connect instantly", description: "Reach out directly and continue on WhatsApp in one tap.", icon: "💬" },
-  ],
-  coaching: [
-    { title: "Pick your exam", description: "Choose JEE, NEET, Boards or Foundation to narrow the right institutes.", icon: "🎯" },
-    { title: "Compare outcomes", description: "See fee bands, batches, and programs side by side before shortlisting.", icon: "📊" },
-    { title: "Send enquiry", description: "Contact the institute directly for counselling and admission support.", icon: "✉️" },
-  ],
-  schools: [
-    { title: "Set your preference", description: "Filter by board, class range, area and annual fee.", icon: "🏫" },
-    { title: "Review school profile", description: "Check facilities, class structure and admissions timeline.", icon: "📘" },
-    { title: "Apply with confidence", description: "Save your shortlist and reach school admins from one flow.", icon: "✅" },
-  ],
-};
-
-const listings: ListingItem[] = [
-  {
-    id: "t1",
-    vertical: "tutors",
-    title: "Priya Sharma",
-    subtitle: "Civil Lines · 7 yrs",
-    badges: ["Verified", "Tutor"],
-    pills: ["Maths", "Physics"],
-    meta: ["Class 9-12", "CBSE", "Both homes"],
-    price: "₹1,200 /mo",
-    stat: "4.9 (48)",
-    href: "/browse",
-  },
-  {
-    id: "t2",
-    vertical: "tutors",
-    title: "Rahul Mehta",
-    subtitle: "Vrindavan · 9 yrs",
-    badges: ["Verified", "Tutor"],
-    pills: ["Chemistry", "Biology"],
-    meta: ["Class 11-12", "CBSE/UP", "My home"],
-    price: "₹1,500 /mo",
-    stat: "4.8 (61)",
-    href: "/browse",
-  },
-  {
-    id: "c1",
-    vertical: "coaching",
-    title: "Aakash Institute",
-    subtitle: "Civil Lines · Est. 2004",
-    badges: ["Verified", "Featured"],
-    pills: ["JEE", "NEET", "Foundation"],
-    meta: ["2,400+ students", "340 IIT", "98%"],
-    price: "₹85,000 /yr",
-    stat: "4.8 (124)",
-    href: "/coaching",
-  },
-  {
-    id: "s1",
-    vertical: "schools",
-    title: "Springfield School",
-    subtitle: "Dampier Nagar · CBSE",
-    badges: ["Profile", "School"],
-    pills: ["CBSE", "K-12", "STEM"],
-    meta: ["1800 students", "Smart labs", "Admissions open"],
-    price: "₹42,000 /yr",
-    stat: "Campus profile",
-    href: "/schools",
-  },
+const locations = [
+  { name: "All of Mathura", available: true },
+  { name: "Civil Lines", available: true },
+  { name: "Vrindavan", available: false },
+  { name: "Gokul", available: false },
+  { name: "Govardhan", available: false },
+  { name: "Banasthali", available: false },
 ];
+
+function asMeta(left: string, middle: string, right: string): [string, string, string] {
+  return [left, middle, right];
+}
 
 export default function HomePage() {
   const [counts, setCounts] = useState<LiveVerticalCounts | null>(null);
   const [heroVertical, setHeroVertical] = useState<VerticalKey>("tutors");
-  const [howVertical, setHowVertical] = useState<VerticalKey>("tutors");
   const [featuredVertical, setFeaturedVertical] = useState<VerticalKey>("tutors");
+  const [selectedLocation, setSelectedLocation] = useState("All of Mathura");
+  const [showLocationMenu, setShowLocationMenu] = useState(false);
+  const [topPickItems, setTopPickItems] = useState<HomepageTopPickItem[]>(defaultHomepageTopPicksConfig.items);
 
   useEffect(() => {
     let active = true;
@@ -139,12 +80,172 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    const mergeWithFallback = (vertical: VerticalKey, dynamicItems: HomepageTopPickItem[]) => {
+      const fallback = loadHomepageTopPicksConfig().items.filter((item) => item.vertical === vertical);
+      if (dynamicItems.length >= 3) {
+        return dynamicItems.slice(0, 3);
+      }
+
+      const existingIds = new Set(dynamicItems.map((item) => item.id));
+      const fallbackNeeded = fallback.filter((item) => !existingIds.has(item.id)).slice(0, 3 - dynamicItems.length);
+      return [...dynamicItems, ...fallbackNeeded].slice(0, 3);
+    };
+
+    const loadTopPicks = async () => {
+      const fallbackConfig = loadHomepageTopPicksConfig().items;
+
+      let tutorsFromApi: Array<{
+        id: string;
+        name: string;
+        locality: string;
+        experience_years: number;
+        subjects: string[];
+        grades: string[];
+        boards: string[];
+        teaches_at: string;
+        price_per_month: number;
+        rating: number;
+        reviewCount?: number;
+        reviews_count?: number;
+        is_founding_member?: boolean;
+      }> = [];
+
+      try {
+        const response = await fetch("/api/browse?limit=30", { cache: "no-store" });
+        if (response.ok) {
+          const payload = (await response.json()) as { teachers?: typeof tutorsFromApi };
+          tutorsFromApi = payload.teachers ?? [];
+        }
+      } catch {
+        tutorsFromApi = [];
+      }
+
+      const localTeachers = loadAppState().teachers
+        .filter((teacher) => teacher.status === "verified")
+        .map((teacher) => ({
+          id: teacher.id,
+          name: teacher.name,
+          locality: teacher.locality,
+          experience_years: teacher.experience_years,
+          subjects: teacher.subjects,
+          grades: teacher.grades,
+          boards: teacher.boards,
+          teaches_at: teacher.teaches_at,
+          price_per_month: teacher.price_per_month,
+          rating: teacher.rating,
+          reviewCount: teacher.reviewCount,
+          reviews_count: teacher.reviews_count,
+          is_founding_member: teacher.is_founding_member,
+        }));
+
+      const tutorSource = tutorsFromApi.length ? tutorsFromApi : localTeachers;
+      const tutorDynamic: HomepageTopPickItem[] = [...tutorSource]
+        .sort((a, b) => {
+          const aPinned = Boolean(a.is_founding_member);
+          const bPinned = Boolean(b.is_founding_member);
+          if (aPinned !== bPinned) {
+            return aPinned ? -1 : 1;
+          }
+
+          return (b.rating ?? 0) - (a.rating ?? 0);
+        })
+        .slice(0, 3)
+        .map((teacher): HomepageTopPickItem => ({
+          id: `teacher-${teacher.id}`,
+          vertical: "tutors" as const,
+          title: teacher.name,
+          subtitle: `${teacher.locality} · ${teacher.experience_years || 0} yrs`,
+          badges: [teacher.is_founding_member ? "Top Pick" : "Verified", "Tutor"],
+          pills: teacher.subjects.slice(0, 3),
+          meta: asMeta(
+            teacher.grades[0] || "All grades",
+            teacher.boards[0] || "All boards",
+            teacher.teaches_at === "both" ? "Both homes" : teacher.teaches_at === "teacher_home" ? "Teacher home" : "Student home",
+          ),
+          price: `₹${(teacher.price_per_month || 0).toLocaleString("en-IN")} /mo`,
+          stat: `${teacher.rating ? teacher.rating.toFixed(1) : "New"} (${teacher.reviewCount ?? teacher.reviews_count ?? 0})`,
+          href: "/browse",
+        }));
+
+      const allCoaching = [...listCustomCoachingInstitutes(), ...seedCoachingInstitutes];
+      const coachingDynamic: HomepageTopPickItem[] = allCoaching
+        .filter((item) => item.status === "verified")
+        .sort((a, b) => {
+          if (a.featured !== b.featured) {
+            return a.featured ? -1 : 1;
+          }
+          return (b.students || 0) - (a.students || 0);
+        })
+        .slice(0, 3)
+        .map((item): HomepageTopPickItem => ({
+          id: `coaching-${item.id}`,
+          vertical: "coaching" as const,
+          title: item.name,
+          subtitle: `${item.locality} · Est. ${item.establishedYear}`,
+          badges: [item.featured ? "Top Pick" : "Verified", "Institute"],
+          pills: item.examTypes.slice(0, 3),
+          meta: asMeta(
+            `${item.students.toLocaleString("en-IN")} students`,
+            `${item.facultyCount} faculty`,
+            `${item.passRate}% success`,
+          ),
+          price: `₹${item.feeRangeMin.toLocaleString("en-IN")} - ₹${item.feeRangeMax.toLocaleString("en-IN")} /yr`,
+          stat: `${item.rating ? item.rating.toFixed(1) : "Profile"} (${item.reviewsCount || 0})`,
+          href: `/coaching/${item.id}`,
+        }));
+
+      const allSchools = [...listCustomSchools(), ...seedSchools];
+      const schoolDynamic: HomepageTopPickItem[] = allSchools
+        .filter((item) => item.status === "verified")
+        .sort((a, b) => {
+          if (a.featured !== b.featured) {
+            return a.featured ? -1 : 1;
+          }
+          return (b.students || 0) - (a.students || 0);
+        })
+        .slice(0, 3)
+        .map((item): HomepageTopPickItem => ({
+          id: `school-${item.id}`,
+          vertical: "schools" as const,
+          title: item.name,
+          subtitle: `${item.locality} · ${item.boards.join("/")}`,
+          badges: [item.featured ? "Top Pick" : "Verified", "School"],
+          pills: item.boards.slice(0, 3),
+          meta: asMeta(
+            `${item.students.toLocaleString("en-IN")} students`,
+            `${item.teachers.toLocaleString("en-IN")} teachers`,
+            item.admissionOpen ? "Admissions open" : "Admissions closed",
+          ),
+          price: `₹${item.annualFeeMin.toLocaleString("en-IN")} - ₹${item.annualFeeMax.toLocaleString("en-IN")} /yr`,
+          stat: `${item.rating ? item.rating.toFixed(1) : "Profile"} (${item.reviewsCount || 0})`,
+          href: `/schools/${item.id}`,
+        }));
+
+      const tutorFinal = mergeWithFallback("tutors", tutorDynamic.length ? tutorDynamic : fallbackConfig.filter((item) => item.vertical === "tutors").slice(0, 3));
+      const coachingFinal = mergeWithFallback("coaching", coachingDynamic.length ? coachingDynamic : fallbackConfig.filter((item) => item.vertical === "coaching").slice(0, 3));
+      const schoolFinal = mergeWithFallback("schools", schoolDynamic.length ? schoolDynamic : fallbackConfig.filter((item) => item.vertical === "schools").slice(0, 3));
+
+      setTopPickItems([...tutorFinal, ...coachingFinal, ...schoolFinal]);
+    };
+
+    void loadTopPicks();
+    window.addEventListener("docent-homepage-top-picks-change", loadTopPicks);
+    window.addEventListener("docent-session-change", loadTopPicks);
+    window.addEventListener("docent-coaching-change", loadTopPicks);
+    window.addEventListener("docent-schools-change", loadTopPicks);
+
+    return () => {
+      window.removeEventListener("docent-homepage-top-picks-change", loadTopPicks);
+      window.removeEventListener("docent-session-change", loadTopPicks);
+      window.removeEventListener("docent-coaching-change", loadTopPicks);
+      window.removeEventListener("docent-schools-change", loadTopPicks);
+    };
+  }, []);
+
   const featuredItems = useMemo(() => {
-    const selected = listings.filter((item) => item.vertical === featuredVertical);
-    if (selected.length >= 3) return selected.slice(0, 3);
-    const remainder = listings.filter((item) => item.vertical !== featuredVertical);
-    return [...selected, ...remainder].slice(0, 3);
-  }, [featuredVertical]);
+    return topPickItems.filter((item) => item.vertical === featuredVertical).slice(0, 3);
+  }, [featuredVertical, topPickItems]);
 
   return (
     <div>
@@ -177,14 +278,39 @@ export default function HomePage() {
                 <div className="flex flex-col gap-2 p-2 md:flex-row md:items-center md:gap-0">
                   <input name="query" className="w-full border-0 bg-transparent px-4 py-3 text-sm outline-none md:flex-1" placeholder="Search tutors, coaching, schools..." />
                   <div className="hidden h-8 w-px bg-[var(--border)] md:block" />
-                  <input name="locality" className="w-full border-0 bg-transparent px-4 py-3 text-sm outline-none md:w-64" placeholder="All of Mathura" />
-                  <button type="submit" className="rounded-xl bg-[var(--navy)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[var(--saffron)]">Search →</button>
+                  <div className="relative md:w-64">
+                    <button type="button" onClick={() => setShowLocationMenu(!showLocationMenu)} className="w-full border-0 bg-transparent px-4 py-3 text-sm text-left outline-none hover:bg-[var(--ivory2)] transition">
+                      {selectedLocation}
+                    </button>
+                    {showLocationMenu && (
+                      <div className="absolute right-0 top-full z-50 mt-1 w-full rounded-xl border border-[var(--border)] bg-white shadow-lg">
+                        {locations.map((loc) => (
+                          <button
+                            key={loc.name}
+                            type="button"
+                            onClick={() => {
+                              if (loc.available) {
+                                setSelectedLocation(loc.name);
+                                setShowLocationMenu(false);
+                              }
+                            }}
+                            className={`block w-full px-4 py-2 text-left text-sm ${loc.available ? "hover:bg-[var(--ivory2)] cursor-pointer" : "text-[var(--muted2)] cursor-not-allowed"}`}
+                          >
+                            {loc.name}
+                            {!loc.available && <span className="ml-2 text-xs text-[var(--muted2)]">Coming soon</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <input name="locality" type="hidden" value={selectedLocation} />
+                  </div>
+                  <button type="submit" className="rounded-xl bg-[var(--saffron)] px-5 py-3 text-sm font-medium text-white transition hover:bg-[var(--saffron-mid)]">Search →</button>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 border-t border-[var(--border)] bg-[var(--ivory2)] px-4 py-3">
                   <span className="text-xs text-[var(--muted2)]">Browse:</span>
-                  <button type="button" onClick={() => setHeroVertical("tutors")} className={`rounded-full border px-3 py-1 text-xs font-medium ${heroVertical === "tutors" ? "border-[rgba(232,134,10,0.3)] bg-[var(--saffron-light)] text-[var(--saffron)]" : "border-[var(--border)] bg-white text-[var(--muted)]"}`}>📚 Tutors</button>
-                  <button type="button" onClick={() => setHeroVertical("coaching")} className={`rounded-full border px-3 py-1 text-xs font-medium ${heroVertical === "coaching" ? "border-[rgba(30,64,175,0.25)] bg-[var(--cobalt-light)] text-[var(--cobalt)]" : "border-[var(--border)] bg-white text-[var(--muted)]"}`}>🎯 Coaching</button>
-                  <button type="button" onClick={() => setHeroVertical("schools")} className={`rounded-full border px-3 py-1 text-xs font-medium ${heroVertical === "schools" ? "border-[rgba(13,115,119,0.25)] bg-[var(--teal-light)] text-[var(--teal)]" : "border-[var(--border)] bg-white text-[var(--muted)]"}`}>🏫 Schools</button>
+                  <button type="button" onClick={() => setHeroVertical("tutors")} className={`rounded-full border px-3 py-1 text-xs font-medium ${heroVertical === "tutors" ? "border-[var(--saffron)] bg-[var(--saffron-light)] text-[var(--saffron)]" : "border-[var(--border)] bg-white text-[var(--muted)]"}`}>Home Tutoring</button>
+                  <button type="button" onClick={() => setHeroVertical("coaching")} className={`rounded-full border px-3 py-1 text-xs font-medium ${heroVertical === "coaching" ? "border-[var(--saffron)] bg-[var(--saffron-light)] text-[var(--saffron)]" : "border-[var(--border)] bg-white text-[var(--muted)]"}`}>Coaching Centers</button>
+                  <button type="button" onClick={() => setHeroVertical("schools")} className={`rounded-full border px-3 py-1 text-xs font-medium ${heroVertical === "schools" ? "border-[var(--saffron)] bg-[var(--saffron-light)] text-[var(--saffron)]" : "border-[var(--border)] bg-white text-[var(--muted)]"}`}>Schools</button>
                 </div>
               </form>
 
@@ -200,38 +326,7 @@ export default function HomePage() {
         </section>
       </div>
 
-      <div className="page-section" id="how-it-works">
-        <section className="relative overflow-hidden bg-[var(--navy)] px-6 py-16 text-white lg:px-12">
-          <div className="absolute -right-40 -top-40 h-[460px] w-[460px] rounded-full border border-white/10" />
-          <div className="absolute -bottom-28 -left-16 h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(232,134,10,0.15)_0%,transparent_70%)]" />
-          <div className="relative z-10">
-            <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/50">How it works</p>
-                <h2 className="mt-2 font-display text-5xl font-light leading-tight lg:text-6xl">Simple by design,<br /><em className="text-[var(--saffron-mid)]">powerful by results.</em></h2>
-              </div>
-              <p className="max-w-sm text-sm leading-7 text-white/50">Each vertical has its own flow designed around how families compare options in practice.</p>
-            </div>
 
-            <div className="mb-8 inline-flex overflow-hidden rounded-xl border border-white/15 bg-white/5">
-              <button type="button" onClick={() => setHowVertical("tutors")} className={`px-5 py-2.5 text-sm ${howVertical === "tutors" ? "bg-[rgba(232,134,10,0.2)] text-[var(--saffron-mid)]" : "text-white/60"}`}>📚 For Tutors</button>
-              <button type="button" onClick={() => setHowVertical("coaching")} className={`px-5 py-2.5 text-sm ${howVertical === "coaching" ? "bg-[rgba(30,64,175,0.25)] text-[var(--cobalt-mid)]" : "text-white/60"}`}>🎯 For Coaching</button>
-              <button type="button" onClick={() => setHowVertical("schools")} className={`px-5 py-2.5 text-sm ${howVertical === "schools" ? "bg-[rgba(13,115,119,0.25)] text-[var(--teal-mid)]" : "text-white/60"}`}>🏫 For Schools</button>
-            </div>
-
-            <div className="grid gap-5 lg:grid-cols-3">
-              {howStepsByVertical[howVertical].map((step, index) => (
-                <article key={step.title} className="rounded-2xl border border-white/15 bg-white/5 p-6">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-white/35">Step {String(index + 1).padStart(2, "0")}</p>
-                  <div className="mt-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-2xl">{step.icon}</div>
-                  <h3 className="mt-4 font-display text-3xl text-white">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-7 text-white/55">{step.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-      </div>
 
       <div className="page-section">
         <section className="section-padding">
@@ -240,55 +335,60 @@ export default function HomePage() {
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--muted2)]">Handpicked for you</p>
               <h2 className="mt-2 font-display text-5xl font-light leading-tight text-[var(--navy)] lg:text-6xl">Top picks in<br /><em className="text-[var(--saffron)]">Mathura</em></h2>
             </div>
-            <Link href="/browse" className="text-sm text-[var(--saffron)]">See all listings →</Link>
+            <Link href={heroCopy[featuredVertical].href} className="text-sm text-[var(--saffron)]">See all listings →</Link>
           </div>
 
           <div className="mb-6 flex gap-8 border-b-2 border-[var(--border)] text-lg">
-            <button type="button" onClick={() => setFeaturedVertical("tutors")} className={`mb-[-2px] border-b-2 pb-2 font-display ${featuredVertical === "tutors" ? "border-[var(--saffron)] text-[var(--saffron)]" : "border-transparent text-[var(--muted)]"}`}>📚 Tutors</button>
-            <button type="button" onClick={() => setFeaturedVertical("coaching")} className={`mb-[-2px] border-b-2 pb-2 font-display ${featuredVertical === "coaching" ? "border-[var(--cobalt)] text-[var(--cobalt)]" : "border-transparent text-[var(--muted)]"}`}>🎯 Coaching</button>
-            <button type="button" onClick={() => setFeaturedVertical("schools")} className={`mb-[-2px] border-b-2 pb-2 font-display ${featuredVertical === "schools" ? "border-[var(--teal)] text-[var(--teal)]" : "border-transparent text-[var(--muted)]"}`}>🏫 Schools</button>
+            <button type="button" onClick={() => setFeaturedVertical("tutors")} className={`mb-[-2px] border-b-2 pb-2 font-display ${featuredVertical === "tutors" ? "border-[var(--saffron)] text-[var(--saffron)]" : "border-transparent text-[var(--muted)]"}`}>Home Tutoring</button>
+            <button type="button" onClick={() => setFeaturedVertical("coaching")} className={`mb-[-2px] border-b-2 pb-2 font-display ${featuredVertical === "coaching" ? "border-[var(--saffron)] text-[var(--saffron)]" : "border-transparent text-[var(--muted)]"}`}>Coaching Centers</button>
+            <button type="button" onClick={() => setFeaturedVertical("schools")} className={`mb-[-2px] border-b-2 pb-2 font-display ${featuredVertical === "schools" ? "border-[var(--saffron)] text-[var(--saffron)]" : "border-transparent text-[var(--muted)]"}`}>Schools</button>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-3">
             {featuredItems.map((item) => (
-              <article key={item.id} className="overflow-hidden rounded-2xl border border-[var(--border)] bg-white">
-                <div className={`h-1.5 ${item.vertical === "coaching" ? "bg-gradient-to-r from-[var(--cobalt)] to-[var(--cobalt-mid)]" : item.vertical === "schools" ? "bg-gradient-to-r from-[var(--teal)] to-[var(--teal-mid)]" : "bg-gradient-to-r from-[var(--saffron)] to-[var(--saffron-mid)]"}`} />
-                <div className="p-5">
-                  <div className="mb-3 flex items-center gap-3">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-full font-display text-lg ${item.vertical === "coaching" ? "bg-[var(--cobalt-light)] text-[var(--cobalt)]" : item.vertical === "schools" ? "bg-[var(--teal-light)] text-[var(--teal)]" : "bg-[var(--saffron-mid)] text-[var(--navy)]"}`}>{item.title.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase()}</div>
-                    <div>
-                      <p className="font-display text-2xl text-[var(--navy)]">{item.title}</p>
-                      <p className="text-xs text-[var(--muted)]">{item.subtitle}</p>
-                    </div>
-                  </div>
-
-                  <div className="mb-3 flex flex-wrap gap-2">
+              <article key={item.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-[var(--saffron-mid)] hover:shadow-[0_16px_32px_rgba(26,39,68,0.08)]">
+                <div className="relative flex h-36 items-end justify-between bg-gradient-to-br from-[var(--saffron-light)] via-white to-[var(--ivory2)] px-5 pb-4">
+                  <span className="rounded-full border border-[var(--saffron-mid)] bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--saffron)]">Top Pick</span>
+                  <div className="h-10 w-10 rounded-xl border border-[var(--border)] bg-white/80" />
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(232,134,10,0.15)_0%,transparent_55%)]" />
+                </div>
+                <div className="flex flex-col gap-1 px-5 py-4">
+                  <div className="flex flex-wrap gap-1.5">
                     {item.badges.map((badge) => (
-                      <span key={badge} className="rounded-full border border-[var(--border)] bg-[var(--ivory2)] px-2.5 py-1 text-[10px] text-[var(--navy)]">{badge}</span>
+                      <span key={badge} className="inline-block rounded-full border border-[var(--saffron-mid)] bg-[var(--saffron-light)] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--saffron)]">{badge}</span>
                     ))}
                   </div>
-
-                  <div className="mb-3 flex flex-wrap gap-2">
+                  <h3 className="mt-2 font-display text-2xl leading-tight text-[var(--navy)]">{item.title}</h3>
+                  <p className="text-sm text-[var(--muted)]">{item.subtitle}</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
                     {item.pills.map((pill) => (
-                      <span key={pill} className={`rounded-full px-2.5 py-1 text-[10px] ${item.vertical === "coaching" ? "bg-[var(--cobalt-light)] text-[var(--cobalt)]" : item.vertical === "schools" ? "bg-[var(--teal-light)] text-[var(--teal)]" : "bg-[var(--saffron-light)] text-[var(--saffron)]"}`}>{pill}</span>
+                      <span key={pill} className="inline-block rounded-full border border-[var(--border)] bg-white px-2.5 py-1 text-xs text-[var(--muted)]">{pill}</span>
                     ))}
                   </div>
-
-                  <div className="mb-2 grid grid-cols-3 gap-1 rounded-lg bg-[var(--ivory2)] px-2 py-2 text-[11px] text-[var(--muted)]">
-                    <span className="text-center">{item.meta[0]}</span>
-                    <span className="text-center">{item.meta[1]}</span>
-                    <span className="text-center">{item.meta[2]}</span>
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-[var(--muted2)]">
+                    {item.meta.map((meta, i) => (
+                      <span key={i}>
+                        {i > 0 && <span className="mr-1.5">·</span>}
+                        {meta}
+                      </span>
+                    ))}
                   </div>
                 </div>
-                <div className="flex items-center justify-between border-t border-[var(--border)] px-5 py-3">
+                <div className="flex items-center justify-between border-t border-[var(--border)] bg-[var(--ivory)]/40 px-5 py-3">
                   <div>
                     <p className="font-display text-3xl text-[var(--navy)]">{item.price}</p>
-                    <p className="text-xs text-[var(--muted)]">★ {item.stat}</p>
+                    <p className="text-xs text-[var(--muted)]">Rating {item.stat}</p>
                   </div>
-                  <Link href={item.href} className="rounded-full bg-[var(--navy)] px-4 py-2 text-xs font-semibold text-white">View →</Link>
+                  <Link href={item.href} className="rounded-full bg-[var(--saffron)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--saffron-mid)]">View Profile →</Link>
                 </div>
               </article>
             ))}
+            {featuredItems.length === 0 && (
+              <article className="col-span-full rounded-2xl border border-[var(--border)] bg-white px-6 py-12 text-center">
+                <p className="font-display text-3xl text-[var(--navy)]">No picks available yet</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">Use the Admin Panel to add top picks for this category.</p>
+              </article>
+            )}
           </div>
         </section>
       </div>
@@ -311,10 +411,10 @@ export default function HomePage() {
 
             <div className="space-y-4">
               {[
-                { icon: "📍", title: "Truly hyperlocal", desc: "Every listing is focused on Mathura neighbourhoods.", bg: "bg-[var(--saffron-light)]" },
-                { icon: "✓", title: "Manually reviewed", desc: "Provider profiles are reviewed before public listing.", bg: "bg-[var(--green-light)]" },
-                { icon: "🎯", title: "Three verticals, one flow", desc: "Tutors, coaching, and schools available from one account.", bg: "bg-[var(--cobalt-light)]" },
-                { icon: "⭐", title: "Quality-first listings", desc: "Clean profiles and structured data for better decisions.", bg: "bg-[#F5F3FF]" },
+                { icon: "✓", title: "Hyperlocal Coverage", desc: "Every listing focuses on Mathura neighborhoods.", bg: "bg-[var(--saffron-light)]" },
+                { icon: "✓", title: "Verified Profiles", desc: "Provider profiles are reviewed before public listing.", bg: "bg-[var(--green-light)]" },
+                { icon: "✓", title: "Unified Platform", desc: "Tutors, coaching, and schools available from one place.", bg: "bg-[var(--cobalt-light)]" },
+                { icon: "✓", title: "Quality Data", desc: "Clean profiles and structured information for better decisions.", bg: "bg-[#F5F3FF]" },
               ].map((item) => (
                 <article key={item.title} className="flex gap-4 rounded-2xl border border-[var(--border)] bg-white p-4">
                   <div className={`flex h-11 w-11 items-center justify-center rounded-xl text-lg ${item.bg}`}>{item.icon}</div>
@@ -330,20 +430,20 @@ export default function HomePage() {
       </div>
 
       <div className="page-section">
-        <section className="relative overflow-hidden bg-[var(--navy3)] px-6 py-20 text-center text-white lg:px-12">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_50%,rgba(232,134,10,0.12)_0%,transparent_55%),radial-gradient(ellipse_at_70%_50%,rgba(13,115,119,0.12)_0%,transparent_55%)]" />
+        <section className="relative overflow-hidden bg-gradient-to-br from-[var(--ivory2)] via-[var(--ivory)] to-[var(--saffron-light)] px-6 py-20 text-center text-[var(--navy)] lg:px-12">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_50%,rgba(232,134,10,0.2)_0%,transparent_58%),radial-gradient(ellipse_at_70%_50%,rgba(26,39,68,0.06)_0%,transparent_60%)]" />
           <div className="relative z-10">
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/55">Start for free · no account needed to browse</p>
-            <h2 className="mt-4 font-display text-5xl font-light leading-tight lg:text-7xl">Mathura&apos;s best education,<br /><em className="text-[var(--saffron-mid)]">all in one place.</em></h2>
-            <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-8 text-white/65">Find a tutor in minutes, compare coaching centres, explore schools.</p>
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted2)]">Start for free · no account needed to browse</p>
+            <h2 className="mt-4 font-display text-5xl font-light leading-tight lg:text-7xl">Mathura&apos;s best education,<br /><em className="text-[var(--saffron)]">all in one place.</em></h2>
+            <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-8 text-[var(--muted)]">Find a tutor in minutes, compare coaching centres, explore schools.</p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/browse" className="rounded-full bg-[var(--saffron)] px-7 py-3 text-sm font-semibold text-white">Find a Tutor →</Link>
-              <Link href="/coaching" className="rounded-full border border-[rgba(30,64,175,0.35)] bg-[rgba(30,64,175,0.2)] px-7 py-3 text-sm font-semibold text-[var(--cobalt-mid)]">Browse Coaching 🎯</Link>
-              <Link href="/schools" className="rounded-full border border-[rgba(13,115,119,0.35)] bg-[rgba(13,115,119,0.2)] px-7 py-3 text-sm font-semibold text-[var(--teal-mid)]">Explore Schools 🏫</Link>
+              <Link href="/browse" className="rounded-full bg-[var(--saffron)] px-7 py-3 text-sm font-semibold text-white hover:bg-[var(--saffron-mid)] transition">Find a Tutor →</Link>
+              <Link href="/coaching" className="rounded-full border border-[var(--border2)] bg-white px-7 py-3 text-sm font-semibold text-[var(--navy)] hover:border-[var(--saffron)] hover:text-[var(--saffron)] transition">Browse Coaching Centers</Link>
+              <Link href="/schools" className="rounded-full border border-[var(--border2)] bg-white px-7 py-3 text-sm font-semibold text-[var(--navy)] hover:border-[var(--saffron)] hover:text-[var(--saffron)] transition">Explore Schools</Link>
             </div>
 
-            <div className="mx-auto mt-10 max-w-6xl border-t border-white/10 pt-8">
-              <div className="flex flex-wrap items-center justify-center gap-10 text-sm text-white/55">
+            <div className="mx-auto mt-10 max-w-6xl border-t border-[var(--border)] pt-8">
+              <div className="flex flex-wrap items-center justify-center gap-10 text-sm text-[var(--muted)]">
                 <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--saffron)]" />{counts ? `${counts.tutors} Verified Tutors` : "Tutors Loading"}</span>
                 <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--cobalt-mid)]" />{counts ? `${counts.coaching} Coaching Institutes` : "Coaching Loading"}</span>
                 <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--teal-mid)]" />{counts ? `${counts.schools} Schools Listed` : "Schools Loading"}</span>

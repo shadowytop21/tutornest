@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { createUniqueHandle } from "@/lib/handles";
 import { getSupabaseServiceClient } from "@/lib/supabase-server";
 import { checkRateLimit, getRequestIp } from "@/lib/rate-limit";
 import { normalizeTeacherName, parseExperienceYears, validateTeacherBio, validateTeacherName, validateWhatsappNumber } from "@/lib/teacher-validation";
@@ -110,15 +109,6 @@ export async function POST(request: Request) {
 
     const adminSupabase = supabase as any;
     const canEnforceIpLimit = Boolean(ip && ip !== "unknown");
-    const handleRows = await adminSupabase.from("teacher_profiles").select("handle");
-
-    if (handleRows.error) {
-      return NextResponse.json({ message: handleRows.error.message }, { status: 500 });
-    }
-
-    const existingHandles = (handleRows.data ?? [])
-      .map((row: { handle?: string | null }) => row.handle)
-      .filter((handle: string | null | undefined): handle is string => Boolean(handle));
 
     let existingUser: { id: string } | null = null;
     if (canEnforceIpLimit) {
@@ -195,7 +185,7 @@ export async function POST(request: Request) {
 
     const existingTeacherResult = await adminSupabase
       .from("teacher_profiles")
-      .select("id,created_at,handle")
+      .select("id,created_at")
       .eq("user_id", userResult.userId)
       .order("created_at", { ascending: false })
       .limit(1);
@@ -205,16 +195,11 @@ export async function POST(request: Request) {
     }
 
     const existingTeacherId = existingTeacherResult.data?.[0]?.id;
-    const existingTeacherHandle = existingTeacherResult.data?.[0]?.handle ?? null;
-    const handle = existingTeacherHandle ?? createUniqueHandle(sanitizedName, existingHandles, "teacher");
 
     if (existingTeacherId) {
       const updateResult = await adminSupabase
         .from("teacher_profiles")
-        .update({
-          ...teacherPayload,
-          handle,
-        })
+        .update(teacherPayload)
         .eq("id", existingTeacherId)
         .select()
         .maybeSingle();
@@ -228,10 +213,7 @@ export async function POST(request: Request) {
 
     const insertResult = await adminSupabase
       .from("teacher_profiles")
-      .insert({
-        ...teacherPayload,
-        handle,
-      })
+      .insert(teacherPayload)
       .select()
       .single();
     if (insertResult.error) {

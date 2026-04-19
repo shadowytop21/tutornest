@@ -288,11 +288,33 @@ export function setCoachingInstituteStatus(id: string, status: CoachingInstitute
   notifyVerticalChange("docent-coaching-change");
 }
 
+export function setCoachingInstituteFeatured(id: string, featured: boolean) {
+  const snapshot = readState();
+  const next: VerticalStorageState = {
+    ...snapshot,
+    coaching: snapshot.coaching.map((item) => (item.id === id ? { ...item, featured } : item)),
+  };
+
+  writeState(next);
+  notifyVerticalChange("docent-coaching-change");
+}
+
 export function setSchoolStatus(id: string, status: SchoolRecord["status"]) {
   const snapshot = readState();
   const next: VerticalStorageState = {
     ...snapshot,
     schools: snapshot.schools.map((item) => (item.id === id ? { ...item, status } : item)),
+  };
+
+  writeState(next);
+  notifyVerticalChange("docent-schools-change");
+}
+
+export function setSchoolFeatured(id: string, featured: boolean) {
+  const snapshot = readState();
+  const next: VerticalStorageState = {
+    ...snapshot,
+    schools: snapshot.schools.map((item) => (item.id === id ? { ...item, featured } : item)),
   };
 
   writeState(next);

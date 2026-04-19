@@ -55,7 +55,7 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-[rgba(253,250,244,0.96)] backdrop-blur-xl">
       <div className="mx-auto flex h-[68px] w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 text-decoration-none">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[9px] bg-[var(--navy)] transition hover:bg-[var(--saffron)]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-[9px] bg-[var(--saffron)] transition hover:bg-[var(--navy)]">
             <Image src="/docent-mark-v2.png?v=5" alt="Docent logo" width={20} height={20} quality={80} priority className="h-5 w-5" />
           </div>
           <div>
