@@ -268,17 +268,6 @@ export default function AuthPage() {
       <div className="docent-right-panel">
         <div className="docent-right-panel-bg" />
 
-        {/* Top bar */}
-        <div className="docent-right-top">
-          <Link href="/" className="docent-back-link">← Back to Docent</Link>
-          <div className="docent-right-top-text">
-            {activeTab === "signup"
-              ? <span>Already have an account? <button type="button" onClick={() => setActiveTab("login")} className="docent-link-btn">Login</button></span>
-              : <span>New to Docent? <button type="button" onClick={() => setActiveTab("signup")} className="docent-link-btn">Create Account</button></span>
-            }
-          </div>
-        </div>
-
         {/* Form area */}
         <div className="docent-form-area">
 
@@ -295,18 +284,18 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* Tab switcher */}
-          <div className="docent-auth-tabs">
+          {/* Top tabs - Create Account / Login */}
+          <div className="docent-top-tabs">
             <button
               type="button"
-              className={`docent-auth-tab ${activeTab === "signup" ? "active" : ""}`}
+              className={`docent-top-tab ${activeTab === "signup" ? "active" : ""}`}
               onClick={() => setActiveTab("signup")}
             >
               Create Account
             </button>
             <button
               type="button"
-              className={`docent-auth-tab ${activeTab === "login" ? "active" : ""}`}
+              className={`docent-top-tab ${activeTab === "login" ? "active" : ""}`}
               onClick={() => setActiveTab("login")}
             >
               Login
@@ -316,32 +305,30 @@ export default function AuthPage() {
           {/* ─── SIGN UP FORM ─── */}
           {activeTab === "signup" && (
             <>
-              <div className="docent-step-indicator">
-                <div className="docent-step-dot active" />
-                <div className="docent-step-dot" />
-                <span className="docent-step-label">Step 1 of 2 — Your Details</span>
+              {/* Step indicator */}
+              <div className="docent-step-indicator-bar">
+                <div className="docent-step-progress">
+                  <div className="docent-step-progress-fill" style={{ width: "50%" }} />
+                </div>
+                <span className="docent-step-text">Step 1 of 2 — Your Details</span>
               </div>
 
               <h1 className="docent-form-title">Join Docent</h1>
               <p className="docent-form-subtitle">Free for parents. Free to list for teachers, institutes and schools.</p>
 
-              {/* Role selector */}
-              <div className="docent-role-selector five">
+              {/* 5-Role selector */}
+              <div className="docent-role-grid-5">
                 {roleOptions.map((role) => (
-                  <div
+                  <button
                     key={role.value}
-                    className={`docent-role-card tone-${role.tone} ${selectedRole === role.value ? "active" : ""}`}
+                    type="button"
+                    className={`docent-role-btn ${selectedRole === role.value ? "active" : ""}`}
                     onClick={() => selectRole(role.value)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === "Enter" && selectRole(role.value)}
-                    aria-pressed={selectedRole === role.value}
                   >
-                    <div className="docent-role-check">✓</div>
-                    <span className="docent-role-emoji">{role.emoji}</span>
-                    <div className="docent-role-title">{role.label}</div>
-                    <div className="docent-role-desc">{role.description}</div>
-                  </div>
+                    {selectedRole === role.value && <div className="docent-role-badge">●</div>}
+                    <div className="docent-role-emoji">{role.emoji}</div>
+                    <div className="docent-role-label">{role.label}</div>
+                  </button>
                 ))}
               </div>
 
@@ -359,42 +346,53 @@ export default function AuthPage() {
               {/* OR divider */}
               <div className="docent-or-divider">
                 <div className="docent-or-line" />
-                <span className="docent-or-text">or</span>
+                <span className="docent-or-text">or with email</span>
                 <div className="docent-or-line" />
               </div>
 
               {/* Form */}
               <form onSubmit={handleSubmit} noValidate>
-                <div className="docent-form-row">
+                {/* First Name & Last Name row */}
+                <div className="docent-form-row-2col">
                   <div className="docent-form-group">
-                    <label className="docent-form-label" htmlFor="auth-name">Full Name</label>
+                    <label className="docent-form-label" htmlFor="auth-fname">First Name</label>
                     <div className="docent-form-input-wrap">
                       <span className="docent-form-input-icon">👤</span>
                       <input
-                        id="auth-name"
+                        id="auth-fname"
                         className="docent-form-input"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="e.g. Sunita Sharma"
+                        value={name.split(" ")[0] || ""}
+                        onChange={(e) => {
+                          const parts = name.split(" ");
+                          parts[0] = e.target.value;
+                          setName(parts.join(" ").trim());
+                        }}
+                        placeholder="Your name"
                         required
                       />
                     </div>
                   </div>
                   <div className="docent-form-group">
-                    <label className="docent-form-label" htmlFor="auth-phone">Phone</label>
+                    <label className="docent-form-label" htmlFor="auth-lname">Last Name</label>
                     <div className="docent-form-input-wrap">
-                      <span className="docent-phone-prefix">+91</span>
+                      <span className="docent-form-input-icon">👤</span>
                       <input
-                        id="auth-phone"
-                        className="docent-form-input docent-phone"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="98xxxxxx00"
+                        id="auth-lname"
+                        className="docent-form-input"
+                        value={name.split(" ").slice(1).join(" ") || ""}
+                        onChange={(e) => {
+                          const parts = name.split(" ");
+                          parts[0] = parts[0] || "";
+                          setName((parts[0] + " " + e.target.value).trim());
+                        }}
+                        placeholder="Last name"
                         required
                       />
                     </div>
                   </div>
                 </div>
+
+                {/* Email */}
                 <div className="docent-form-group">
                   <label className="docent-form-label" htmlFor="auth-email">Email Address</label>
                   <div className="docent-form-input-wrap">
@@ -410,56 +408,52 @@ export default function AuthPage() {
                     />
                   </div>
                 </div>
+
+                {/* Phone */}
                 <div className="docent-form-group">
-                  <div className="docent-form-label">
-                    <label htmlFor="auth-password">Password</label>
-                    <span className="docent-form-label-hint">Min. 8 characters</span>
-                  </div>
+                  <label className="docent-form-label" htmlFor="auth-phone">Phone Number</label>
                   <div className="docent-form-input-wrap">
-                    <span className="docent-form-input-icon">🔒</span>
+                    <span className="docent-phone-prefix">+91</span>
                     <input
-                      id="auth-password"
-                      className="docent-form-input"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Create a password"
+                      id="auth-phone"
+                      className="docent-form-input docent-phone-input"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="10-digit mobile number"
                       required
                     />
-                    <button type="button" className="docent-password-toggle" onClick={() => setShowPassword(!showPassword)}>
-                      {showPassword ? "🙈" : "👁"}
-                    </button>
                   </div>
                 </div>
 
                 {/* Terms */}
                 <div className="docent-terms-row">
-                  <div
-                    className={`docent-custom-checkbox ${termsChecked ? "checked" : ""}`}
-                    onClick={toggleTerms}
-                    role="checkbox"
-                    aria-checked={termsChecked}
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === "Enter" && toggleTerms()}
+                  <input
+                    type="checkbox"
+                    id="auth-terms"
+                    className="docent-form-checkbox"
+                    checked={termsChecked}
+                    onChange={toggleTerms}
                   />
-                  <p className="docent-terms-text">
-                    I agree to the{" "}
-                    <Link href="/company/legal/terms">Terms and Conditions</Link>
-                    {" "}and{" "}
-                    <Link href="/company/legal/privacy">Privacy Policy</Link>.
-                  </p>
+                  <label htmlFor="auth-terms" className="docent-terms-label">
+                    I agree to Docent's <Link href="/company/legal/terms">Terms of Service</Link> and <Link href="/company/legal/privacy">Privacy Policy</Link>
+                  </label>
                 </div>
 
                 <button type="submit" className="docent-btn-submit" disabled={!acceptedTerms} id="create-account-btn">
-                  <span>Create Account →</span>
+                  <span>Continue →</span>
                 </button>
               </form>
 
+              {/* Already registered */}
+              <div className="docent-login-link">
+                Already registered? <button type="button" onClick={() => setActiveTab("login")} className="docent-link-text">Login to your account</button>
+              </div>
+
               {/* Trust badges */}
-              <div className="docent-trust-row">
-                <div className="docent-trust-item"><span className="docent-trust-dot">🔒</span> SSL Secure</div>
-                <div className="docent-trust-item"><span className="docent-trust-dot">•</span> Local tutor profiles</div>
-                <div className="docent-trust-item"><span className="docent-trust-dot">🇮🇳</span> Mathura-local</div>
+              <div className="docent-trust-badges">
+                <span className="docent-trust-badge">🔒 SSL Secured</span>
+                <span className="docent-trust-badge">✓ No spam</span>
+                <span className="docent-trust-badge">🎁 Free to join</span>
               </div>
             </>
           )}
@@ -467,6 +461,14 @@ export default function AuthPage() {
           {/* ─── LOGIN FORM ─── */}
           {activeTab === "login" && (
             <>
+              {/* Step indicator */}
+              <div className="docent-step-indicator-bar">
+                <div className="docent-step-progress">
+                  <div className="docent-step-progress-fill" style={{ width: "50%" }} />
+                </div>
+                <span className="docent-step-text">Login to your account</span>
+              </div>
+
               <h1 className="docent-form-title">Welcome back</h1>
               <p className="docent-form-subtitle">Sign in to your Docent account.</p>
 
@@ -482,7 +484,7 @@ export default function AuthPage() {
 
               <div className="docent-or-divider">
                 <div className="docent-or-line" />
-                <span className="docent-or-text">or</span>
+                <span className="docent-or-text">or with email</span>
                 <div className="docent-or-line" />
               </div>
 
@@ -503,9 +505,7 @@ export default function AuthPage() {
                   </div>
                 </div>
                 <div className="docent-form-group">
-                  <div className="docent-form-label">
-                    <label htmlFor="login-password">Password</label>
-                  </div>
+                  <label className="docent-form-label" htmlFor="login-password">Password</label>
                   <div className="docent-form-input-wrap">
                     <span className="docent-form-input-icon">🔒</span>
                     <input
@@ -523,45 +523,20 @@ export default function AuthPage() {
                   </div>
                 </div>
 
-                <div className="docent-role-selector five" style={{ marginBottom: "1.5rem" }}>
-                  {roleOptions.map((role) => (
-                    <div
-                      key={`login-${role.value}`}
-                      className={`docent-role-card tone-${role.tone} ${selectedRole === role.value ? "active" : ""}`}
-                      onClick={() => selectRole(role.value)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === "Enter" && selectRole(role.value)}
-                    >
-                      <div className="docent-role-check">✓</div>
-                      <span className="docent-role-emoji">{role.emoji}</span>
-                      <div className="docent-role-title">{role.label}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="docent-terms-row">
-                  <div
-                    className={`docent-custom-checkbox ${termsChecked ? "checked" : ""}`}
-                    onClick={toggleTerms}
-                    role="checkbox"
-                    aria-checked={termsChecked}
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === "Enter" && toggleTerms()}
-                  />
-                  <p className="docent-terms-text">
-                    I agree to the <Link href="/company/legal/terms">Terms</Link> and <Link href="/company/legal/privacy">Privacy Policy</Link>.
-                  </p>
-                </div>
-
-                <button type="submit" className="docent-btn-submit" disabled={!acceptedTerms} id="login-btn">
+                <button type="submit" className="docent-btn-submit" id="login-btn">
                   <span>Login →</span>
                 </button>
               </form>
 
-              <div className="docent-form-switch">
-                Don&apos;t have an account?{" "}
-                <button type="button" onClick={() => setActiveTab("signup")} className="docent-link-btn">Sign up free</button>
+              <div className="docent-login-link">
+                Don&apos;t have an account? <button type="button" onClick={() => setActiveTab("signup")} className="docent-link-text">Sign up free</button>
+              </div>
+
+              {/* Trust badges */}
+              <div className="docent-trust-badges">
+                <span className="docent-trust-badge">🔒 SSL Secured</span>
+                <span className="docent-trust-badge">✓ No spam</span>
+                <span className="docent-trust-badge">🎁 Free to join</span>
               </div>
             </>
           )}
