@@ -151,12 +151,12 @@ export default function HomePage() {
       <VerticalSwitcher />
 
       <div className="page-section">
-        <section className="grid min-h-[88vh] grid-cols-1 lg:grid-cols-[1fr_480px]">
+        <section className="min-h-[88vh]">
           <div className="relative overflow-hidden px-6 py-16 lg:px-12">
             <div className="absolute -left-16 bottom-0 h-52 w-52 rounded-full border border-[var(--border)]" />
             <div className="absolute right-16 top-0 h-56 w-56 rounded-full border border-[var(--border)]" />
 
-            <div className="relative z-10 max-w-3xl">
+            <div className="relative z-10 max-w-5xl">
               <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--muted)]">Tutors · Coaching · Schools in Mathura</p>
               <h1 className="mt-6 font-display text-5xl font-light leading-[1.05] text-[var(--navy)] lg:text-7xl">
                 {heroCopy[heroVertical].title.split("education").length > 1 ? (
@@ -196,51 +196,6 @@ export default function HomePage() {
                 <span><span className="font-display text-xl text-[var(--navy)]">{counts?.schools ?? "..."}</span> Schools</span>
               </div>
             </div>
-          </div>
-
-          <div className="border-l border-[var(--border)] bg-[linear-gradient(180deg,#f6f1e4_0%,#efe5cf_100%)] p-6">
-            {[
-              {
-                key: "tutors" as const,
-                title: "Home Tutors",
-                desc: "Verified local tutors for every subject, grade and board.",
-                count: counts ? `${counts.tutors} tutors in Mathura` : "Loading tutors...",
-                href: "/browse",
-                icon: "📚",
-                color: "text-[var(--saffron)]",
-                bg: "bg-[var(--saffron-light)]",
-              },
-              {
-                key: "coaching" as const,
-                title: "Coaching Institutes",
-                desc: "Compare JEE, NEET and board coaching centres.",
-                count: counts ? `${counts.coaching} institutes listed` : "Loading coaching...",
-                href: "/coaching",
-                icon: "🎯",
-                color: "text-[var(--cobalt)]",
-                bg: "bg-[var(--cobalt-light)]",
-              },
-              {
-                key: "schools" as const,
-                title: "Schools",
-                desc: "Explore schools with fees, facilities and admission status.",
-                count: counts ? `${counts.schools} schools listed` : "Loading schools...",
-                href: "/schools",
-                icon: "🏫",
-                color: "text-[var(--teal)]",
-                bg: "bg-[var(--teal-light)]",
-              },
-            ].map((panel) => (
-              <Link key={panel.key} href={panel.href} className="group mb-4 flex items-center gap-4 rounded-2xl border border-[var(--border)] bg-white/70 p-5 transition hover:translate-x-1">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl ${panel.bg}`}>{panel.icon}</div>
-                <div className="flex-1">
-                  <p className="font-display text-2xl text-[var(--navy)]">{panel.title}</p>
-                  <p className="mt-1 text-xs text-[var(--muted)]">{panel.desc}</p>
-                  <p className={`mt-2 text-[11px] font-medium ${panel.color}`}>Live Now · {panel.count}</p>
-                </div>
-                <span className="text-xl text-[var(--muted2)] transition group-hover:text-[var(--navy)] group-hover:translate-x-1">→</span>
-              </Link>
-            ))}
           </div>
         </section>
       </div>
@@ -385,6 +340,14 @@ export default function HomePage() {
               <Link href="/browse" className="rounded-full bg-[var(--saffron)] px-7 py-3 text-sm font-semibold text-white">Find a Tutor →</Link>
               <Link href="/coaching" className="rounded-full border border-[rgba(30,64,175,0.35)] bg-[rgba(30,64,175,0.2)] px-7 py-3 text-sm font-semibold text-[var(--cobalt-mid)]">Browse Coaching 🎯</Link>
               <Link href="/schools" className="rounded-full border border-[rgba(13,115,119,0.35)] bg-[rgba(13,115,119,0.2)] px-7 py-3 text-sm font-semibold text-[var(--teal-mid)]">Explore Schools 🏫</Link>
+            </div>
+
+            <div className="mx-auto mt-10 max-w-6xl border-t border-white/10 pt-8">
+              <div className="flex flex-wrap items-center justify-center gap-10 text-sm text-white/55">
+                <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--saffron)]" />{counts ? `${counts.tutors} Verified Tutors` : "Tutors Loading"}</span>
+                <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--cobalt-mid)]" />{counts ? `${counts.coaching} Coaching Institutes` : "Coaching Loading"}</span>
+                <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-[var(--teal-mid)]" />{counts ? `${counts.schools} Schools Listed` : "Schools Loading"}</span>
+              </div>
             </div>
           </div>
         </section>
